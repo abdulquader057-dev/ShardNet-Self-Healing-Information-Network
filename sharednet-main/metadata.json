@@ -1,0 +1,12 @@
+{
+  "name": "SHARDNET",
+  "description": "Self-Healing Information Network - Offline-first decentralized messaging via sharding and QR codes.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "Offline Storage",
+    "P2P Communication",
+    "QR Scanning"
+  ]
+}

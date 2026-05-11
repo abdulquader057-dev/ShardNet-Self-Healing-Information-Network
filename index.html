@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shared Net | Self-Healing Information Network</title>
+    <meta name="theme-color" content="#0a0a0c" />
+    <meta name="app-version" content="2.7.6-SURVIVAL-V5-FINAL" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta name="description" content="Secure, offline-first mesh network for message sharding and reconstruction in network blackout scenarios." />
+    <!-- 🛡️ GLOBAL STABILITY & CONSTRUCTOR VACCINE -->
+    <!-- 🛡️ GLOBAL STABILITY & CONSTRUCTOR VACCINE (V8 - MAXIMUM STABILITY) -->
+    <script>
+      (function() {
+        var failCount = parseInt(localStorage.getItem('sn_boot_fail_count') || '0');
+        var isReset = window.location.search.includes('reset=true');
+
+        if (isReset || failCount > 3) {
+          localStorage.clear(); 
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              for(var i=0; i<regs.length; i++) regs[i].unregister();
+            });
+          }
+          if (isReset) { window.location.href = window.location.pathname; return; }
+        }
+
+        // 1. Universal Constructor Proxy
+        var forceOverride = function(name, value) {
+          try {
+            delete window[name];
+            Object.defineProperty(window, name, { value: value, configurable: true, writable: true });
+          } catch (e) { window[name] = value; }
+        };
+
+        // MessageChannel Vaccine (V8)
+        try { new MessageChannel(); } catch (e) {
+          var MP = function() { this.onmessage = null; };
+          MP.prototype.postMessage = function(d) { 
+            var s = this; setTimeout(function() { if(s.onmessage) s.onmessage({data:d}); }, 0); 
+          };
+          var MC = function() { this.port1 = new MP(); this.port2 = new MP(); };
+          forceOverride('MessagePort', MP);
+          forceOverride('MessageChannel', MC);
+        }
+
+        // 2. Tactical Error Interceptor
+        window.onerror = function(msg, src, line, col, err) {
+          var errorStr = String(msg || "");
+          var stack = err && err.stack ? err.stack : "No stack trace available";
+          var isFatal = errorStr.includes('Illegal constructor') || errorStr.includes('defined') || errorStr.includes('is not a function') || errorStr.includes('createRoot');
+          
+          console.error("🚨 SHARDNET FATAL:", errorStr, "\nStack:", stack);
+
+          if (isFatal) {
+            localStorage.setItem('sn_boot_fail_count', (failCount + 1).toString());
+            document.body.innerHTML = `
+              <div style="background:#0a0a0c;color:#ff3b3b;padding:40px;font-family:monospace;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;position:fixed;inset:0;z-index:9999;">
+                <h1 style="font-weight:900;font-size:32px;margin-bottom:10px;">⚠️ TACTICAL BOOT FAILURE</h1>
+                <p style="text-transform:uppercase;font-weight:700;letter-spacing:2px;color:#475569;">System Crash Detected during Global Initialization</p>
+                <div style="margin-top:30px;padding:20px;border:1px dashed #ff3b3b;background:rgba(255,59,59,0.05);max-width:80%;text-align:left;">
+                  <p style="font-size:12px;margin:0;font-weight:bold;">EXCEPTION LOGGED:</p>
+                  <p style="font-size:10px;opacity:0.8;word-break:break-all;">${errorStr}</p>
+                  <p style="font-size:12px;margin:10px 0 0;font-weight:bold;">TRACE:</p>
+                  <p style="font-size:8px;opacity:0.5;word-break:break-all;white-space:pre-wrap;max-height:100px;overflow:auto;">${stack}</p>
+                </div>
+                <div style="margin-top:40px;display:flex;gap:20px;">
+                  <button onclick="window.location.reload()" style="padding:15px 30px;background:#ff3b3b;color:#fff;border:none;font-weight:900;cursor:pointer;text-transform:uppercase;">Retry Boot</button>
+                  <button onclick="window.location.href=window.location.pathname+'?reset=true'" style="padding:15px 30px;background:transparent;color:#ff3b3b;border:1px solid #ff3b3b;font-weight:900;cursor:pointer;text-transform:uppercase;">Nuclear Reset</button>
+                </div>
+              </div>`;
+          }
+        };
+
+        // 3. Boot Helpers
+        window.safeBoot = async function(fn) { try { await fn(); } catch(e) { window.onerror(e.message, null, null, null, e); } };
+        window.safeInit = async function(n, fn) { 
+          try { 
+            await fn(); 
+            console.log("🛡️ " + n + " OK"); 
+          } catch(e) { console.error(n + " FAIL", e); } 
+        };
+        window.safeCall = function(fn, n) { try { if(fn) return fn(); } catch(e) { console.warn(n + " FAIL", e); } };
+
+        console.log("🛡️ SHARDNET V8 MAXIMUM_STABILITY ACTIVE");
+      })();
+    </script>
+  </head>
+  <body class="bg-[#0a0a0c]">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx?v=5"></script>
+  </body>
+</html>

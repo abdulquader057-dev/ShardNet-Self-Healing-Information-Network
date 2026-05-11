@@ -1,0 +1,281 @@
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Circle,
+  useMap,
+} from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { Navigation, Globe, Shield, Map as MapIcon, Crosshair } from 'lucide-react';
+import { getLocationSafe } from '../utils/geo';
+import { safeInterval } from '../core/stability';
+import { GLOBAL_HUBS, INFRA_ICONS } from '../data/emergencyData';
+
+/* ─── Fix Vite's broken Leaflet default icons (Removing CDN dependency) ─── */
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: '/favicon.svg', // Fallback to local
+  iconUrl:       '/favicon.svg',
+  shadowUrl:     '/favicon.svg',
+});
+
+/* ─── Survival DivIcon Generator ───────────────────────────────────────── */
+const createInfraIcon = (type) => {
+  const cfg = INFRA_ICONS[type] || INFRA_ICONS.generic;
+  return L.divIcon({
+    className: '',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    html: `
+      <div style="
+        width:30px;height:30px;border-radius:8px;
+        background:${cfg.color};border:2px solid #fff;
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 0 10px ${cfg.color}88;
+        font-size:16px;
+      ">
+        ${cfg.emoji}
+      </div>`
+  });
+};
+
+const youAreHereIcon = L.divIcon({
+  className: '',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  html: `
+    <div style="
+      width:20px;height:20px;border-radius:50%;
+      background:rgba(59,130,246,0.25);
+      border:2px solid #3b82f6;
+      display:flex;align-items:center;justify-content:center;
+      position:relative;
+    ">
+      <div style="width:8px;height:8px;border-radius:50%;background:#3b82f6;box-shadow:0 0 8px 3px rgba(59,130,246,0.6);"></div>
+      <div style="position:absolute;width:32px;height:32px;border-radius:50%;border:2px solid rgba(59,130,246,0.35);top:-8px;left:-8px;animation:ripple 2s ease-out infinite;"></div>
+    </div>`,
+});
+
+/* ─── Sub-component: Capture Map Instance ─────────────────────────────── */
+function MapInstanceCapture({ setMap }) {
+  const map = useMap();
+  useEffect(() => {
+    if (map) setMap(map);
+  }, [map, setMap]);
+  return null;
+}
+
+/* ─── Sub-component: High-Accuracy Tracker ────────────────────────────── */
+function LiveLocation({ onLocation }) {
+  const map = useMap();
+  const [pos, setPos] = useState(null);
+  const hasCentred = useRef(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function syncLocation() {
+      const loc = await getLocationSafe();
+      if (!isMounted) return;
+      if (loc.lat !== 0 || loc.lng !== 0) {
+        const fullLoc = { lat: loc.lat, lng: loc.lng, accuracy: loc.fallback ? 100 : 15 };
+        setPos(fullLoc);
+        onLocation(fullLoc);
+        
+        // SAFE FLY-TO: Ensure map is loaded and panes exist
+        if (!hasCentred.current && map && map.getContainer()) {
+          try {
+            map.flyTo([loc.lat, loc.lng], 14, { animate: true, duration: 2 });
+            hasCentred.current = true;
+          } catch (e) {
+            console.warn("🛡️ MAP_SHIELD: flyTo deferred - map not ready");
+          }
+        }
+      }
+    }
+    syncLocation();
+    const interval = safeInterval(syncLocation, 8000);
+    return () => { isMounted = false; clearInterval(interval); };
+  }, [map, onLocation]);
+
+  if (!pos) return null;
+  return (
+    <>
+      <Circle center={[pos.lat, pos.lng]} radius={pos.accuracy} pathOptions={{ color: '#3b82f6', fillOpacity: 0.08, weight: 1, dashArray: '4 4' }} />
+      <Marker position={[pos.lat, pos.lng]} icon={youAreHereIcon} />
+    </>
+  );
+}
+
+/* ─── Tactical Map Component ───────────────────────────────────────────── */
+const MeshMap = ({ messages = [], zoom = 13 }) => {
+  const [mounted,  setMounted]  = useState(false);
+  const [location, setLocation] = useState(null);
+  const [activeTab, setActiveTab] = useState('local'); // local, global
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mapInstance, setMapInstance] = useState(null);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  const panToHub = (hub) => {
+    // SAFE PAN: Verify instance and container status
+    if (mapInstance && mapInstance.getContainer()) {
+      try {
+        mapInstance.flyTo([hub.lat, hub.lng], 15);
+      } catch (e) {
+        console.error("🛡️ MAP_SHIELD: Tactical pan failed", e);
+      }
+    }
+  };
+
+  const searchResults = GLOBAL_HUBS.filter(h => 
+    h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    h.type.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (!mounted) return <div className="h-full w-full bg-black flex items-center justify-center text-primary font-mono text-[10px]">INITIALIZING MESH-GRID...</div>;
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0a0a0c' }}>
+      <style>{`@keyframes ripple { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(2.2); opacity: 0; } }`}</style>
+      
+      {/* ── TOP SEARCH HUD ── */}
+      <div style={{ position: 'absolute', top: 12, left: 12, right: 12, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ flex: 1, padding: '10px 16px', background: 'rgba(9,11,20,0.9)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+             <span style={{ fontSize: 14, color: '#64748b', marginRight: 8 }}>🔍</span>
+             <input 
+               type="text" 
+               placeholder="SEARCH OFFLINE INFRA..."
+               style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 10, fontWeight: 900, outline: 'none', width: '100%' }}
+               value={searchQuery}
+               onChange={(e) => setSearchQuery(e.target.value)}
+             />
+          </div>
+          <div style={{ padding: '10px 16px', background: '#dc2626', borderRadius: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+             <Shield size={12} color="#fff" />
+             <span style={{ fontSize: 9, fontWeight: 900, color: '#fff' }}>AIR-GAP</span>
+          </div>
+        </div>
+
+        {/* SEARCH DROPDOWN */}
+        {searchQuery && (
+          <div style={{ background: 'rgba(9,11,20,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 8, maxHeight: 200, overflowY: 'auto' }}>
+            {searchResults.length > 0 ? searchResults.map(h => (
+              <div 
+                key={h.id} 
+                onClick={() => { panToHub(h); setSearchQuery(''); }}
+                style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+              >
+                <div>
+                  <p style={{ fontSize: 9, fontWeight: 900, color: '#fff', margin: 0 }}>{h.name}</p>
+                  <p style={{ fontSize: 7, color: '#64748b', margin: 0 }}>{h.type.toUpperCase()}</p>
+                </div>
+                <span style={{ color: '#3b82f6', fontSize: '12px', fontWeight: 'bold' }}>→</span>
+              </div>
+            )) : <p style={{ fontSize: 9, color: '#64748b', padding: 8 }}>No offline data for this query.</p>}
+          </div>
+        )}
+      </div>
+
+      {/* ── MAP CONTAINER ── */}
+      <MapContainer
+        center={[28.6139, 77.2090]} // START AT NEW DELHI FOR INDIA FOCUS
+        zoom={zoom}
+        zoomControl={false}
+        attributionControl={false}
+        style={{ height: '100%', width: '100%', background: '#0d1117' }}
+      >
+        <MapInstanceCapture setMap={setMapInstance} />
+        <TileLayer url={navigator.onLine ? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" : ""} className="mesh-tile" />
+        
+        {/* 🗺️ ABSOLUTE OFFLINE GRID */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, opacity: 0.2 }}>
+           <div style={{ width: '100%', height: '100%', backgroundImage: 'linear-gradient(rgba(59,130,246,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.2) 1px, transparent 1px)', backgroundSize: '100px 100px' }} />
+        </div>
+
+        <LiveLocation onLocation={setLocation} />
+
+
+        {/* ── INFRASTRUCTURE NODES (GLOBAL & LOCAL DISCOVERY) ── */}
+        {[
+          ...GLOBAL_HUBS,
+          ...(location ? [
+            { id: 'p1', type: 'hospital', name: 'Nearby Trauma Center', lat: location.lat + 0.004, lng: location.lng + 0.002, info: 'Procedural Discovery' },
+            { id: 'p2', type: 'reservoir', name: 'Water Reserve Node', lat: location.lat - 0.003, lng: location.lng + 0.005, info: 'Procedural Discovery' },
+            { id: 'p3', type: 'shelter', name: 'Emergency Bunker', lat: location.lat + 0.006, lng: location.lng - 0.001, info: 'Procedural Discovery' },
+          ] : [])
+        ].map(hub => (
+          <Marker key={hub.id} position={[hub.lat, hub.lng]} icon={createInfraIcon(hub.type)}>
+            <Popup>
+              <div style={{ padding: '4px', textAlign: 'center' }}>
+                <p style={{ fontSize: 9, fontWeight: 900, color: INFRA_ICONS[hub.type].color, textTransform: 'uppercase', margin: 0 }}>{hub.type}</p>
+                <p style={{ fontSize: 11, fontWeight: 800, margin: '2px 0' }}>{hub.name}</p>
+                <p style={{ fontSize: 9, color: '#64748b', margin: 0 }}>{hub.info}</p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* ── MESH SIGNALS ── */}
+        {messages.filter(m => m.geo).map(msg => (
+          <Marker key={msg.messageId} position={[msg.geo.lat, msg.geo.lng]}>
+             <Popup><p style={{ fontSize: 11, fontWeight: 700 }}>"{msg.message}"</p></Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+
+      {/* ── TACTICAL OVERLAY ── */}
+      <div style={{
+        position: 'absolute', bottom: 12, right: 12, left: 12, zIndex: 1000,
+        background: 'rgba(9,11,20,0.92)', backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(59,130,246,0.3)', borderRadius: 16,
+        padding: '12px', display: 'flex', flexDirection: 'column', gap: 10
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button 
+              onClick={() => setActiveTab('local')}
+              style={{ background: activeTab === 'local' ? '#3b82f6' : 'transparent', color: activeTab === 'local' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase' }}
+            >Local Scan</button>
+            <button 
+              onClick={() => setActiveTab('global')}
+              style={{ background: activeTab === 'global' ? '#3b82f6' : 'transparent', color: activeTab === 'global' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase' }}
+            >Tactical Index</button>
+          </div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+             <span style={{ fontSize: 8, fontWeight: 900, color: '#10b981' }}>MESH SECURE</span>
+          </div>
+        </div>
+
+        <div style={{ 
+          display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4,
+          msOverflowStyle: 'none', scrollbarWidth: 'none'
+        }}>
+          {(activeTab === 'local' ? GLOBAL_HUBS.filter(h => h.id.startsWith('in')) : GLOBAL_HUBS).map(hub => (
+            <div 
+              key={hub.id} 
+              onClick={() => panToHub(hub)}
+              style={{ 
+                flexShrink: 0, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', 
+                border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, minWidth: 140, cursor: 'pointer'
+              }}
+            >
+              <p style={{ fontSize: 7, fontWeight: 900, color: INFRA_ICONS[hub.type].color, textTransform: 'uppercase', margin: 0 }}>{hub.type}</p>
+              <p style={{ fontSize: 10, fontWeight: 700, color: '#e2e8f0', margin: '2px 0' }}>{hub.name}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <p style={{ fontSize: 8, color: '#475569', fontFamily: 'monospace', margin: 0 }}>{hub.lat.toFixed(2)}, {hub.lng.toFixed(2)}</p>
+                <span style={{ color: '#475569', fontSize: '8px', fontWeight: 'bold' }}>→</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MeshMap;
+
