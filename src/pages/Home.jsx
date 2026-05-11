@@ -405,12 +405,6 @@ const Home = () => {
       </AnimatePresence>
     </div>
   );
-on.div>
-        )}
-      </AnimatePresence>
-      </div>
-    </div>
-  );
 };
 
 export default Home;

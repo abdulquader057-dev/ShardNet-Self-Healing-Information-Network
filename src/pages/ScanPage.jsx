@@ -418,7 +418,6 @@ const ScanPage = () => {
   };
 
   return (
-  return (
     <div className="page-container">
       <div className="flex items-center gap-4 mb-10">
         <div className="bg-accent/20 p-3 rounded-2xl text-accent shadow-[0_0_15px_rgba(139,92,246,0.2)]">
