@@ -56,14 +56,23 @@
             try {
               localStorage.clear(); 
             } catch(e) {}
+            
             if ('serviceWorker' in navigator) {
               navigator.serviceWorker.getRegistrations().then(function(regs) {
-                for(var i=0; i<regs.length; i++) regs[i].unregister();
-              }).catch(function(){});
-            }
-            if (isReset) { 
-              window.location.href = window.location.pathname; 
-              return; 
+                var promises = [];
+                for(var i=0; i<regs.length; i++) {
+                  promises.push(regs[i].unregister());
+                }
+                Promise.all(promises).then(function() {
+                  if (isReset) window.location.href = window.location.pathname;
+                }).catch(function() {
+                  if (isReset) window.location.href = window.location.pathname;
+                });
+              }).catch(function(){
+                if (isReset) window.location.href = window.location.pathname;
+              });
+            } else {
+              if (isReset) window.location.href = window.location.pathname;
             }
           }
 
