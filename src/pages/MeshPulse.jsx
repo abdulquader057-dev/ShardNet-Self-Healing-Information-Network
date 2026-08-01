@@ -11,37 +11,66 @@ import {
   Search, 
   ChevronDown, 
   Loader2, 
-  CheckCircle2, 
   Globe, 
   Info,
-  Radio
+  MapPin,
+  AlertTriangle
 } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import L from 'leaflet';
+
+// Setup custom Leaflet icons using L.divIcon
+const userIcon = L.divIcon({
+  html: '<div class="user-marker-container"><div class="user-marker"></div><div class="pulse-ring"></div></div>',
+  className: 'custom-leaflet-icon',
+  iconSize: [36, 36],
+  iconAnchor: [18, 18]
+});
+
+const createNodeIcon = (status, type) => {
+  let statusClass = '';
+  if (status === 'warning') statusClass = 'node-marker--warning';
+  else if (status === 'emergency') statusClass = 'node-marker--emergency';
+
+  let iconClass = 'ph-bold ph-device-mobile';
+  if (type === 'Drone' || type === 'HQ Station') iconClass = 'ph-bold ph-paper-plane-tilt';
+  else if (type === 'Vehicle') iconClass = 'ph-bold ph-car';
+  else if (type === 'Mobile') iconClass = 'ph-bold ph-device-mobile';
+
+  return L.divIcon({
+    html: `<div class="node-marker ${statusClass}"><i class="${iconClass}" style="font-size: 16px;"></i></div>`,
+    className: 'custom-leaflet-icon',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
+  });
+};
+
+const emergencySirenIcon = L.divIcon({
+  html: '<div class="emergency-siren-marker"><i class="ph-fill ph-siren" style="font-size: 18px;"></i><div class="emergency-pulse-ring"></div></div>',
+  className: 'custom-leaflet-icon',
+  iconSize: [38, 38],
+  iconAnchor: [19, 19]
+});
 
 export default function MeshPulse() {
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
+
   const [devices, setDevices] = useState([
-    { id: '1', name: 'Rescue-01', type: 'Mobile', signal: 'Strong', lastSeen: '2m ago', icon: Smartphone, status: 'success' },
-    { id: '2', name: 'Hiker-42', type: 'Mobile', signal: 'Strong', lastSeen: '5m ago', icon: User, status: 'success' },
-    { id: '3', name: 'Drone-X', type: 'Drone', signal: 'Medium', lastSeen: '1m ago', icon: Navigation, status: 'warning' },
-    { id: '4', name: 'Vehicle-A1', type: 'Vehicle', signal: 'Weak', lastSeen: '8m ago', icon: Car, status: 'emergency' }
-  ]);
-  
-  // Constellation coordinate positions inside viewBox="0 0 400 280"
-  const [nodes, setNodes] = useState([
-    { id: '1', name: 'Rescue-01', cx: 80, cy: 60, icon: Smartphone, status: 'success', active: true },
-    { id: '2', name: 'Hiker-42', cx: 320, cy: 70, icon: User, status: 'success', active: true },
-    { id: '3', name: 'Drone-X', cx: 90, cy: 220, icon: Navigation, status: 'warning', active: true },
-    { id: '4', name: 'Unknown', cx: 310, cy: 210, icon: User, status: 'muted', active: false }
+    { id: '1', name: 'Rescue-01', type: 'Mobile', signal: 'Strong', lastSeen: '2m ago', icon: Smartphone, status: 'success', coords: [17.4100, 78.4750] },
+    { id: '2', name: 'Hiker-42', type: 'Mobile', signal: 'Strong', lastSeen: '5m ago', icon: User, status: 'success', coords: [17.4040, 78.4800] },
+    { id: '3', name: 'Drone-X', type: 'Drone', signal: 'Medium', lastSeen: '1m ago', icon: Navigation, status: 'warning', coords: [17.4080, 78.4720] },
+    { id: '4', name: 'Vehicle-A1', type: 'Vehicle', signal: 'Weak', lastSeen: '8m ago', icon: Car, status: 'emergency', coords: [17.4020, 78.4780] }
   ]);
 
-  const [scannedCount, setScannedCount] = useState(0);
-
-  // Initial skeleton load for 1.5 seconds
+  // Initial skeleton loader for 1.5 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
+      // Simulate map tile load delay
+      setTimeout(() => setMapLoaded(true), 300);
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
@@ -51,15 +80,13 @@ export default function MeshPulse() {
     
     setTimeout(() => {
       setScanning(false);
-      setScannedCount(prev => prev + 1);
 
-      // Check if already scanned to prevent duplicates in list
       if (devices.some(d => d.name === 'Command-Center')) {
         alert("Mesh scan complete. No new nodes found in BLE airspace.");
         return;
       }
 
-      // Add 5th device (Command-Center) to list
+      // Add 5th device (Command-Center) to list & map
       const newDevice = { 
         id: '5', 
         name: 'Command-Center', 
@@ -67,24 +94,11 @@ export default function MeshPulse() {
         signal: 'Strong', 
         lastSeen: 'Just now', 
         icon: Globe, 
-        status: 'success' 
+        status: 'success',
+        coords: [17.4120, 78.4790]
       };
 
       setDevices(prev => [newDevice, ...prev]);
-
-      // Add 5th Node to constellation map (top center)
-      const newNode = {
-        id: '5',
-        name: 'Command-Center',
-        cx: 200,
-        cy: 40,
-        icon: Globe,
-        status: 'success',
-        active: true
-      };
-      setNodes(prev => [...prev, newNode]);
-
-      // Alert/notification fallback
       alert("🚨 New Mesh Node Discovered: Command-Center (HQ Station)");
     }, 3000);
   };
@@ -130,79 +144,110 @@ export default function MeshPulse() {
         </div>
       </div>
 
-      {/* ── ANIMATED MESH VISUALIZATION ── */}
-      <div className="relative h-[280px] w-full rounded-2xl overflow-hidden border border-slate-800" style={{ background: 'var(--bg-primary)' }}>
-        {/* Subtle radial gradient background */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, rgba(10,132,255,0.06) 0%, transparent 70%)' }} />
-        
-        <svg viewBox="0 0 400 280" className="w-full h-full">
-          {/* Constellation lines */}
-          {nodes.map(node => {
-            const isMuted = node.status === 'muted';
-            return (
-              <g key={`line-${node.id}`}>
-                <path
-                  d={`M 200,140 L ${node.cx},${node.cy}`}
-                  stroke={isMuted ? '#FF9500' : '#38383A'}
-                  strokeWidth="1.5"
-                  opacity={isMuted ? '0.3' : '1'}
-                  className={!isMuted ? 'animate-dash-line' : ''}
-                />
-                {/* Active traveling dots */}
-                {node.active && !isMuted && (
-                  <circle r="4" fill="#34C759">
-                    <animateMotion
-                      dur="2.5s"
-                      repeatCount="indefinite"
-                      path={`M 200,140 L ${node.cx},${node.cy}`}
-                    />
-                  </circle>
-                )}
-              </g>
-            );
-          })}
+      {/* ── DARK-THEMED INTERACTIVE LEAFLET MAP ── */}
+      <div 
+        id="network-map" 
+        className="relative h-[320px] w-full rounded-xl overflow-hidden border border-slate-800 bg-[#0A0A0F]"
+      >
+        {!mapLoaded ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-50 bg-[#0A0A0F] text-slate-400">
+            <Loader2 size={32} className="animate-spin text-[#0A84FF]" />
+            <span className="text-xs uppercase font-black tracking-widest">Loading Tactical Map...</span>
+          </div>
+        ) : (
+          <MapContainer
+            center={[17.4065, 78.4772]}
+            zoom={14}
+            zoomControl={false}
+            attributionControl={false}
+            tap={false}
+            style={{ height: '100%', width: '100%', zIndex: 1 }}
+          >
+            {/* CartoDB Dark Matter Tiles (No API key required) */}
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              maxZoom={19}
+            />
 
-          {/* Connection Center node ("You") */}
-          <g>
-            <foreignObject x="176" y="116" width="48" height="48">
-              <div className="w-12 h-12 rounded-full bg-[#0A84FF] flex items-center justify-center text-white border-2 border-white/20 shadow-[0_0_15px_rgba(10,132,255,0.4)]">
-                <User size={20} />
-              </div>
-            </foreignObject>
-            <text x="200" y="180" textAnchor="middle" className="text-[10px] font-black fill-white uppercase tracking-widest">You</text>
-          </g>
+            {/* Range Circles (Instruction 6) */}
+            <Circle
+              center={[17.4065, 78.4772]}
+              radius={100}
+              pathOptions={{
+                color: 'var(--action, #0A84FF)',
+                weight: 1,
+                dashArray: '4,4',
+                fillColor: 'var(--action, #0A84FF)',
+                fillOpacity: 0.05
+              }}
+            />
+            <Circle
+              center={[17.4065, 78.4772]}
+              radius={250}
+              pathOptions={{
+                color: 'var(--text-tertiary, #636366)',
+                weight: 1,
+                dashArray: '4,4',
+                fillColor: 'transparent',
+                fillOpacity: 0
+              }}
+            />
 
-          {/* Surrounding constellation nodes */}
-          {nodes.map(node => {
-            const isMuted = node.status === 'muted';
-            const borderColors = {
-              success: 'border-[#34C759]',
-              warning: 'border-[#FF9500]',
-              emergency: 'border-[#FF3B30]',
-              muted: 'border-dashed border-[#48484A]'
-            };
+            {/* Center User Location Marker */}
+            <Marker position={[17.4065, 78.4772]} icon={userIcon}>
+              <Popup>
+                <div className="text-center text-xs space-y-1">
+                  <p className="font-bold text-white uppercase tracking-wider">Your Transceiver</p>
+                  <p className="text-slate-400">GPS Lock: Delhi Sector (Mock)</p>
+                </div>
+              </Popup>
+            </Marker>
 
-            const Icon = node.icon;
-
-            return (
-              <g key={`node-${node.id}`}>
-                <foreignObject x={node.cx - 18} y={node.cy - 18} width="36" height="36">
-                  <div className={`w-9 h-9 rounded-full bg-[#1C1C1E] border-2 ${borderColors[node.status] || 'border-slate-700'} flex items-center justify-center text-slate-300 transition-all duration-200 hover:scale-110 cursor-pointer ${isMuted ? 'opacity-50' : ''}`}>
-                    <Icon size={16} className={node.status === 'warning' ? 'text-[#FF9500]' : node.status === 'success' ? 'text-[#34C759]' : 'text-slate-400'} />
+            {/* Active Emergency Signal Marker at Hiker-42 coordinates */}
+            <Marker position={[17.4040, 78.4800]} icon={emergencySirenIcon}>
+              <Popup>
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center gap-1.5 text-rose-500 font-bold uppercase tracking-wider">
+                    <AlertTriangle size={14} />
+                    <span>Active Emergency</span>
                   </div>
-                </foreignObject>
-                <text 
-                  x={node.cx} 
-                  y={node.cy + 30} 
-                  textAnchor="middle" 
-                  className={`text-[9px] font-black uppercase tracking-wider ${isMuted ? 'fill-slate-600 opacity-50' : 'fill-slate-400'}`}
+                  <div className="h-[1px] bg-slate-800" />
+                  <p className="font-bold text-white">Node: Hiker-42</p>
+                  <p className="text-slate-400 leading-normal">Reported distress beacon 4 mins ago.</p>
+                  <button 
+                    onClick={() => alert("SOS Response Protocol Initialized. Broadcasting intercept acknowledgement...")}
+                    className="w-full mt-2 py-2 bg-[#FF3B30] text-white rounded font-bold text-[10px] uppercase tracking-wider text-center"
+                  >
+                    Tap to Respond
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
+
+            {/* Nearby Node Pins */}
+            {devices.map(device => {
+              // Hiker-42 has a siren marker instead of standard node marker
+              if (device.name === 'Hiker-42') return null;
+
+              return (
+                <Marker 
+                  key={device.id} 
+                  position={device.coords} 
+                  icon={createNodeIcon(device.status, device.type)}
                 >
-                  {node.name}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+                  <Popup>
+                    <div className="space-y-1 text-xs">
+                      <p className="font-bold text-white uppercase tracking-wider">{device.name}</p>
+                      <p className="text-slate-400">Device Type: {device.type}</p>
+                      <p className="text-slate-400">Signal: <span className={device.status === 'success' ? 'text-[#34C759]' : device.status === 'warning' ? 'text-[#FF9500]' : 'text-[#FF3B30]'}>{device.signal}</span></p>
+                      <p className="text-[10px] text-slate-500 italic mt-1">Last seen: {device.lastSeen}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
+          </MapContainer>
+        )}
       </div>
 
       {/* ── NEARBY DEVICES LIST ── */}
@@ -227,7 +272,6 @@ export default function MeshPulse() {
         {/* List render / Skeleton loader */}
         <div className="space-y-3">
           {loading ? (
-            // Skeleton loader blocks (Instruction 6)
             [1, 2, 3].map(i => (
               <div key={i} className="card p-4 flex gap-4 items-center bg-[#1C1C1E] border border-[#38383A] animate-pulse">
                 <div className="w-10 h-10 rounded-full bg-[#2C2C2E]" />
