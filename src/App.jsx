@@ -7,6 +7,7 @@ import StorageView from './pages/StorageView';
 import ScanPage from './pages/ScanPage';
 import ReconstructedView from './pages/ReconstructedView';
 import Inbox from './pages/Inbox';
+import BluetoothMesh from './pages/BluetoothMesh';
 import MeshPulse from './pages/MeshPulse';
 import MeshWhisper from './pages/MeshWhisper';
 import SilentRelay from './pages/SilentRelay';
