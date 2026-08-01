@@ -88,7 +88,7 @@ const Home = () => {
         const k = prompt('Enter Vault Key (or Duress PIN: 0000 to wipe):');
         if (k === '0000' || k === '9999') {
           clearAllData().then(() => {
-            alert('🚨 DURESS TRIGGERED: DATA WIPED');
+            window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: '🚨 DURESS TRIGGERED: ALL VAULT DATA WIPED' } }));
             refresh();
           });
           return;

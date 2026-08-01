@@ -4,8 +4,6 @@ import {
   Copy, 
   Check, 
   Globe, 
-  ToggleLeft, 
-  ToggleRight, 
   HelpCircle, 
   ShieldAlert, 
   Volume2, 
@@ -15,7 +13,9 @@ import {
   FileText, 
   ExternalLink,
   ChevronRight,
-  Edit2
+  Edit2,
+  X,
+  BookOpen
 } from 'lucide-react';
 
 export default function Settings() {
@@ -37,11 +37,15 @@ export default function Settings() {
   const [largeText, setLargeText] = useState(localStorage.getItem('setting_large_text') === 'true');
   const [reduceMotion, setReduceMotion] = useState(localStorage.getItem('setting_reduce_motion') === 'true');
 
+  // Presentation settings (Instruction 6)
+  const [versionTaps, setVersionTaps] = useState(0);
+  const [presentationMode, setPresentationMode] = useState(localStorage.getItem('presentation_mode') === 'true');
+  const [showAboutModal, setShowAboutModal] = useState(false);
+
   const deviceId = 'SN-WV1K-7842';
 
   // Apply visual settings on load/toggle
   useEffect(() => {
-    // High contrast
     if (highContrast) {
       document.documentElement.classList.add('high-contrast');
     } else {
@@ -50,7 +54,6 @@ export default function Settings() {
   }, [highContrast]);
 
   useEffect(() => {
-    // Large text
     if (largeText) {
       document.documentElement.style.fontSize = '120%';
     } else {
@@ -59,13 +62,20 @@ export default function Settings() {
   }, [largeText]);
 
   useEffect(() => {
-    // Reduce motion
     if (reduceMotion) {
       document.documentElement.classList.add('reduce-motion');
     } else {
       document.documentElement.classList.remove('reduce-motion');
     }
   }, [reduceMotion]);
+
+  useEffect(() => {
+    if (presentationMode) {
+      document.documentElement.classList.add('presentation-mode');
+    } else {
+      document.documentElement.classList.remove('presentation-mode');
+    }
+  }, [presentationMode]);
 
   const showToast = (type, message) => {
     window.dispatchEvent(new CustomEvent('show-toast', { detail: { type, message } }));
@@ -93,16 +103,13 @@ export default function Settings() {
     showToast('success', 'Device name updated');
   };
 
-  // Demo mode handler
   const handleDemoToggle = (val) => {
     setDemoMode(val);
     localStorage.setItem('sharednet_demo_mode', val.toString());
     
     // Seed/clear demo signals
     if (val) {
-      // Demo Mode ON
       if (window.sharedNetData) {
-        // Expand signals
         window.sharedNetData.signals = [
           {
             id: 'mock-1',
@@ -197,21 +204,18 @@ export default function Settings() {
           }
         ];
       }
-      showToast('info', 'Demo Mode Activated: Expanded telemetry loaded');
+      showToast('info', 'Demo Mode Activated: mock telemetry loaded');
     } else {
-      // Demo Mode OFF - Reset to default
       if (window.sharedNetData) {
         window.sharedNetData.signals = []; // Trigger re-populate
       }
       showToast('info', 'Demo Mode Deactivated: Standard telemetry restored');
     }
     
-    // Dispatch global event so pages update their list / maps immediately
     window.dispatchEvent(new CustomEvent('demo-mode-changed'));
   };
 
   const handleTestSOS = () => {
-    // Directly trigger the SOS sent overlay layout
     window.dispatchEvent(new CustomEvent('trigger-sos-test'));
     showToast('success', 'Bypassing countdown: Mock SOS transmission sent');
   };
@@ -220,6 +224,29 @@ export default function Settings() {
     if (confirm("Are you sure you want to reset your local mesh transceivers? This will wipe cached gossip shards.")) {
       localStorage.clear();
       window.location.reload();
+    }
+  };
+
+  const handleVersionClick = () => {
+    const nextTaps = versionTaps + 1;
+    setVersionTaps(nextTaps);
+    if (nextTaps >= 5) {
+      const nextPres = !presentationMode;
+      setPresentationMode(nextPres);
+      localStorage.setItem('presentation_mode', nextPres.toString());
+      
+      if (nextPres) {
+        document.documentElement.classList.add('presentation-mode');
+        showToast('info', 'Presentation Mode ON — slowed animations for demo');
+      } else {
+        document.documentElement.classList.remove('presentation-mode');
+        showToast('info', 'Presentation Mode OFF — default speeds restored');
+      }
+      
+      window.dispatchEvent(new CustomEvent('demo-mode-changed'));
+      setVersionTaps(0);
+    } else {
+      showToast('info', `Tap Version ${5 - nextTaps} more times for Presentation Settings`);
     }
   };
 
@@ -237,7 +264,6 @@ export default function Settings() {
         <span className="text-caption text-slate-500 uppercase tracking-widest block pl-1">Device Identity</span>
         <div className="card p-4 bg-[#1C1C1E] border border-slate-800 rounded-xl divide-y divide-slate-800/60">
           
-          {/* Row 1: Name */}
           <div className="pb-3 flex justify-between items-center">
             <div>
               <span className="text-[10px] text-slate-500 font-bold block">Device Alias</span>
@@ -263,7 +289,6 @@ export default function Settings() {
             )}
           </div>
 
-          {/* Row 2: ID */}
           <div className="py-3 flex justify-between items-center">
             <div>
               <span className="text-[10px] text-slate-500 font-bold block">Transceiver ID</span>
@@ -274,7 +299,6 @@ export default function Settings() {
             </button>
           </div>
 
-          {/* Row 3: Role */}
           <div className="pt-3 flex justify-between items-center">
             <div>
               <span className="text-[10px] text-slate-500 font-bold block">Network Role</span>
@@ -434,28 +458,170 @@ export default function Settings() {
       <div className="space-y-2">
         <span className="text-caption text-slate-500 uppercase tracking-widest block pl-1">About</span>
         <div className="card p-4 bg-[#1C1C1E] border border-slate-800 rounded-xl divide-y divide-slate-800/60 text-xs">
-          <div className="pb-3 flex justify-between items-center">
+          <div 
+            onClick={handleVersionClick} 
+            className="pb-3 flex justify-between items-center cursor-pointer hover:bg-white/5 p-1 rounded transition-all"
+          >
             <span className="text-slate-500 font-medium">Software Version</span>
-            <span className="text-white font-semibold">1.0.0 (Hackathon Build)</span>
+            <span className="text-white font-semibold flex items-center gap-1.5">
+              <span>1.0.0 (Hackathon Build)</span>
+              {presentationMode && <span className="bg-[#FF9500] text-black px-1.5 py-0.5 rounded text-[8px] font-black uppercase">PRES</span>}
+            </span>
           </div>
           <div className="py-3 flex justify-between items-center">
             <span className="text-slate-500 font-medium">Pitch Context</span>
             <span className="text-white font-semibold">Founders Fest 2026</span>
           </div>
           <div className="pt-3 flex justify-between items-center">
-            <span className="text-slate-500 font-medium">Repository License</span>
-            <a 
-              href="https://github.com/abdulquader057-dev/ShardNet-Self-Healing-Information-Network" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-[#0A84FF] font-semibold flex items-center gap-1 hover:underline"
+            <span className="text-slate-500 font-medium">Technical Blueprint</span>
+            <button 
+              onClick={() => { setShowAboutModal(true); showToast('info', 'Opening Pitch leaf-behind...'); }}
+              className="text-[#0A84FF] font-semibold flex items-center gap-1 hover:underline bg-transparent border-none p-0 cursor-pointer"
             >
-              <span>GitHub Source</span>
-              <ExternalLink size={12} />
-            </a>
+              <span>Audit Blueprint</span>
+              <ChevronRight size={14} />
+            </button>
           </div>
         </div>
       </div>
+
+      {/* ── JUDGE-FACING "ABOUT" MODAL OVERLAY (Instruction 4) ── */}
+      <AnimatePresence>
+        {showAboutModal && (
+          <div 
+            className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="absolute inset-0" onClick={() => setShowAboutModal(false)} />
+            
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 30 }}
+              className="bg-[#1C1C1E] border border-slate-800 w-full max-w-sm rounded-xl p-6 relative z-10 flex flex-col gap-4 shadow-2xl max-h-[85vh] overflow-y-auto scroll-momentum-container"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-xl font-black text-white italic uppercase tracking-tight">SharedNet</h2>
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mt-0.5">
+                    1.0.0 (Founders Fest Build)
+                  </span>
+                </div>
+                <button 
+                  onClick={() => setShowAboutModal(false)}
+                  className="p-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="h-[1px] bg-slate-800/80" />
+
+              {/* Tagline & Problem */}
+              <div className="space-y-1">
+                <span className="text-[10px] text-[#0A84FF] font-bold uppercase tracking-wide block">The Proposition</span>
+                <p className="text-white text-xs font-bold leading-normal">
+                  "Emergency communication when everything else fails."
+                </p>
+              </div>
+
+              <div className="space-y-1 text-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide block">The Problem</span>
+                <p className="text-slate-400 leading-relaxed">
+                  Natural disasters, remote areas, and grid attacks sever communications. First responders and survivors need coordination without cell towers or internet.
+                </p>
+              </div>
+
+              <div className="space-y-1 text-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide block">The Solution</span>
+                <p className="text-slate-400 leading-relaxed">
+                  SharedNet forms a self-healing mesh network using WebRTC data channels and Bluetooth Low Energy. Every phone becomes a relay. Messages hop from device to device.
+                </p>
+              </div>
+
+              {/* Tech Stack */}
+              <div className="space-y-1 text-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide block">Technical Stack</span>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {['WebRTC Channels', 'BLE GATT', 'AES-256-GCM', 'PWA Offline'].map(tech => (
+                    <span key={tech} className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[9px] font-bold">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1 text-xs">
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide block">Team Credentials</span>
+                <p className="text-slate-400 italic">Built by Team Antigravity at Founders Fest 2026</p>
+              </div>
+
+              {/* QR Code */}
+              <div className="bg-[#2C2C2E]/40 border border-slate-800 p-4 rounded-lg text-center space-y-2">
+                <span className="text-[9px] text-[#FF9500] font-black uppercase tracking-widest block">Live Pitch Demo link</span>
+                
+                {/* SVG QR Code (Instruction 4) */}
+                <svg viewBox="0 0 100 100" className="w-24 h-24 mx-auto bg-white p-1.5 rounded">
+                  <rect x="0" y="0" width="30" height="30" fill="black" />
+                  <rect x="5" y="5" width="20" height="20" fill="white" />
+                  <rect x="10" y="10" width="10" height="10" fill="black" />
+                  
+                  <rect x="70" y="0" width="30" height="30" fill="black" />
+                  <rect x="75" y="5" width="20" height="20" fill="white" />
+                  <rect x="80" y="10" width="10" height="10" fill="black" />
+                  
+                  <rect x="0" y="70" width="30" height="30" fill="black" />
+                  <rect x="5" y="75" width="20" height="20" fill="white" />
+                  <rect x="10" y="80" width="10" height="10" fill="black" />
+                  
+                  <rect x="75" y="75" width="10" height="10" fill="black" />
+                  <rect x="78" y="78" width="4" height="4" fill="white" />
+                  
+                  <rect x="35" y="5" width="10" height="5" fill="black" />
+                  <rect x="55" y="10" width="5" height="15" fill="black" />
+                  <rect x="40" y="25" width="15" height="5" fill="black" />
+                  <rect x="5" y="45" width="15" height="10" fill="black" />
+                  <rect x="25" y="35" width="5" height="20" fill="black" />
+                  <rect x="35" y="45" width="20" height="5" fill="black" />
+                  <rect x="45" y="55" width="5" height="15" fill="black" />
+                  <rect x="15" y="60" width="10" height="5" fill="black" />
+                  <rect x="65" y="35" width="15" height="5" fill="black" />
+                  <rect x="60" y="50" width="5" height="15" fill="black" />
+                  <rect x="85" y="45" width="10" height="10" fill="black" />
+                  <rect x="70" y="60" width="10" height="5" fill="black" />
+                  <rect x="35" y="80" width="15" height="10" fill="black" />
+                  <rect x="55" y="75" width="10" height="5" fill="black" />
+                  <rect x="55" y="85" width="5" height="10" fill="black" />
+                </svg>
+
+                <p className="text-[9px] text-slate-500">Scan to run SharedNet on judge transceivers</p>
+              </div>
+
+              {/* View on GitHub Button */}
+              <div className="flex gap-2">
+                <a 
+                  href="https://github.com/abdulquader057-dev/ShardNet-Self-Healing-Information-Network" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex-1 h-12 bg-transparent border border-slate-800 text-slate-300 rounded-xl flex items-center justify-center gap-2 font-bold text-xs uppercase hover:bg-slate-800/40 active:scale-95 transition-transform"
+                >
+                  <i className="ph-bold ph-github-logo" style={{ fontSize: '16px' }} />
+                  <span>View Repository</span>
+                </a>
+                <button
+                  onClick={() => setShowAboutModal(false)}
+                  className="flex-1 h-12 bg-slate-800 text-white rounded-xl font-bold text-xs uppercase active:scale-95 transition-transform"
+                >
+                  Close
+                </button>
+              </div>
+
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

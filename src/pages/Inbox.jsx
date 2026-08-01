@@ -170,7 +170,7 @@ export default function Inbox() {
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
     } catch(e) {}
 
-    alert("Signal marked as resolved. Broadcast status updated across mesh.");
+    window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Signal resolved: Mesh status updated' } }));
     refreshSignalsList();
     if (selectedSignal && selectedSignal.id === signalId) {
       setSelectedSignal(prev => ({ ...prev, status: 'resolved' }));
@@ -178,7 +178,7 @@ export default function Inbox() {
   };
 
   const handleResend = (sig) => {
-    alert(`Re-broadcasting payload: "${sig.title}" across mesh network...`);
+    window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: `Re-broadcasting: "${sig.title}" across mesh...` } }));
     try {
       if (navigator.vibrate) navigator.vibrate(100);
     } catch(e) {}
@@ -211,6 +211,7 @@ export default function Inbox() {
       {activeEmergency && !activeBannerDismissed && (
         <div 
           className="sticky top-[12px] z-50 p-4 rounded-xl flex items-center justify-between gap-4 border border-[#FF3B30]/30 shadow-[0_0_30px_rgba(255,59,48,0.35)]"
+          data-label="Active Alert"
           style={{ 
             background: 'linear-gradient(135deg, #FF3B30 0%, #D32F2F 100%)',
             touchAction: 'manipulation'
@@ -233,7 +234,7 @@ export default function Inbox() {
             <button 
               onClick={() => {
                 navigate('/pulse');
-                alert("Opening tactical telemetry map to intercept coordinates.");
+                window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Tracking emergency coordinates on tactical map' } }));
               }}
               className="px-4 py-2 bg-white text-[#FF3B30] rounded-lg text-xs font-bold shrink-0 shadow-lg active:scale-95 transition-transform"
             >
@@ -410,7 +411,7 @@ export default function Inbox() {
                           <button
                             onClick={() => {
                               navigate('/pulse');
-                              alert("Opening telemetry map coordinates.");
+                              window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Tracking alert coordinates on tactical map' } }));
                             }}
                             className="h-9 px-4 rounded-lg bg-transparent border border-slate-700 text-slate-300 font-bold text-xs uppercase hover:bg-slate-800/40 active:scale-95 transition-transform"
                           >

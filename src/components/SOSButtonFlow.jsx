@@ -256,6 +256,7 @@ export default function SOSButtonFlow() {
         <button
           onClick={handleTrigger}
           className="sos-trigger"
+          data-label="SOS System"
           aria-label="Emergency SOS Button. Tap to initiate 3-second countdown distress beacon."
           style={{ touchAction: 'manipulation' }}
         >

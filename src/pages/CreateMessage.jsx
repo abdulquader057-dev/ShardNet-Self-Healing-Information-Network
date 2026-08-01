@@ -80,8 +80,7 @@ const CreateMessage = () => {
       setUseGeo(true);
       setLocation(`${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`);
     } catch (e) {
-      console.warn("GPS unavailable:", e);
-      alert("GPS signal is too weak or unavailable. Try moving near a window or outside.");
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'GPS signal too weak or unavailable' } }));
     } finally {
       setGeoLoading(false);
     }
@@ -141,9 +140,7 @@ const CreateMessage = () => {
       setQrCodes(qrs);
       await addLog(`Successfully sharded intelligence at ${location}.`, 'success');
       
-    } catch (err) {
-      console.error('Failed to create signal:', err);
-      alert("SIGNAL CREATION FAILED: " + (err.message || "Unknown error"));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Signal creation failed: ' + (err.message || 'Unknown error') } }));
     } finally {
       setLoading(false);
     }
@@ -350,7 +347,7 @@ const CreateMessage = () => {
                 </div>
                 <div className="w-full flex gap-2">
                   <button 
-                    onClick={() => shareImage(qrCodes[shard.id], `shard-${shard.id}.png`).catch(e => alert('Sharing failed. Use Download instead.'))}
+                    onClick={() => shareImage(qrCodes[shard.id], `shard-${shard.id}.png`).catch(e => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Sharing failed. Use Download instead.' } })))}
                     className="flex-1 py-3 bg-secondary/10 hover:bg-secondary/20 border border-secondary/20 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-secondary transition-all"
                   >
                     <Share2 size={14} /> Share

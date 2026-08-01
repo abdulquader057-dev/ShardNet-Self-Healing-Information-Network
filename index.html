@@ -1,17 +1,62 @@
+<!--
+SHAREDNET HACKATHON PRE-FLIGHT CHECKLIST
+Founders Fest 2026 | Aug 6-7 | Hyderabad
+
+BEFORE EVERY DEMO:
+□ App loads in <2s on mobile data
+□ SOS button pulses red and is tappable
+□ 3-second countdown works, Cancel works
+□ Signal sent shows success state
+□ Network screen shows 4+ devices in Demo Mode
+□ Emergency Feed shows active + resolved signals
+□ Settings > Demo Mode toggle works
+□ Offline banner appears when WiFi disabled
+□ QR code in About modal scans correctly
+□ No console errors (check DevTools)
+□ Battery saver mode doesn't break animations
+□ Text is readable at 200% zoom
+□ All touch targets are 48px+
+
+JUDGE TALKING POINTS:
+□ "When cell towers fail, SharedNet doesn't."
+□ "Every device is a relay — no central server."
+□ "One tap SOS. 3 seconds to cancel. Done."
+□ "End-to-end encrypted. Privacy by design."
+□ "Works on $50 Android phones. Scales to thousands."
+
+DEMO FLOW (5 minutes):
+1. Open app → show onboarding (30s)
+2. Network tab → show mesh visualization (60s)
+3. SOS button → trigger test signal (45s)
+4. Emergency Feed → show active alert + resolution (45s)
+5. Settings → Demo Mode + QR code (60s)
+-->
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Shared Net | Self-Healing Information Network</title>
     <meta name="theme-color" content="#0a0a0c" />
     <meta name="app-version" content="2.7.6-SURVIVAL-V5-FINAL" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="description" content="Secure, offline-first mesh network for message sharding and reconstruction in network blackout scenarios." />
+    
+    <!-- Preload fonts and critical CDNs -->
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preload" href="https://unpkg.com/@phosphor-icons/web" as="script" />
+    
     <!-- Phosphor Icons CDN -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+      /* Fallback style if CDN icon font fails to resolve (Instruction 1) */
+      .ph, [class^="ph-"], [class*=" ph-"] {
+        font-family: "Phosphor", "Inter", sans-serif;
+      }
+    </style>
     <!-- 🛡️ GLOBAL STABILITY & CONSTRUCTOR VACCINE -->
     <!-- 🛡️ GLOBAL STABILITY & CONSTRUCTOR VACCINE (V8 - MAXIMUM STABILITY) -->
     <script>

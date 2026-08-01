@@ -27,6 +27,8 @@ function App() {
   const [onboarded, setOnboarded] = useState(localStorage.getItem('sharednet_onboarded') === 'true');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [toasts, setToasts] = useState([]);
+  const [showSplash, setShowSplash] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
     // 1. Initialize Core Engines
@@ -49,6 +51,9 @@ function App() {
     if (localStorage.getItem('setting_reduce_motion') === 'true') {
       document.documentElement.classList.add('reduce-motion');
     }
+    if (localStorage.getItem('presentation_mode') === 'true') {
+      document.documentElement.classList.add('presentation-mode');
+    }
 
     // 4. Listeners for Demo Mode change
     const handleDemoChange = () => {
@@ -62,16 +67,38 @@ function App() {
       const newToast = { id, ...e.detail };
       setToasts(prev => [...prev, newToast]);
       
-      // Setup auto-dismiss timeout
-      const dismissTimeout = setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-      }, 3000);
-
-      newToast.timeoutId = dismissTimeout;
+      const presMode = localStorage.getItem('presentation_mode') === 'true';
+      if (!presMode) {
+        const dismissTimeout = setTimeout(() => {
+          setToasts(prev => prev.filter(t => t.id !== id));
+        }, 3000);
+        newToast.timeoutId = dismissTimeout;
+      }
     };
     window.addEventListener('show-toast', handleToast);
 
-    // Add audio and haptics to all button clicks globally
+    // 6. Network connectivity triggers (Instruction 2)
+    const handleOnlineStatus = () => {
+      setIsOnline(true);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'success', message: 'Transceiver back online: Core network linked' }
+      }));
+    };
+    const handleOfflineStatus = () => {
+      setIsOnline(false);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { type: 'error', message: 'You are offline. Proximity mesh active.' }
+      }));
+    };
+    window.addEventListener('online', handleOnlineStatus);
+    window.addEventListener('offline', handleOfflineStatus);
+
+    // 7. Splash screen dismiss timer (Instruction 2)
+    const splashTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 1000);
+
+    // 8. Global acoustic clicks
     const handleGlobalClick = (e) => {
       const target = e.target.closest('button, a, [role="button"]');
       if (target && !target.disabled) {
@@ -85,7 +112,10 @@ function App() {
       safeCall(cleanup, "Interval Cleanup");
       window.removeEventListener('demo-mode-changed', handleDemoChange);
       window.removeEventListener('show-toast', handleToast);
+      window.removeEventListener('online', handleOnlineStatus);
+      window.removeEventListener('offline', handleOfflineStatus);
       document.removeEventListener('click', handleGlobalClick);
+      clearTimeout(splashTimer);
     };
   }, []);
 
@@ -108,12 +138,13 @@ function App() {
         toasts={toasts}
         setToasts={setToasts}
         handleFinishOnboarding={handleFinishOnboarding}
+        showSplash={showSplash}
+        isOnline={isOnline}
       />
     </Router>
   );
 }
 
-// Inner component wrapper to safely query react-router location and navigate hooks
 function AppContent({
   demoActive,
   setDemoActive,
@@ -123,11 +154,14 @@ function AppContent({
   setCurrentSlide,
   toasts,
   setToasts,
-  handleFinishOnboarding
+  handleFinishOnboarding,
+  showSplash,
+  isOnline
 }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [transitionClass, setTransitionClass] = useState('app-launch-anim');
+  const [showHelpers, setShowHelpers] = useState(false);
 
   // Trigger page transition scaling animations on route changes (Instruction 2)
   useEffect(() => {
@@ -145,13 +179,13 @@ function AppContent({
     };
   }, [location.pathname]);
 
-  // Keyboard Shortcuts (Instruction 9)
+  // Demo keyboard script helper shortcuts (Instruction 3)
   useEffect(() => {
     let keyHintShown = localStorage.getItem('key_hint_shown') === 'true';
 
     const handleKeyDown = (e) => {
-      // Show hint banner on first modifier / key interaction
-      if (!keyHintShown && (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || ['s','n','e','d'].includes(e.key.toLowerCase()))) {
+      // Shortcut key indicators hint
+      if (!keyHintShown && (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || ['s','n','e','d','r','t','h'].includes(e.key.toLowerCase()))) {
         window.dispatchEvent(new CustomEvent('show-toast', {
           detail: { type: 'info', message: "Pro tip: Press 'S' for SOS, 'N' for Network, 'E' for Feed, 'D' for Demo Mode" }
         }));
@@ -159,34 +193,18 @@ function AppContent({
         keyHintShown = true;
       }
 
-      // Bypass shortcut actions if user is typing in forms
+      // Bypass when typing in form inputs
       if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
         return;
       }
 
-      const key = e.key.toLowerCase();
-      if (key === 's') {
-        e.preventDefault();
-        AudioEngine.play('warning');
-        Haptic.warning();
-        if (confirm("🚨 WARNING: Trigger emergency SOS distress beacon?")) {
-          window.dispatchEvent(new CustomEvent('trigger-sos'));
-        }
-      } else if (key === 'n') {
-        e.preventDefault();
-        AudioEngine.play('tap');
-        navigate('/pulse');
-      } else if (key === 'e') {
-        e.preventDefault();
-        AudioEngine.play('tap');
-        navigate('/inbox');
-      } else if (key === 'd') {
+      // 1. Shift + D: Toggle Demo Mode instantly
+      if (e.key === 'D' && e.shiftKey) {
         e.preventDefault();
         const currentMode = localStorage.getItem('sharednet_demo_mode') === 'true';
         const nextMode = !currentMode;
-        
-        // Update LocalStorage & global parameters
         localStorage.setItem('sharednet_demo_mode', nextMode.toString());
+        
         if (nextMode) {
           if (!window.sharedNetData) window.sharedNetData = { signals: [] };
           window.sharedNetData.signals = [
@@ -285,19 +303,97 @@ function AppContent({
         } else {
           if (window.sharedNetData) window.sharedNetData.signals = [];
         }
-
-        window.dispatchEvent(new CustomEvent('demo-mode-changed'));
         
-        // Sound and vibrating feedbacks
+        window.dispatchEvent(new CustomEvent('demo-mode-changed'));
         AudioEngine.play(nextMode ? 'success' : 'warning');
         Haptic.vibrate(nextMode ? [50, 100, 50] : 100);
-
         window.dispatchEvent(new CustomEvent('show-toast', {
-          detail: { 
-            type: 'info', 
-            message: `Demo Mode ${nextMode ? 'Activated: mock telemetry loaded' : 'Deactivated'}` 
-          }
+          detail: { type: 'info', message: `Demo: Demo Mode ${nextMode ? 'ON' : 'OFF'}` }
         }));
+      }
+
+      // 2. Shift + R: Reset all data to default state
+      else if (e.key === 'R' && e.shiftKey) {
+        e.preventDefault();
+        AudioEngine.play('error');
+        Haptic.error();
+        localStorage.clear();
+        window.location.reload();
+      }
+
+      // 3. Shift + S: Simulate receiving an emergency signal
+      else if (e.key === 'S' && e.shiftKey) {
+        e.preventDefault();
+        if (!window.sharedNetData) window.sharedNetData = { signals: [] };
+        const newSig = {
+          id: `sim-${Date.now()}`,
+          type: 'received',
+          title: 'Trekker-09 Emergency SOS',
+          status: 'active',
+          time: 'Just now',
+          timestamp: new Date().toISOString(),
+          location: '320m northwest',
+          description: "Critical SOS alert received via Wi-Fi direct beacon. Message: 'Injured trekker, coordinates shared. Need urgent evacuation.'",
+          sender: 'Trekker-09',
+          range: '320m',
+          battery: '52%'
+        };
+        window.sharedNetData.signals.unshift(newSig);
+        window.dispatchEvent(new CustomEvent('demo-mode-changed'));
+        
+        AudioEngine.play('sos');
+        Haptic.sos();
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { type: 'error', message: 'Demo: Simulated emergency received' }
+        }));
+      }
+
+      // 4. Shift + T: Advance time by 1 hour (age timestamps)
+      else if (e.key === 'T' && e.shiftKey) {
+        e.preventDefault();
+        if (window.sharedNetData && window.sharedNetData.signals) {
+          window.sharedNetData.signals = window.sharedNetData.signals.map(s => {
+            const nextTime = new Date(new Date(s.timestamp).getTime() - 60 * 60 * 1000).toISOString();
+            return {
+              ...s,
+              timestamp: nextTime,
+              time: '1h older'
+            };
+          });
+          window.dispatchEvent(new CustomEvent('demo-mode-changed'));
+          AudioEngine.play('success');
+          Haptic.success();
+          window.dispatchEvent(new CustomEvent('show-toast', {
+            detail: { type: 'info', message: 'Demo: Advanced timestamps by 1 hour' }
+          }));
+        }
+      }
+
+      // 5. Shift + H: Toggle hidden helper shortcuts overlay panel
+      else if (e.key === 'H' && e.shiftKey) {
+        e.preventDefault();
+        setShowHelpers(prev => !prev);
+      }
+
+      // Standard single keys: N (Network), E (Feed), S (SOS)
+      else {
+        const key = e.key.toLowerCase();
+        if (key === 's') {
+          e.preventDefault();
+          AudioEngine.play('warning');
+          Haptic.warning();
+          if (confirm("🚨 WARNING: Trigger emergency SOS distress beacon?")) {
+            window.dispatchEvent(new CustomEvent('trigger-sos'));
+          }
+        } else if (key === 'n') {
+          e.preventDefault();
+          AudioEngine.play('tap');
+          navigate('/pulse');
+        } else if (key === 'e') {
+          e.preventDefault();
+          AudioEngine.play('tap');
+          navigate('/inbox');
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -307,6 +403,17 @@ function AppContent({
   return (
     <div className="app-container flex flex-col min-h-screen">
       
+      {/* ── OFFLINE STATUS BANNER (Instruction 2) ── */}
+      {!isOnline && (
+        <div 
+          className="offline-banner bg-[#FF9500] text-black text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center shrink-0 z-[9999]" 
+          style={{ height: '32px', borderBottom: '1px solid rgba(0,0,0,0.1)' }}
+        >
+          <i className="ph-bold ph-plugs-warning mr-1.5" />
+          You are offline • Proximity Mesh Active
+        </div>
+      )}
+
       {/* ── PERSISTENT DEMO MODE BANNER ── */}
       {demoActive && (
         <div 
@@ -321,7 +428,7 @@ function AppContent({
       <Navbar />
       <SOSButtonFlow />
 
-      {/* ── TOAST NOTIFICATIONS CONTAINER (Instruction 4) ── */}
+      {/* ── TOAST NOTIFICATIONS DRAWER ── */}
       <div className="toast-container fixed top-[56px] left-4 right-4 z-[99999] pointer-events-none flex flex-col gap-2">
         <AnimatePresence>
           {toasts.map(toast => {
@@ -341,7 +448,6 @@ function AppContent({
             };
 
             const handleMouseLeave = () => {
-              // Restart timer on mouse leave
               const newTimeout = setTimeout(() => {
                 setToasts(prev => prev.filter(t => t.id !== toast.id));
               }, 2000);
@@ -356,10 +462,18 @@ function AppContent({
                 exit={{ y: -20, opacity: 0, x: 20 }}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-                className={`p-4 border-l-4 rounded-lg shadow-2xl flex items-center gap-3 pointer-events-auto border border-slate-800/80 ${colors[toast.type] || colors.info}`}
+                className={`p-4 border-l-4 rounded-lg shadow-2xl flex items-center justify-between gap-3 pointer-events-auto border border-slate-800/80 ${colors[toast.type] || colors.info}`}
               >
-                {Icons[toast.type] || Icons.info}
-                <span className="text-white text-xs font-bold">{toast.message}</span>
+                <div className="flex items-center gap-3">
+                  {Icons[toast.type] || Icons.info}
+                  <span className="text-white text-xs font-bold">{toast.message}</span>
+                </div>
+                <button 
+                  onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                  className="text-slate-500 hover:text-white p-0.5"
+                >
+                  <X size={14} />
+                </button>
               </motion.div>
             );
           })}
@@ -388,7 +502,25 @@ function AppContent({
         </ErrorBoundary>
       </main>
 
-      {/* ── FIRST-TIME ONBOARDING FLOW OVERLAY (Instruction 1) ── */}
+      {/* ── DEMO HELPERS CONSOLE (Instruction 3) ── */}
+      {showHelpers && (
+        <div className="fixed bottom-24 left-4 z-[999] p-4 bg-[#1C1C1E] border border-slate-800 rounded-xl max-w-[280px] text-[10px] text-slate-400 space-y-2 shadow-2xl pointer-events-auto">
+          <div className="flex justify-between items-center text-white font-bold uppercase tracking-wider">
+            <span>Demo Keyboard Helpers</span>
+            <button onClick={() => setShowHelpers(false)} className="text-slate-500 hover:text-white"><X size={12} /></button>
+          </div>
+          <div className="h-[1px] bg-slate-850" />
+          <ul className="space-y-1 list-disc pl-3">
+            <li><b className="text-[#FF9500]">Shift + D</b>: Toggle Demo Mode</li>
+            <li><b className="text-[#FF3B30]">Shift + S</b>: Simulate Emergency Beacon</li>
+            <li><b className="text-[#0A84FF]">Shift + T</b>: Age timestamps by 1 hour</li>
+            <li><b className="text-slate-200">Shift + R</b>: Nuclear Reset Data</li>
+            <li><b className="text-slate-200">Shift + H</b>: Close this panel</li>
+          </ul>
+        </div>
+      )}
+
+      {/* ── FIRST-TIME ONBOARDING FLOW OVERLAY ── */}
       {!onboarded && (
         <div className="onboarding fixed inset-0 z-[100000] bg-[#0A0A0F] flex flex-col justify-between p-6">
           <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at bottom, rgba(10,132,255,0.06) 0%, transparent 65%)' }} />
@@ -505,6 +637,16 @@ function AppContent({
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── SPLASH SCREEN LAYOUT (Instruction 2) ── */}
+      {showSplash && (
+        <div className="fixed inset-0 bg-[#0A0A0F] z-[999999] flex flex-col items-center justify-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-[#0A84FF]/10 border border-[#0A84FF]/20 flex items-center justify-center shadow-[0_0_20px_rgba(10,132,255,0.2)]">
+            <i className="ph-fill ph-shield-check text-[#0A84FF] animate-pulse" style={{ fontSize: '32px' }} />
+          </div>
+          <h1 className="text-xl font-black text-white uppercase tracking-[0.2em] italic">SharedNet</h1>
         </div>
       )}
 

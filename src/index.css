@@ -720,5 +720,71 @@ button:active:hover::after,
   padding: 6px 8px 0 0 !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   iOS SAFE AREA NOTCH & PRESENTATION MODE OVERRIDES (Instruction 5 & 6)
+   ═══════════════════════════════════════════════════════════════ */
+
+.offline-banner {
+  padding-top: env(safe-area-inset-top, 0px);
+  z-index: 100 !important;
+}
+
+.toast-container {
+  top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+  z-index: 150 !important;
+}
+
+/* Modal and SOS overlay z-index enforcement */
+[role="dialog"], .dialog-overlay {
+  z-index: 200 !important;
+}
+
+.sos-overlay {
+  z-index: 250 !important;
+}
+
+/* safe-area-inset-bottom for bottom navigation */
+.bottom-nav {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+}
+
+/* Grayscale Font Smoothing */
+body {
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Presentation Mode System (Instruction 6) */
+html.presentation-mode {
+  /* Slow animations by 2x */
+  --transition-fast: 300ms;
+  --transition-medium: 600ms;
+  --transition-slow: 1000ms;
+}
+
+html.presentation-mode [data-label] {
+  position: relative !important;
+}
+
+html.presentation-mode [data-label]::after {
+  content: attr(data-label);
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  background: #FF9500;
+  color: black;
+  font-family: 'Outfit', sans-serif;
+  font-size: 7px;
+  font-weight: 900;
+  padding: 2px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  z-index: 99999;
+  pointer-events: none;
+  border: 1px solid black;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  letter-spacing: 0.5px;
+}
+
+
 
 

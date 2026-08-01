@@ -12,8 +12,11 @@ const navItems = [
 ];
 
 const Navbar = () => (
-  <nav className="fixed bottom-0 left-0 right-0 z-[9999] pointer-events-none flex justify-center pb-6">
-    <div className="mx-4 w-full max-w-[500px] pointer-events-auto glass-premium rounded-[2rem] flex items-center justify-around p-2 border-white/10">
+  <nav className="bottom-nav fixed bottom-0 left-0 right-0 z-[9999] pointer-events-none flex justify-center pb-6">
+    <div 
+      className="mx-4 w-full max-w-[500px] pointer-events-auto glass-premium rounded-[2rem] flex items-center justify-around p-2 border-white/10"
+      data-label="Nav Hub"
+    >
       {navItems.map(({ to, icon: Icon, label }) => (
         <NavLink
           key={to}

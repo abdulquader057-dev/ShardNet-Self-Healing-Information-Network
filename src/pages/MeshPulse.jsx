@@ -105,7 +105,7 @@ export default function MeshPulse() {
       setScanning(false);
 
       if (devices.some(d => d.name === 'Command-Center')) {
-        alert("Mesh scan complete. No new nodes found in BLE airspace.");
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Scan finished: no new BLE nodes' } }));
         return;
       }
 
@@ -122,7 +122,7 @@ export default function MeshPulse() {
       };
 
       setDevices(prev => [newDevice, ...prev]);
-      alert("🚨 New Mesh Node Discovered: Command-Center (HQ Station)");
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: '🚨 Discovered Mesh Node: Command-Center' } }));
     }, 3000);
   };
 
@@ -141,7 +141,11 @@ export default function MeshPulse() {
       <div className="space-y-6 pb-28">
       
       {/* ── HEADER TELEMETRY CARD ── */}
-      <div className="card-elevated p-6 flex flex-col gap-4" style={{ background: 'var(--glass)' }}>
+      <div 
+        className="card-elevated p-6 flex flex-col gap-4" 
+        style={{ background: 'var(--glass)' }}
+        data-label="Grid Status"
+      >
         <div className="flex justify-between items-center">
           <div className="space-y-1">
             <h2 className="text-h2 text-white">Network Status</h2>
@@ -182,6 +186,7 @@ export default function MeshPulse() {
       <div 
         id="network-map" 
         className="relative h-[320px] w-full rounded-xl overflow-hidden border border-slate-800 bg-[#0A0A0F]"
+        data-label="Tactical Map"
       >
         {!mapLoaded ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-50 bg-[#0A0A0F] text-slate-400">
@@ -249,7 +254,7 @@ export default function MeshPulse() {
                   <p className="font-bold text-white">Node: Hiker-42</p>
                   <p className="text-slate-400 leading-normal">Reported distress beacon 4 mins ago.</p>
                   <button 
-                    onClick={() => alert("SOS Response Protocol Initialized. Broadcasting intercept acknowledgement...")}
+                    onClick={() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'SOS Response Broadcasted across mesh' } }))}
                     className="w-full mt-2 py-2 bg-[#FF3B30] text-white rounded font-bold text-[10px] uppercase tracking-wider text-center"
                   >
                     Tap to Respond
