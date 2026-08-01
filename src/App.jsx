@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// ═══════════════════════════════════════════════════════════════
-// GLOBAL ACCESSIBILITY FEEDBACK ENGINES
-// ═══════════════════════════════════════════════════════════════
+// Audio Synthesizer Engine (Instruction 12)
 const AudioEngine = {
   play(type) {
     try {
@@ -19,8 +17,8 @@ const AudioEngine = {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, now);
-        gain.gain.setValueAtTime(0.08, now);
+        osc.frequency.setValueAtTime(900, now);
+        gain.gain.setValueAtTime(0.06, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -30,9 +28,9 @@ const AudioEngine = {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(523, now); 
-        osc.frequency.setValueAtTime(659, now + 0.08); 
-        osc.frequency.setValueAtTime(784, now + 0.16); 
+        osc.frequency.setValueAtTime(587, now); // D5
+        osc.frequency.setValueAtTime(698, now + 0.08); // F5
+        osc.frequency.setValueAtTime(880, now + 0.16); // A5
         gain.gain.setValueAtTime(0.12, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
         osc.connect(gain);
@@ -43,20 +41,20 @@ const AudioEngine = {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(180, now);
-        gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.frequency.setValueAtTime(160, now);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
-        osc.stop(now + 0.25);
+        osc.stop(now + 0.2);
       } else if (type === 'warning') {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.linearRampToValueAtTime(880, now + 0.15);
-        gain.gain.setValueAtTime(0.15, now);
+        osc.frequency.setValueAtTime(500, now);
+        osc.frequency.linearRampToValueAtTime(900, now + 0.15);
+        gain.gain.setValueAtTime(0.12, now);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -66,27 +64,26 @@ const AudioEngine = {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(500, now);
-        osc.frequency.linearRampToValueAtTime(1000, now + 0.3);
-        osc.frequency.linearRampToValueAtTime(500, now + 0.6);
-        gain.gain.setValueAtTime(0.25, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+        osc.frequency.setValueAtTime(520, now);
+        osc.frequency.linearRampToValueAtTime(1040, now + 0.4);
+        osc.frequency.linearRampToValueAtTime(520, now + 0.8);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.9);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
-        osc.stop(now + 0.8);
+        osc.stop(now + 0.9);
       }
-    } catch (e) {
-      console.warn("Audio blocked", e);
-    }
+    } catch(e) {}
   }
 };
 
+// Tactile Vibration Mappings (Instruction 12)
 const Haptic = {
   tap() {
     try {
       const isVibrateOn = localStorage.getItem('setting_vibration') !== 'false';
-      if (isVibrateOn && navigator.vibrate) navigator.vibrate(10);
+      if (isVibrateOn && navigator.vibrate) navigator.vibrate(8);
     } catch(e) {}
   },
   success() {
@@ -104,7 +101,7 @@ const Haptic = {
   error() {
     try {
       const isVibrateOn = localStorage.getItem('setting_vibration') !== 'false';
-      if (isVibrateOn && navigator.vibrate) navigator.vibrate(250);
+      if (isVibrateOn && navigator.vibrate) navigator.vibrate(200);
     } catch(e) {}
   },
   sos() {
@@ -118,54 +115,54 @@ const Haptic = {
 };
 
 export default function App() {
-  // Screens & Navigation (Instruction 5 & 7)
-  const [activeTab, setActiveTab] = useState('network'); 
+  // Navigation & States
+  const [activeTab, setActiveTab] = useState('home'); // home | scan | pulse | inbox | vault | config
   const [showSplash, setShowSplash] = useState(true);
-  const [onboarded, setOnboarded] = useState(localStorage.getItem('sharednet_onboarded') === 'true');
-  const [onboardingSlide, setOnboardingSlide] = useState(0);
-
-  // Status metrics & identity
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [deviceAlias, setDeviceAlias] = useState(localStorage.getItem('setting_device_name') || 'WV1K');
-  const [isEditingAlias, setIsEditingAlias] = useState(false);
-  const [tempAlias, setTempAlias] = useState(deviceAlias);
-  const [toasts, setToasts] = useState([]);
-  
-  // Settings & Showcase
+  const [airGapActive, setAirGapActive] = useState(localStorage.getItem('setting_air_gap') === 'true');
   const [demoMode, setDemoMode] = useState(localStorage.getItem('sharednet_demo_mode') === 'true');
   const [presentationMode, setPresentationMode] = useState(localStorage.getItem('presentation_mode') === 'true');
   const [highContrast, setHighContrast] = useState(localStorage.getItem('setting_high_contrast') === 'true');
   const [largeText, setLargeText] = useState(localStorage.getItem('setting_large_text') === 'true');
   const [reduceMotion, setReduceMotion] = useState(localStorage.getItem('setting_reduce_motion') === 'true');
-  const [soundAlerts, setSoundAlerts] = useState(localStorage.getItem('setting_sound_alerts') !== 'false');
-  const [vibration, setVibration] = useState(localStorage.getItem('setting_vibration') !== 'false');
-
-  // Pitch helper overlays
   const [showHelpers, setShowHelpers] = useState(false);
-  const [showAboutModal, setShowAboutModal] = useState(false);
-  const [versionTaps, setVersionTaps] = useState(0);
+  const [toasts, setToasts] = useState([]);
 
-  // SOS Engine States (Instruction 9)
-  const [sosState, setSosState] = useState('idle'); // idle | countdown | sending | sent | cancelled
+  // SOS Countdown state machine (Instruction 10)
+  const [sosState, setSosState] = useState('idle'); // idle | countdown | sending | sent
   const [sosTimeLeft, setSosTimeLeft] = useState(3.0);
   const countdownIntervalRef = useRef(null);
   const sendingTimeoutRef = useRef(null);
   const sentTimeoutRef = useRef(null);
 
-  // Signals Feed & Connected Devices Database
-  const [signals, setSignals] = useState([]);
-  const [devices, setDevices] = useState([]);
-  const [selectedSignal, setSelectedSignal] = useState(null);
-  const [activeEmergencyBannerDismissed, setActiveEmergencyBannerDismissed] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-
-  // Map references
+  // Map Feature states (Instruction 11)
+  const [showMapModal, setShowMapModal] = useState(false);
   const mapInstanceRef = useRef(null);
   const markerGroupRef = useRef(null);
 
-  // ═══════════════════════════════════════════════════════════════
-  // REUSABLE DISPATCHERS
-  // ═══════════════════════════════════════════════════════════════
+  // Intel drop creation states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [intelContent, setIntelContent] = useState('');
+  const [generatedShards, setGeneratedShards] = useState([]);
+
+  // Safe check status update modal
+  const [showSafeCheckModal, setShowSafeCheckModal] = useState(false);
+
+  // Survival Kit sheet
+  const [showSurvivalKit, setShowSurvivalKit] = useState(false);
+
+  // About blueprint leaves-behind modal
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [versionTaps, setVersionTaps] = useState(0);
+
+  // Scan items loading spinner state
+  const [isScanning, setIsScanning] = useState(false);
+
+  // Database seed
+  const [signals, setSignals] = useState([]);
+  const [devices, setDevices] = useState([]);
+
+  const deviceId = 'NODE-5UK5';
+
   const showToast = (type, message) => {
     const id = Math.random().toString();
     const newToast = { id, type, message };
@@ -177,41 +174,26 @@ export default function App() {
     }, delay);
   };
 
-  // Seed mock databases depending on Demo Mode
-  const populateDatabases = (modeActive) => {
+  const populateDatabase = (modeActive) => {
     if (modeActive) {
       setDevices([
-        { id: '1', name: 'Trekker-09', type: 'Handheld Radio', signal: 'Strong', lastSeen: '2m ago', coords: [17.4080, 78.4750], status: 'success' },
-        { id: '2', name: 'Medic-Hub', type: 'HQ Station', signal: 'Good', lastSeen: '4m ago', coords: [17.4020, 78.4710], status: 'success' },
-        { id: '3', name: 'BaseCamp-2', type: 'Gateway Link', signal: 'Weak', lastSeen: '8m ago', coords: [17.4110, 78.4820], status: 'warning' },
-        { id: '4', name: 'Hiker-42', type: 'Mobile Node', signal: 'Critical', lastSeen: '12m ago', coords: [17.4040, 78.4800], status: 'emergency' }
+        { id: '1', name: 'Trekker-09', type: 'Handheld Radio', signal: 'Strong', lastSeen: '2m ago', coords: [28.57, 77.21], status: 'success' },
+        { id: '2', name: 'BaseCamp-2', type: 'Gateway Link', signal: 'Weak', lastSeen: '8m ago', coords: [31.41, 76.43], status: 'warning' },
+        { id: '3', name: 'NIMHANS-Base', type: 'Medic Node', signal: 'Good', lastSeen: '4m ago', coords: [12.94, 77.58], status: 'success' }
       ]);
       setSignals([
         {
           id: 'sig-1',
           type: 'received',
-          title: 'Hiker-42 Emergency SOS',
+          title: 'Flood Alert - Bihar',
           status: 'active',
           time: '4m ago',
           timestamp: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-          location: '120m northeast',
-          description: "Distress signal from hiker. Message: 'Twisted ankle, cannot walk. Need medical assistance.'",
-          sender: 'Hiker-42',
-          range: '120m',
-          battery: '34%'
-        },
-        {
-          id: 'sig-2',
-          type: 'received',
-          title: 'BaseCamp Water Advisory',
-          status: 'resolved',
-          time: '2h ago',
-          timestamp: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
-          location: '2.1km north',
-          description: "River levels peaked, danger has passed. Local bridge remains closed.",
-          sender: 'BaseCamp-2',
-          range: '2.1km',
-          battery: '98%'
+          location: 'Bihar Risk Zone',
+          description: "Flash flood warnings issued. Evacuate local lowlands immediately.",
+          sender: 'NDRF-Base',
+          range: 'Local Mesh Link',
+          battery: '94%'
         }
       ]);
     } else {
@@ -220,69 +202,51 @@ export default function App() {
     }
   };
 
-  // ═══════════════════════════════════════════════════════════════
-  // INITIALIZATIONS & GLOBAL LISTENERS
-  // ═══════════════════════════════════════════════════════════════
   useEffect(() => {
-    populateDatabases(demoMode);
+    populateDatabase(demoMode);
 
-    // Fade out splash screen after 1.5s (Instruction 17)
+    // Splash screen fadeout timer (Instruction 13)
     const splashTimer = setTimeout(() => {
       setShowSplash(false);
     }, 1500);
 
-    // Online detection listeners
-    const goOnline = () => {
-      setIsOnline(true);
-      showToast('success', 'Network connection linked');
-    };
-    const goOffline = () => {
-      setIsOnline(false);
-      showToast('error', 'Searching for nearby devices...');
-    };
-    window.addEventListener('online', goOnline);
-    window.addEventListener('offline', goOffline);
+    // Dynamic class bindings
+    if (presentationMode) document.documentElement.classList.add('presentation-mode');
+    if (highContrast) document.documentElement.classList.add('high-contrast');
+    if (largeText) document.documentElement.style.fontSize = '120%';
+    if (reduceMotion) document.documentElement.classList.add('reduce-motion');
 
-    // Global click haptics & audio binding
+    // Global tap click haptics & audio binding
     const handleGlobalClick = (e) => {
-      const button = e.target.closest('button, a, .nav-tab, .card');
-      if (button) {
+      const target = e.target.closest('button, a, .feature-card, .nav-item');
+      if (target) {
         AudioEngine.play('tap');
         Haptic.tap();
       }
     };
     document.addEventListener('click', handleGlobalClick);
 
-    // Presentation mode initial sync
-    if (presentationMode) document.documentElement.classList.add('presentation-mode');
-    if (highContrast) document.documentElement.classList.add('high-contrast');
-    if (largeText) document.documentElement.style.fontSize = '120%';
-    if (reduceMotion) document.documentElement.classList.add('reduce-motion');
-
     return () => {
-      window.removeEventListener('online', goOnline);
-      window.removeEventListener('offline', goOffline);
       document.removeEventListener('click', handleGlobalClick);
       clearTimeout(splashTimer);
     };
   }, []);
 
-  // Keyboard Demo Controller Shortcuts (Instruction 3 of Prompt 7)
+  // Keyboard Shortcuts (Instruction 3 of Prompt 7)
   useEffect(() => {
     const handleShortcuts = (e) => {
       if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
         return;
       }
-      
       const key = e.key.toLowerCase();
-      
+
       // Shift + D: Toggle Demo Mode
       if (e.key === 'D' && e.shiftKey) {
         e.preventDefault();
         const nextDemo = !demoMode;
         setDemoMode(nextDemo);
         localStorage.setItem('sharednet_demo_mode', nextDemo.toString());
-        populateDatabases(nextDemo);
+        populateDatabase(nextDemo);
         AudioEngine.play(nextDemo ? 'success' : 'warning');
         Haptic.warning();
         showToast('info', `Demo Mode ${nextDemo ? 'Activated' : 'Deactivated'}`);
@@ -297,27 +261,26 @@ export default function App() {
         window.location.reload();
       }
 
-      // Shift + S: Simulate emergency incoming signal
+      // Shift + S: Ingest emergency simulation signal
       else if (e.key === 'S' && e.shiftKey) {
         e.preventDefault();
-        const simSig = {
+        const simulated = {
           id: `sim-${Date.now()}`,
           type: 'received',
-          title: 'Trekker-09 Emergency SOS',
+          title: 'Simulated SOS Distress Alert',
           status: 'active',
           time: 'Just now',
           timestamp: new Date().toISOString(),
-          location: '320m northwest',
-          description: "Incoming signal: 'Injured trekker, coordinates shared. Need urgent evacuation.'",
-          sender: 'Trekker-09',
-          range: '320m',
-          battery: '52%'
+          location: 'Sector 4 Area',
+          description: "SOS Beacon received via BLE gossip link. Medical assistance request initiated.",
+          sender: 'Medic-Hub',
+          range: '240m',
+          battery: '74%'
         };
-        setSignals(prev => [simSig, ...prev]);
+        setSignals(prev => [simulated, ...prev]);
         AudioEngine.play('sos');
         Haptic.sos();
-        showToast('error', 'Simulated emergency alert received');
-        setActiveEmergencyBannerDismissed(false);
+        showToast('error', 'Demo: Simulated emergency received');
       }
 
       // Shift + T: Advance timestamps by 1 hour
@@ -333,19 +296,19 @@ export default function App() {
         showToast('info', 'Demo: Advanced timestamps by 1 hour');
       }
 
-      // Shift + H: Toggle helper panel
+      // Shift + H: Toggle helper shortcuts legend
       else if (e.key === 'H' && e.shiftKey) {
         e.preventDefault();
         setShowHelpers(prev => !prev);
       }
 
-      // Tab switcher shortcuts: N (Network), E (Feed)
+      // Tab navigators
       else if (key === 'n') {
         e.preventDefault();
-        setActiveTab('network');
+        setActiveTab('home');
       } else if (key === 'e') {
         e.preventDefault();
-        setActiveTab('feed');
+        setActiveTab('inbox');
       } else if (key === 's') {
         e.preventDefault();
         if (sosState === 'idle') handleSOSStart();
@@ -357,13 +320,13 @@ export default function App() {
   }, [demoMode, sosState]);
 
   // ═══════════════════════════════════════════════════════════════
-  // MAP LEAFLET RENDERING ENGINE (Instruction 8)
+  // MAP LEAFLET RENDERING ENGINE (Instruction 11)
   // ═══════════════════════════════════════════════════════════════
   useEffect(() => {
-    if (activeTab === 'map' && !showSplash && onboarded) {
+    if (showMapModal && !showSplash) {
       const renderTimer = setTimeout(() => {
-        const mapDom = document.getElementById('map-container');
-        if (!mapDom) return;
+        const container = document.getElementById('map-container');
+        if (!container) return;
 
         if (mapInstanceRef.current) {
           mapInstanceRef.current.remove();
@@ -373,12 +336,12 @@ export default function App() {
         const L = window.L;
         if (!L) return;
 
-        // Initialize Leaflet Map centered on Hyderabad
+        // Initialize Leaflet Map centered on India to view all coordinates
         const map = L.map('map-container', {
           zoomControl: false,
           attributionControl: false,
           tap: false
-        }).setView([17.4065, 78.4772], 14);
+        }).setView([22.0, 78.0], 5);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
           maxZoom: 19
@@ -389,70 +352,56 @@ export default function App() {
         const markerGroup = L.layerGroup().addTo(map);
         markerGroupRef.current = markerGroup;
 
-        // 1. User pin
+        // 1. User pin (Delhi)
         const userIcon = L.divIcon({
           html: '<div class="user-marker-container"><div class="user-marker"></div><div class="user-marker-pulse"></div></div>',
           className: 'custom-user-marker',
           iconSize: [16, 16],
           iconAnchor: [8, 8]
         });
-        L.marker([17.4065, 78.4772], { icon: userIcon }).addTo(markerGroup);
+        L.marker([28.57, 77.21], { icon: userIcon }).addTo(markerGroup);
 
-        // 2. Mesh Node pins
-        devices.forEach(d => {
-          if (d.name === 'Hiker-42') return; // rendering emergency siren pin instead
-          const nodeIcon = L.divIcon({
-            html: `<div class="map-node-marker ${d.status}"><i class="ph-bold ${d.status === 'success' ? 'ph-check-circle' : 'ph-warning'}"></i></div>`,
+        // 2. Add Tactical Index locations (Mock data markers)
+        const locations = [
+          { name: 'AIIMS New Delhi', type: 'HOSPITAL', coords: [28.57, 77.21], color: '#FF3B30' },
+          { name: 'Apollo Hospitals Mumbai', type: 'HOSPITAL', coords: [19.02, 72.82], color: '#FF3B30' },
+          { name: 'Bhakra Nangal Reservoir', type: 'RESERVOIR', coords: [31.41, 76.43], color: '#0A84FF' },
+          { name: 'NDRF Base Ghaziabad', type: 'SHELTER', coords: [28.67, 77.45], color: '#30D158' },
+          { name: 'NIMHANS Bangalore', type: 'HOSPITAL', coords: [12.94, 77.58], color: '#FF3B30' },
+          { name: 'Indira Sagar Dam', type: 'RESERVOIR', coords: [22.29, 76.47], color: '#0A84FF' },
+          { name: 'High-Flood Risk Zone (Bihar)', type: 'DANGER', coords: [25.59, 85.13], color: '#FF9F0A' }
+        ];
+
+        locations.forEach(loc => {
+          const pinColorClass = loc.type === 'HOSPITAL' ? 'border-[#FF3B30] text-[#FF3B30]' : 
+                              loc.type === 'RESERVOIR' ? 'border-[#0A84FF] text-[#0A84FF]' :
+                              loc.type === 'SHELTER' ? 'border-[#30D158] text-[#30D158]' : 'border-[#FF9F0A] text-[#FF9F0A]';
+          const pinIcon = L.divIcon({
+            html: `<div class="map-node-marker" style="border: 2px solid ${loc.color}; color: ${loc.color}; background: #141419;"><i class="ph-bold ph-map-pin"></i></div>`,
             className: 'custom-node-marker',
             iconSize: [36, 36],
             iconAnchor: [18, 18]
           });
-          L.marker(d.coords, { icon: nodeIcon })
+
+          L.marker(loc.coords, { icon: pinIcon })
             .addTo(markerGroup)
             .bindPopup(`
               <div style="padding: 2px;">
-                <p style="font-weight:700; color:white; font-size:12px; margin-bottom:2px;">${d.name}</p>
-                <p style="color:#8E8E93; font-size:10px;">Type: ${d.type} • Signal: ${d.signal}</p>
-                <p style="color:#8E8E93; font-size:10px; font-style:italic; margin-top:4px;">Last seen ${d.lastSeen}</p>
+                <span style="font-size: 8px; font-weight: 800; color: ${loc.color}; text-transform: uppercase;">${loc.type}</span>
+                <p style="font-weight:700; color:white; font-size:12px; margin-top:2px;">${loc.name}</p>
+                <p style="color:#8E8E93; font-size:10px; margin-top:2px;">Coordinates: ${loc.coords[0]}, ${loc.coords[1]}</p>
               </div>
             `);
         });
-
-        // 3. Active Emergency Siren Marker
-        const hasActiveEmergency = signals.find(s => s.status === 'active');
-        if (hasActiveEmergency) {
-          const emergencyIcon = L.divIcon({
-            html: '<div class="map-node-marker emergency"><i class="ph-fill ph-siren" style="font-size:20px;"></i></div>',
-            className: 'custom-emergency-marker',
-            iconSize: [44, 44],
-            iconAnchor: [22, 22]
-          });
-          L.marker([17.4040, 78.4800], { icon: emergencyIcon })
-            .addTo(markerGroup)
-            .bindPopup(`
-              <div style="padding: 2px;">
-                <p style="font-weight:900; color:#FF3B30; font-size:12px; text-transform:uppercase; margin-bottom:2px;">🚨 Active Emergency</p>
-                <p style="font-weight:700; color:white; font-size:11px;">Node: Hiker-42</p>
-                <p style="color:#8E8E93; font-size:10px; margin-top:2px;">Twisted ankle, cannot walk. Need medical assistance.</p>
-              </div>
-            `, { closeButton: false }).openPopup();
-        }
 
       }, 100);
 
       return () => clearTimeout(renderTimer);
     }
-  }, [activeTab, showSplash, onboarded, devices, signals]);
-
-  const handleRecenter = () => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.setView([17.4065, 78.4772], 14);
-      showToast('info', 'Centering map on current location');
-    }
-  };
+  }, [showMapModal, showSplash]);
 
   // ═══════════════════════════════════════════════════════════════
-  // SOS TRIGGER SEQUENCE (Instruction 9)
+  // SOS TRIGGER OVERLAYS (Instruction 10)
   // ═══════════════════════════════════════════════════════════════
   const handleSOSStart = () => {
     setSosState('countdown');
@@ -460,22 +409,22 @@ export default function App() {
     AudioEngine.play('warning');
     Haptic.warning();
 
-    let ticks = 3;
+    let count = 3.0;
     countdownIntervalRef.current = setInterval(() => {
-      ticks -= 0.1;
-      setSosTimeLeft(parseFloat(ticks.toFixed(1)));
-      if (Math.abs(ticks - Math.floor(ticks)) < 0.05) {
+      count -= 0.1;
+      setSosTimeLeft(parseFloat(count.toFixed(1)));
+      if (Math.abs(count - Math.floor(count)) < 0.05) {
         AudioEngine.play('tap');
       }
 
-      if (ticks <= 0) {
+      if (count <= 0) {
         clearInterval(countdownIntervalRef.current);
-        handleSOSBroadcast();
+        triggerSOSBroadcast();
       }
     }, 100);
   };
 
-  const handleSOSBroadcast = () => {
+  const triggerSOSBroadcast = () => {
     setSosState('sending');
     AudioEngine.play('sos');
     Haptic.sos();
@@ -485,26 +434,25 @@ export default function App() {
       AudioEngine.play('success');
       Haptic.success();
 
-      // Injects sent message to timeline database
+      // Add to emergency logs
       const mySOS = {
         id: `sos-${Date.now()}`,
         type: 'sent',
-        title: 'Emergency SOS Sent',
+        title: 'Emergency SOS Broadcasted',
         status: 'sent',
         time: 'Just now',
         timestamp: new Date().toISOString(),
-        location: 'Your location',
-        description: 'Distress beacon propagated successfully across adjacent transceivers.',
+        location: 'Your Location',
+        description: 'Priority distress beacon broadcasted successfully over active BLE and Wi-Fi Gossip links.',
         sender: 'You (Self)',
         range: 'Local Transceiver',
         battery: '84%'
       };
       setSignals(prev => [mySOS, ...prev]);
 
-      // Auto dismiss sent modal after 4.5s
       sentTimeoutRef.current = setTimeout(() => {
         setSosState('idle');
-      }, 4500);
+      }, 4000);
 
     }, 2000);
   };
@@ -515,28 +463,39 @@ export default function App() {
     setSosState('idle');
     AudioEngine.play('error');
     Haptic.error();
-    showToast('info', 'Emergency SOS cancelled');
+    showToast('info', 'SOS Beacon aborted');
   };
 
   // ═══════════════════════════════════════════════════════════════
-  // TIMELINE FUNCTIONS
+  // SHARD INTEL drops CREATOR
   // ═══════════════════════════════════════════════════════════════
-  const handleMarkResolved = (id) => {
-    setSignals(prev => prev.map(s => {
-      if (s.id === id) {
-        return { ...s, status: 'resolved' };
-      }
-      return s;
-    }));
-    if (selectedSignal && selectedSignal.id === id) {
-      setSelectedSignal(null);
+  const handleCreateIntelDrop = () => {
+    if (!intelContent.trim()) {
+      showToast('error', 'Intelligence payload content cannot be blank');
+      return;
     }
+    
+    // Splitting mock shards
+    const mockShards = [
+      { id: '1', content: `SHARD-A: ${intelContent.substring(0, 10)}...` },
+      { id: '2', content: `SHARD-B: ${intelContent.substring(10, 20)}...` }
+    ];
+    setGeneratedShards(mockShards);
     AudioEngine.play('success');
     Haptic.success();
-    showToast('success', 'Alert resolved and mesh network notified');
+    showToast('success', 'Intelligence payload sharded into 2 air-gap carriers');
   };
 
-  const handleScanForDevices = () => {
+  const handleAirGapToggle = () => {
+    const nextGap = !airGapActive;
+    setAirGapActive(nextGap);
+    localStorage.setItem('setting_air_gap', nextGap.toString());
+    AudioEngine.play(nextGap ? 'warning' : 'success');
+    Haptic.warning();
+    showToast('info', `Air-Gap Transmitters: ${nextGap ? 'MUTED (offline security)' : 'ACTIVE'}`);
+  };
+
+  const handleScanNodes = () => {
     setIsScanning(true);
     AudioEngine.play('tap');
     Haptic.tap();
@@ -545,21 +504,21 @@ export default function App() {
       setIsScanning(false);
       const hostFound = devices.some(d => d.name === 'Command-Center');
       if (hostFound) {
-        showToast('info', 'No new mesh devices found nearby.');
+        showToast('info', 'No new transceivers found in local BLE airspace.');
       } else {
         const ccNode = {
           id: '5',
           name: 'Command-Center',
-          type: 'Station Hub',
+          type: 'HQ Hub Station',
           signal: 'Strong',
           lastSeen: 'Just now',
-          coords: [17.4120, 78.4790],
+          coords: [28.67, 77.45],
           status: 'success'
         };
         setDevices(prev => [ccNode, ...prev]);
         AudioEngine.play('success');
         Haptic.success();
-        showToast('success', 'Connected to new device: Command-Center');
+        showToast('success', 'G gossip sync linked: Command-Center');
       }
     }, 2500);
   };
@@ -574,10 +533,10 @@ export default function App() {
       localStorage.setItem('presentation_mode', nextPres.toString());
       if (nextPres) {
         document.documentElement.classList.add('presentation-mode');
-        showToast('info', 'Presentation Mode: Animations slowed for display');
+        showToast('info', 'Presentation Mode Activated (slowed animations)');
       } else {
         document.documentElement.classList.remove('presentation-mode');
-        showToast('info', 'Presentation Mode Disabled');
+        showToast('info', 'Presentation Mode Deactivated');
       }
       setVersionTaps(0);
     } else {
@@ -585,376 +544,398 @@ export default function App() {
     }
   };
 
-  const handleFinishOnboarding = () => {
-    setOnboarded(true);
-    localStorage.setItem('sharednet_onboarded', 'true');
-    AudioEngine.play('success');
-    Haptic.success();
-  };
-
-  // Render variables
-  const activeEmergency = signals.find(s => s.status === 'active');
-
   return (
-    <div id="app" className={`${presentationMode ? 'presentation-mode' : ''} ${highContrast ? 'high-contrast' : ''}`}>
-      
-      {/* ── TOP STATUS BAR (Instruction 6) ── */}
-      <header className="status-bar" data-label="Status Bar">
-        <span style={{ fontWeight: 600, fontSize: '13px' }}>09:41</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span className="w-2 h-2 rounded-full bg-emerald-500" style={{ boxShadow: '0 0 8px #34C759' }}></span>
-          <span className="text-caption" style={{ color: 'var(--text-primary)', letterSpacing: '0.5px' }}>Mesh Active</span>
+    <div id="app">
+
+      {/* ── TOP HEADER BAR (Instruction 4) ── */}
+      <header className="top-header" data-label="Status & Air-Gap">
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <i className="ph-bold ph-magnifying-glass text-[14px]" style={{ color: 'var(--text-tertiary)' }} />
+            <span className="caption">SEARCH OFFLINE INFRA</span>
+          </div>
+          <span className="caption block mt-0.5" style={{ color: 'var(--text-tertiary)', fontSize: '9px' }}>
+            NODE ID: {deviceId}
+          </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
-          <i className="ph-fill ph-battery-full" style={{ color: 'var(--success)', fontSize: '18px' }} />
-          <span>84%</span>
+
+        {/* Center Logo - Desktop Only */}
+        <span className="title-app text-white italic hidden md:block" style={{ fontSize: '1.25rem' }}>
+          SharedNet
+        </span>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Map Feature Trigger Button */}
+          <button 
+            onClick={() => setShowMapModal(true)}
+            className="px-3 bg-[var(--bg-elevated)] border border-[var(--border-medium)] rounded-full text-white flex items-center gap-1.5 h-8 hover:bg-slate-800 transition-colors"
+          >
+            <i className="ph-bold ph-map-trifold" style={{ fontSize: '12px', color: 'var(--accent-cyan)' }} />
+            <span className="badge-text" style={{ color: 'var(--text-secondary)' }}>Map</span>
+          </button>
+
+          {/* Air Gap Mute Button */}
+          <button 
+            onClick={handleAirGapToggle}
+            className="px-3 bg-[#FF3B30] rounded-full text-white font-bold text-[10px] uppercase tracking-wider flex items-center justify-center h-8 transition-transform active:scale-95"
+            style={{ 
+              backgroundColor: airGapActive ? 'var(--accent-red)' : 'var(--bg-elevated)',
+              border: airGapActive ? 'none' : '1px solid var(--border-medium)'
+            }}
+          >
+            {airGapActive ? 'AIR-GAP ON' : 'AIR-GAP OFF'}
+          </button>
+
+          {/* Network stability dot indicator */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#30D158]"></span>
+            <span className="badge-text text-[#30D158]">STABLE</span>
+          </div>
         </div>
       </header>
 
-      {/* ── STICKY ACTIVE BANNER (Instruction 11) ── */}
-      {activeEmergency && !activeEmergencyBannerDismissed && activeTab !== 'map' && (
+      {/* ── STICKY EMERGENCY BANNER (If Active Alert Exists) ── */}
+      {activeEmergency && activeTab === 'home' && (
         <div 
           className="fixed left-4 right-4 p-4 rounded-xl border border-red-500/20 flex items-center justify-between gap-3 shadow-lg z-[50]"
           style={{ 
-            top: 'calc(48px + var(--space-3) + env(safe-area-inset-top))', 
+            top: 'calc(56px + var(--space-3) + env(safe-area-inset-top))', 
             background: 'linear-gradient(135deg, #FF3B30 0%, #C92A2A 100%)' 
           }}
-          data-label="Active emergency notification"
+          data-label="Urgent Alerts"
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white shrink-0 animate-pulse">
-              <i className="ph-fill ph-siren" style={{ fontSize: '22px' }} />
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <i className="ph-fill ph-siren text-white animate-pulse" style={{ fontSize: '20px' }} />
             <div>
-              <span className="text-[9px] font-black uppercase tracking-wider bg-white/20 text-white px-2 py-0.5 rounded-full block w-fit mb-0.5">Alert Priority</span>
-              <p className="text-xs font-bold text-white truncate">{activeEmergency.title}</p>
-              <p className="text-[10px] text-white/80">{activeEmergency.time} • {activeEmergency.location}</p>
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">ACTIVE EMERGENCY</h4>
+              <p className="text-[10px] text-white/90 truncate">{activeEmergency.title} • {activeEmergency.location}</p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <button 
-              onClick={() => setSelectedSignal(activeEmergency)}
-              className="px-3 py-1.5 bg-white text-[#FF3B30] text-[10px] font-bold uppercase rounded-lg active:scale-95 transition-transform"
-            >
-              Respond
-            </button>
-            <button 
-              onClick={() => setActiveEmergencyBannerDismissed(true)}
-              className="text-white/80 hover:text-white p-1"
-              aria-label="Dismiss banner"
-            >
-              <i className="ph-bold ph-x" style={{ fontSize: '16px' }} />
-            </button>
-          </div>
+          <button 
+            onClick={() => setActiveTab('inbox')}
+            className="px-3 py-1 bg-white text-[#FF3B30] text-[9px] font-bold uppercase rounded active:scale-95 transition-transform"
+          >
+            Respond
+          </button>
         </div>
       )}
 
-      {/* ── SCREEN 1: NETWORK VIEW (Instruction 10) ── */}
-      <section className={`screen ${activeTab === 'network' ? 'active' : ''}`} id="screen-network">
-        <div className="screen-content">
-          <div className="space-y-1">
-            <h1 className="text-h1 text-white">Network Status</h1>
-            <p className="text-body-sm">Your mesh network connections</p>
-          </div>
-
-          <div className="card-elevated" style={{ padding: 'var(--space-5)' }} data-label="Primary node link data">
-            <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'center' }}>
-              <div>
-                <span className="text-caption block mb-1">State</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" style={{ boxShadow: '0 0 10px #34C759' }}></span>
-                  <span className="text-h2 text-white font-bold">Network Active</span>
+      {/* ── MAIN LAYOUT PAGE CONTENT ── */}
+      <main className="dashboard">
+        
+        {/* TAB 1: TACTICAL DASHBOARD GRID */}
+        {activeTab === 'home' && (
+          <div className="space-y-6">
+            
+            {/* Feature Cards Grid (Instruction 6) */}
+            <div className="feature-grid">
+              
+              {/* Card 1: EMERGENCY SOS */}
+              <div 
+                onClick={handleSOSStart}
+                className="feature-card feature-card--emergency border-red-550/20"
+                data-label="SOS Broadcast Beacon"
+              >
+                <div className="flex justify-between items-start">
+                  <i className="ph-bold ph-shield-warning text-xl text-[#FF3B30]" />
+                  <span className="badge-text px-2 py-0.5 bg-[#FF3B30]/10 text-[#FF3B30] rounded-full border border-[#FF3B30]/20">
+                    PRIORITY BEACON
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <h3 className="heading-lg text-white">EMERGENCY SOS</h3>
+                  <p className="body text-slate-400">
+                    Broadcast priority medical or distress beacon to all nearby nodes in the mesh. Operates offline without cellular infrastructure.
+                  </p>
                 </div>
               </div>
-              <span className="text-[10px] bg-[#2C2C2E] text-slate-300 font-bold px-2.5 py-1 rounded-full border border-slate-700">
-                {devices.length} Connected
-              </span>
-            </div>
 
-            <div className="h-[1px] bg-slate-800 my-2" />
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center' }}>
-              <div>
-                <i className="ph-bold ph-wifi-high text-[#0A84FF] text-xl" />
-                <span className="text-[9px] text-slate-500 font-black uppercase tracking-wider block mt-1">Signal</span>
-                <span className="text-xs font-bold text-white">{devices.length > 0 ? 'Strong' : 'Searching'}</span>
-              </div>
-              <div>
-                <i className="ph-bold ph-arrows-left-right text-[#FF9500] text-xl" />
-                <span className="text-[9px] text-slate-500 font-black uppercase tracking-wider block mt-1">Range</span>
-                <span className="text-xs font-bold text-white">~120m</span>
-              </div>
-              <div>
-                <i className="ph-bold ph-clock text-[#5AC8FA] text-xl" />
-                <span className="text-[9px] text-slate-500 font-black uppercase tracking-wider block mt-1">Uptime</span>
-                <span className="text-xs font-bold text-white">14m</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <span className="text-caption block pl-1">Connected Devices</span>
-
-            {devices.length === 0 ? (
-              <div className="card text-center py-8 space-y-2">
-                <i className="ph-bold ph-shield-check text-4xl text-slate-600 block mx-auto" />
-                <span className="text-h3 text-white font-bold block">No one nearby yet</span>
-                <p className="text-xs text-slate-500 leading-normal max-w-[280px] mx-auto">
-                  No other active transceivers detected. Move closer to other emergency responders.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {devices.map(device => {
-                  const statusColors = {
-                    success: 'border-emerald-500 text-emerald-500',
-                    warning: 'border-amber-500 text-amber-500',
-                    emergency: 'border-red-500 text-red-500 animate-pulse'
-                  };
-
-                  return (
-                    <div key={device.id} className="card flex-row items-center justify-between" style={{ padding: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div className={`w-11 h-11 rounded-full bg-[#2C2C2E] border-2 flex items-center justify-center shrink-0 ${statusColors[device.status]}`}>
-                          <i className={`ph-bold ${device.status === 'emergency' ? 'ph-siren' : 'ph-cell-signal-high'}`} style={{ fontSize: '20px' }} />
-                        </div>
-                        <div>
-                          <span className="text-xs font-bold text-white block">{device.name}</span>
-                          <span className="text-[10px] text-slate-500 block">{device.type} • {device.signal} Link</span>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end', gap: '4px' }}>
-                        <span className="text-[9px] text-slate-500 italic">seen {device.lastSeen}</span>
-                        {/* Signal bars */}
-                        <div style={{ display: 'flex', gap: '2px', alignItems: 'end', height: '14px' }}>
-                          <div className="w-[3px] bg-emerald-500" style={{ height: '4px', borderRadius: '1px' }} />
-                          <div className="w-[3px] bg-emerald-500" style={{ height: '7px', borderRadius: '1px' }} />
-                          <div className="w-[3px] bg-emerald-500" style={{ height: '10px', borderRadius: '1px' }} />
-                          <div className="w-[3px] bg-emerald-500" style={{ height: '13px', borderRadius: '1px', opacity: device.status === 'warning' ? 0.3 : 1 }} />
-                        </div>
-                      </div>
+              {/* Card 2: NETWORK INTEL */}
+              <div 
+                onClick={() => setActiveTab('pulse')}
+                className="feature-card"
+                data-label="Telemetry Network Stats"
+              >
+                <div className="flex justify-between items-start">
+                  <i className="ph-bold ph-activity text-xl text-[#0A84FF]" />
+                  <span className="caption text-slate-500">TELEMETRY</span>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="heading-lg text-white">NETWORK INTEL</h3>
+                  <div className="flex gap-6 pt-1">
+                    <div>
+                      <span className="caption block">ACTIVE SHARDS</span>
+                      <span className="stat-number text-[#0A84FF]">1</span>
                     </div>
-                  );
-                })}
+                    <div>
+                      <span className="caption block">RECONSTRUCTED</span>
+                      <span className="stat-number text-[#30D158]">1</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center pt-1.5 border-t border-slate-800/60">
+                    <span className="caption">SIGNAL INTEGRITY</span>
+                    <span className="badge-text text-[#30D158] font-black">98.4% NOMINAL</span>
+                  </div>
+                </div>
               </div>
-            )}
 
-            <button 
-              onClick={handleScanForDevices}
-              disabled={isScanning}
-              className="btn-outline mt-2"
-              data-label="Scan Trigger"
-            >
+              {/* Card 3: INTEL DROP */}
+              <div 
+                onClick={() => setShowCreateModal(true)}
+                className="feature-card"
+                data-label="Encrypted Intel Sharder"
+              >
+                <div className="flex justify-between items-start">
+                  <i className="ph-bold ph-stack text-xl text-[#0A84FF]" />
+                  <span className="caption">SHARE CRITICAL DATA</span>
+                </div>
+                <h3 className="heading-lg text-white">INTEL DROP</h3>
+              </div>
+
+              {/* Card 4: SAFE CHECK */}
+              <div 
+                onClick={() => setShowSafeCheckModal(true)}
+                className="feature-card"
+                data-label="Update Status"
+              >
+                <div className="flex justify-between items-start">
+                  <i className="ph-bold ph-check-circle text-xl text-[#30D158]" />
+                  <span className="caption">UPDATE YOUR STATUS</span>
+                </div>
+                <h3 className="heading-lg text-white">SAFE CHECK</h3>
+              </div>
+
+              {/* Card 5: SURVIVAL KIT */}
+              <div 
+                onClick={() => setShowSurvivalKit(true)}
+                className="feature-card md:col-span-2 lg:col-span-3 flex-row items-center justify-between"
+                data-label="Survival Resources Kit"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div className="w-10 h-10 rounded-full bg-[#BF5AF2]/10 border border-[#BF5AF2]/20 flex items-center justify-center text-[#BF5AF2]">
+                    <i className="ph-bold ph-heart" style={{ fontSize: '20px' }} />
+                  </div>
+                  <div>
+                    <h3 className="heading-lg text-white">SURVIVAL KIT</h3>
+                    <span className="caption text-[#BF5AF2] block mt-0.5">FIRST AID • SIGNAL TOOLS • GUIDELINES</span>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setShowSurvivalKit(true); }}
+                  className="w-12 h-12 rounded-full bg-[#BF5AF2]/15 border border-[#BF5AF2]/30 flex items-center justify-center text-[#BF5AF2] hover:bg-[#BF5AF2]/25 active:scale-95 transition-transform"
+                >
+                  <i className="ph-bold ph-lightning" style={{ fontSize: '20px' }} />
+                </button>
+              </div>
+
+            </div>
+
+            {/* Tactical Tools Scroll Section (Instruction 7 & 8) */}
+            <div className="space-y-2">
+              <span className="caption block text-center text-slate-500 py-2">EXPLORE TACTICAL TOOLS</span>
+              
+              <button 
+                onClick={() => { setShowAboutModal(true); AudioEngine.play('success'); }}
+                className="w-full bg-[var(--bg-elevated)] border border-[var(--border-medium)] rounded-xl h-12 flex items-center justify-between px-4"
+              >
+                <div className="flex items-center gap-2">
+                  <i className="ph-bold ph-book-open text-slate-400" />
+                  <span className="heading-md text-slate-300">TACTICAL INDEX</span>
+                </div>
+                <i className="ph-bold ph-chevron-down text-slate-400" />
+              </button>
+
+              <div className="tactical-index" data-label="Tactical Index scroll box">
+                {[
+                  { id: '1', type: 'HOSPITAL', name: 'AIIMS New Delhi', coords: '28.57, 77.21', colorClass: 'text-[#FF3B30]' },
+                  { id: '2', type: 'HOSPITAL', name: 'Apollo Mumbai', coords: '19.02, 72.82', colorClass: 'text-[#FF3B30]' },
+                  { id: '3', type: 'RESERVOIR', name: 'Bhakra Reservoir', coords: '31.41, 76.43', colorClass: 'text-[#0A84FF]' },
+                  { id: '4', type: 'SHELTER', name: 'NDRF Ghaziabad', coords: '28.67, 77.45', colorClass: 'text-[#30D158]' },
+                  { id: '5', type: 'HOSPITAL', name: 'NIMHANS Bangalore', coords: '12.94, 77.58', colorClass: 'text-[#FF3B30]' },
+                  { id: '6', type: 'RESERVOIR', name: 'Indira Dam', coords: '22.29, 76.47', colorClass: 'text-[#0A84FF]' },
+                  { id: '7', type: 'DANGER', name: 'Flood Zone Bihar', coords: '25.59, 85.13', colorClass: 'text-[#FF9F0A]' }
+                ].map(item => (
+                  <div key={item.id} className="tactical-card">
+                    <span className={`badge-text font-black ${item.colorClass}`}>{item.type}</span>
+                    <span className="heading-md text-white truncate mt-1 block max-w-[140px]">{item.name}</span>
+                    <span className="caption block text-slate-600 mt-0.5">{item.coords}</span>
+                    <div className="flex gap-2 justify-end mt-2 text-slate-600 text-xs">
+                      <i className="ph-bold ph-map-pin" />
+                      <i className="ph-bold ph-navigation-arrow" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB 2: MESH SCAN OVERLAY */}
+        {activeTab === 'scan' && (
+          <div className="space-y-4">
+            <h2 className="heading-lg text-white">Airspace Scanner</h2>
+            <p className="body">Searching local radio channels for adjacent repeater systems.</p>
+
+            <div className="card text-center py-10 space-y-3">
               {isScanning ? (
                 <>
-                  <i className="ph-bold ph-spinner animate-spin" />
-                  <span>Searching Airspace...</span>
+                  <i className="ph-bold ph-radar animate-spin text-4xl text-[#0A84FF] block mx-auto" />
+                  <span className="heading-md text-white font-bold block">Pinging Airspace...</span>
                 </>
               ) : (
                 <>
-                  <i className="ph-bold ph-magnifying-glass" />
-                  <span>Scan for Connected Devices</span>
+                  <i className="ph-bold ph-radio text-4xl text-slate-600 block mx-auto" />
+                  <span className="heading-md text-white font-bold block">Scan Finished</span>
+                  <p className="text-xs text-slate-500 max-w-[240px] mx-auto leading-normal">
+                    Click trigger below to search for emergency channels.
+                  </p>
                 </>
               )}
+            </div>
+
+            <button 
+              onClick={handleScanNodes}
+              disabled={isScanning}
+              className="btn-primary"
+            >
+              {isScanning ? 'Syncing...' : 'Scan BLE gossip transceivers'}
             </button>
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* ── SCREEN 2: DEDICATED MAP SCREEN (Instruction 8) ── */}
-      <section className={`screen ${activeTab === 'map' ? 'active' : ''}`} id="screen-map">
-        <div id="map-container">
-          <button onClick={handleRecenter} className="map-recenter-btn">
-            <i className="ph-bold ph-crosshair" />
-            <span>Recenter</span>
-          </button>
-        </div>
-      </section>
-
-      {/* ── SCREEN 3: ALERTS / EMERGENCY FEED (Instruction 11) ── */}
-      <section className={`screen ${activeTab === 'feed' ? 'active' : ''}`} id="screen-feed">
-        <div className="screen-content">
-          <div className="space-y-1">
-            <h1 className="text-h1 text-white">Emergency Feed</h1>
-            <p className="text-body-sm">Distress alerts from surrounding transceivers</p>
-          </div>
-
-          {signals.length === 0 ? (
-            <div className="card text-center py-12 space-y-3">
-              <i className="ph-bold ph-shield-check text-5xl text-[#34C759] block mx-auto animate-pulse" />
-              <span className="text-h2 text-white font-bold block">No active emergencies</span>
-              <p className="text-xs text-slate-500 leading-normal max-w-[240px] mx-auto">
-                No distress beacons detected. Mesh network airspace is quiet.
-              </p>
+        {/* TAB 3: NETWORK PULSE STATS */}
+        {activeTab === 'pulse' && (
+          <div className="space-y-4">
+            <h2 className="heading-lg text-white">Network Telemetry</h2>
+            
+            <div className="card flex-row justify-between items-center p-4">
+              <div>
+                <span className="caption block">Telemetry Channel</span>
+                <span className="heading-md text-white block mt-0.5">Secure Direct Connection</span>
+              </div>
+              <span className="status-pill status-pill--success uppercase tracking-wider">
+                Stable Link
+              </span>
             </div>
-          ) : (
-            <div className="timeline mt-2" data-label="Mesh timeline logs">
-              {signals.map(sig => {
-                const isEmergency = sig.status === 'active';
-                const isResolved = sig.status === 'resolved';
-                
-                return (
-                  <div key={sig.id} className="timeline-item">
-                    <span className={`timeline-dot ${sig.status}`} />
+
+            <div className="card flex-row justify-between items-center p-4">
+              <div>
+                <span className="caption block">Payload Security</span>
+                <span className="heading-md text-white block mt-0.5">End-to-End Encrypted</span>
+              </div>
+              <span className="status-pill status-pill--success uppercase tracking-wider">
+                AES-255 Secure
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <span className="caption block pl-1">Adjacent Repeaters</span>
+              {devices.length === 0 ? (
+                <div className="card text-center py-6 text-slate-600 text-xs">
+                  No transceivers found. Switch on Demo Mode in Config.
+                </div>
+              ) : (
+                devices.map(d => (
+                  <div key={d.id} className="card flex-row justify-between items-center p-4">
+                    <div>
+                      <span className="text-xs font-bold text-white block">{d.name}</span>
+                      <span className="text-[10px] text-slate-500">{d.type}</span>
+                    </div>
+                    <span className="caption text-slate-400">Signal: {d.signal}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: EMERGENCIES INBOX Timeline */}
+        {activeTab === 'inbox' && (
+          <div className="space-y-4">
+            <h2 className="heading-lg text-white">Mesh Distress Log</h2>
+
+            {signals.length === 0 ? (
+              <div className="card text-center py-10 space-y-2 text-slate-600">
+                <i className="ph-bold ph-shield-check text-4xl block mx-auto" />
+                <span className="heading-md text-white font-bold block">No distress beacons</span>
+                <p className="text-xs text-slate-500">All local mesh repeaters report green check.</p>
+              </div>
+            ) : (
+              <div className="timeline">
+                {signals.map(s => (
+                  <div key={s.id} className="timeline-item">
+                    <span className={`timeline-dot ${s.status}`} />
                     
-                    <div 
-                      onClick={() => setSelectedSignal(sig)}
-                      className="card cursor-pointer hover:border-slate-700 transition-colors"
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'start' }}>
-                        <div>
-                          <span className="text-[9px] font-black uppercase tracking-wider block text-slate-500 mb-0.5">{sig.time}</span>
-                          <h4 className="text-xs font-bold text-white">{sig.title}</h4>
-                        </div>
-                        <span className={`status-pill uppercase tracking-wider ${isEmergency ? 'status-pill--danger' : isResolved ? 'status-pill--success' : 'status-pill--info'}`}>
-                          {sig.status}
-                        </span>
+                    <div className="card p-4">
+                      <div className="flex justify-between items-center">
+                        <span className="caption text-slate-500">{s.time}</span>
+                        <span className="badge-text text-[#FF3B30]">{s.status}</span>
                       </div>
+                      <h4 className="heading-md text-white mt-1">{s.title}</h4>
+                      <p className="body mt-1">{s.description}</p>
                       
-                      <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">
-                        {sig.description}
-                      </p>
-                      
-                      <div className="flex gap-2 mt-2 pt-2 border-t border-slate-800/60 justify-end">
-                        {isEmergency && (
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleMarkResolved(sig.id); }}
-                            className="px-3 py-1 bg-[#34C759] text-white rounded text-[9px] font-bold uppercase active:scale-95 transition-transform"
-                          >
-                            Mark Resolved
-                          </button>
-                        )}
-                        <button className="px-3 py-1 bg-transparent border border-slate-700 text-slate-400 rounded text-[9px] font-bold uppercase hover:bg-slate-800">
-                          View details
+                      {s.status === 'active' && (
+                        <button 
+                          onClick={() => handleMarkResolved(s.id)}
+                          className="mt-3 px-3 py-1.5 bg-[#30D158] text-white rounded text-[10px] font-bold uppercase active:scale-95 transition-transform"
+                        >
+                          Mark Resolved
                         </button>
-                      </div>
+                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ── SCREEN 4: SETTINGS VIEW (Instruction 12) ── */}
-      <section className={`screen ${activeTab === 'settings' ? 'active' : ''}`} id="screen-settings">
-        <div className="screen-content">
-          <div className="space-y-1">
-            <h1 className="text-h1 text-white">Settings</h1>
-            <p className="text-body-sm">Configure mesh transceivers & parameters</p>
+                ))}
+              </div>
+            )}
           </div>
+        )}
 
-          {/* Group 1: Device Info */}
-          <div className="space-y-2">
-            <span className="text-caption block pl-1">Device Identity</span>
-            <div className="card bg-[#1C1C1E] border-slate-800 rounded-xl divide-y divide-slate-800/60" style={{ gap: 0, padding: 0 }}>
-              
-              <div className="p-4 flex justify-between items-center">
-                <div>
-                  <span className="text-[9px] text-slate-500 font-bold block">Device Alias</span>
-                  {isEditingAlias ? (
-                    <div className="flex gap-2 mt-1">
-                      <input 
-                        type="text" 
-                        value={tempAlias} 
-                        onChange={e => setTempAlias(e.target.value)} 
-                        className="bg-[#2C2C2E] border border-slate-700 text-white rounded px-2.5 py-1 text-xs focus:outline-none focus:border-[#0A84FF]"
-                        maxLength={12}
-                      />
-                      <button onClick={handleSaveName} className="p-1 bg-[#34C759] text-white rounded"><i className="ph-bold ph-check" /></button>
-                    </div>
-                  ) : (
-                    <span className="text-white text-xs font-semibold">{deviceAlias}</span>
-                  )}
-                </div>
-                {!isEditingAlias && (
-                  <button onClick={() => { setTempAlias(deviceAlias); setIsEditingAlias(true); }} className="text-slate-400 hover:text-white p-1">
-                    <i className="ph-bold ph-pencil" />
-                  </button>
-                )}
-              </div>
+        {/* TAB 5: VAULT SHARD INTEGRATOR */}
+        {activeTab === 'vault' && (
+          <div className="space-y-4">
+            <h2 className="heading-lg text-white">Vault Integrator</h2>
+            <p className="body">Re-assemble fragmented air-gap coordinates payload shards from local memory.</p>
 
-              <div className="p-4 flex justify-between items-center">
-                <div>
-                  <span className="text-[9px] text-slate-500 font-bold block">Mesh Role</span>
-                  <span className="text-slate-400 text-xs">Propagates emergency signals</span>
-                </div>
-                <span className="status-pill status-pill--success uppercase tracking-wider">
-                  Relay Node
-                </span>
-              </div>
+            <div className="card text-center py-8 text-slate-600 text-xs">
+              Vault storage locked. Use Intel Drop on home screen to create message shards.
             </div>
           </div>
+        )}
 
-          {/* Group 2: Hackathon Showcase */}
-          <div className="space-y-2">
-            <span className="text-caption block pl-1 text-[#FF9500]">Hackathon Showcase</span>
-            <div className="card border-dashed border-[#FF9500]/50" style={{ background: 'rgba(255,149,0,0.04)', padding: '16px' }}>
+        {/* TAB 6: CONFIG SYSTEM PARAMETERS */}
+        {activeTab === 'config' && (
+          <div className="space-y-6">
+            <h2 className="heading-lg text-white">System Config</h2>
+
+            {/* Showcase */}
+            <div className="card border-dashed border-[#FF9F0A]/40" style={{ background: 'rgba(255,159,10,0.03)' }}>
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-white font-bold text-xs">Demo Mode</span>
-                  <p className="text-[10px] text-[#FF9500] mt-0.5">Seeds simulated transceivers for judges.</p>
+                  <span className="text-xs font-bold text-white block">Demo Showcase Mode</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Seeds simulated transceivers for review.</p>
                 </div>
                 <ToggleSwitch 
                   checked={demoMode} 
                   onChange={(val) => {
                     setDemoMode(val);
                     localStorage.setItem('sharednet_demo_mode', val.toString());
-                    populateDatabases(val);
+                    populateDatabase(val);
                     AudioEngine.play(val ? 'success' : 'warning');
-                    showToast('info', `Demo Mode ${val ? 'ON' : 'OFF'}`);
+                    showToast('info', `Demo Mode ${val ? 'Activated' : 'Deactivated'}`);
                   }}
-                  activeColor="#FF9500"
+                  activeColor="#FF9F0A"
                 />
               </div>
             </div>
-          </div>
 
-          {/* Group 3: Operations Config */}
-          <div className="space-y-2">
-            <span className="text-caption block pl-1">Operations Config</span>
-            <div className="card bg-[#1C1C1E] border-slate-800 rounded-xl space-y-4" style={{ padding: '16px' }}>
+            {/* Display preferences */}
+            <div className="card space-y-4 p-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-white font-semibold text-xs">Sound Alerts</span>
-                  <p className="text-[10px] text-slate-500">Play acoustic siren sweeps.</p>
-                </div>
-                <ToggleSwitch 
-                  checked={soundAlerts} 
-                  onChange={(val) => { setSoundAlerts(val); localStorage.setItem('setting_sound_alerts', val.toString()); }} 
-                />
-              </div>
-
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="text-white font-semibold text-xs">Tactile Haptics</span>
-                  <p className="text-[10px] text-slate-500">Vibrate patterns during alerts.</p>
-                </div>
-                <ToggleSwitch 
-                  checked={vibration} 
-                  onChange={(val) => { setVibration(val); localStorage.setItem('setting_vibration', val.toString()); }} 
-                />
-              </div>
-
-              <button 
-                onClick={handleTestSOS}
-                className="w-full py-3 bg-[#FF3B30] text-white text-xs font-bold uppercase rounded-lg active:scale-95 transition-transform"
-              >
-                Test SOS (Instant Beam)
-              </button>
-            </div>
-          </div>
-
-          {/* Group 4: Accessibility */}
-          <div className="space-y-2">
-            <span className="text-caption block pl-1">Accessibility</span>
-            <div className="card bg-[#1C1C1E] border-slate-800 rounded-xl space-y-4" style={{ padding: '16px' }}>
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="text-white font-semibold text-xs">High Contrast Mode</span>
-                  <p className="text-[10px] text-slate-500">Increases border and link visibility.</p>
+                  <span className="text-xs font-semibold text-white">High Contrast borders</span>
+                  <p className="text-[10px] text-slate-500">Increases structural readability.</p>
                 </div>
                 <ToggleSwitch 
                   checked={highContrast} 
@@ -969,273 +950,248 @@ export default function App() {
 
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-white font-semibold text-xs">Large UI Text</span>
-                  <p className="text-[10px] text-slate-500">Scale layout typography by 120%.</p>
+                  <span className="text-xs font-semibold text-white">Sound Sirens</span>
+                  <p className="text-[10px] text-slate-500">Sound alarm chime notifications.</p>
                 </div>
                 <ToggleSwitch 
-                  checked={largeText} 
+                  checked={soundAlerts} 
                   onChange={(val) => {
-                    setLargeText(val);
-                    localStorage.setItem('setting_large_text', val.toString());
-                    if (val) document.documentElement.style.fontSize = '120%';
-                    else document.documentElement.style.fontSize = '100%';
+                    setSoundAlerts(val);
+                    localStorage.setItem('setting_sound_alerts', val.toString());
                   }} 
                 />
               </div>
 
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-white font-semibold text-xs">Reduce Motion</span>
-                  <p className="text-[10px] text-slate-500">Deactivates structural transitions.</p>
+                  <span className="text-xs font-semibold text-white">Tactile Vibrate</span>
+                  <p className="text-[10px] text-slate-500">Vibrate alert sweeps.</p>
                 </div>
                 <ToggleSwitch 
-                  checked={reduceMotion} 
+                  checked={vibration} 
                   onChange={(val) => {
-                    setReduceMotion(val);
-                    localStorage.setItem('setting_reduce_motion', val.toString());
-                    if (val) document.documentElement.classList.add('reduce-motion');
-                    else document.documentElement.classList.remove('reduce-motion');
+                    setVibration(val);
+                    localStorage.setItem('setting_vibration', val.toString());
                   }} 
                 />
               </div>
             </div>
-          </div>
 
-          {/* Group 5: About Section */}
-          <div className="space-y-2">
-            <span className="text-caption block pl-1">About</span>
-            <div className="card bg-[#1C1C1E] border-slate-800 rounded-xl divide-y divide-slate-800/60 text-xs" style={{ gap: 0, padding: 0 }}>
-              <div 
-                onClick={handleVersionClick} 
-                className="p-4 flex justify-between items-center cursor-pointer hover:bg-white/5 transition-all"
-              >
-                <span className="text-slate-500 font-medium text-xs">Software Version</span>
-                <span className="text-white font-semibold flex items-center gap-1.5">
+            {/* Version taps presentation */}
+            <div className="card p-4" onClick={handleVersionClick} style={{ cursor: 'pointer' }}>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-medium">Software Version</span>
+                <span className="text-white font-bold flex items-center gap-1.5">
                   <span>1.0.0 (Hackathon Build)</span>
-                  {presentationMode && <span className="bg-[#FF9500] text-black px-1.5 py-0.5 rounded text-[8px] font-black uppercase">PRES</span>}
+                  {presentationMode && <span className="bg-[#FF9F0A] text-black px-1.5 py-0.5 rounded text-[8px] font-black uppercase">PRES</span>}
                 </span>
               </div>
-              
-              <div className="p-4 flex justify-between items-center">
-                <span className="text-slate-500 font-medium text-xs">Pitch Location</span>
-                <span className="text-white font-semibold">Founders Fest 2026</span>
-              </div>
-
-              <div className="p-4 flex justify-between items-center">
-                <span className="text-slate-500 font-medium text-xs">Project Blueprint</span>
-                <button 
-                  onClick={() => { setShowAboutModal(true); AudioEngine.play('success'); }}
-                  className="text-[#0A84FF] font-semibold text-xs hover:underline bg-transparent border-none p-0 cursor-pointer"
-                >
-                  Open Blueprint
-                </button>
-              </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ── SOS FLOATING ACTION BUTTON (Instruction 9) ── */}
-      {sosState === 'idle' && !showSplash && onboarded && (
+          </div>
+        )}
+
+      </main>
+
+      {/* ── SOS FLOATING TRIGGER BUTTON (Instruction 10) ── */}
+      {sosState === 'idle' && !showSplash && (
         <button 
-          onClick={handleSOSStart} 
-          className="sos-fab"
+          onClick={handleSOSStart}
+          className="sos-fab animate-pulse"
           data-label="SOS FAB"
         >
-          <i className="ph-fill ph-siren" style={{ fontSize: '28px' }} />
-          <span>SOS</span>
+          <i className="ph-fill ph-shield text-white" style={{ fontSize: '22px' }} />
+          <span style={{ fontSize: '9px', fontWeight: 800 }}>SOS</span>
         </button>
       )}
 
-      {/* ── BOTTOM NAVIGATION TAB BAR (Instruction 7) ── */}
-      {!showSplash && onboarded && (
-        <nav className="bottom-nav" data-label="Bottom Navigation">
-          <button 
-            onClick={() => setActiveTab('network')} 
-            className={`nav-tab ${activeTab === 'network' ? 'active' : ''}`}
-          >
-            <i className={`ph-bold ph-globe ${activeTab === 'network' ? 'text-2xl' : 'text-xl'}`} />
-            <span>Network</span>
+      {/* ── BOTTOM NAVIGATION 6 TABS BAR (Instruction 9) ── */}
+      {!showSplash && (
+        <nav className="bottom-nav" data-label="Tactical Navigation">
+          <button onClick={() => setActiveTab('home')} className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}>
+            <i className="ph-bold ph-house" style={{ fontSize: '20px' }} />
+            <span>HOME</span>
           </button>
           
-          <button 
-            onClick={() => setActiveTab('map')} 
-            className={`nav-tab ${activeTab === 'map' ? 'active' : ''}`}
-          >
-            <i className={`ph-bold ph-map-trifold ${activeTab === 'map' ? 'text-2xl' : 'text-xl'}`} />
-            <span>Map</span>
+          <button onClick={() => setActiveTab('scan')} className={`nav-item ${activeTab === 'scan' ? 'active' : ''}`}>
+            <i className="ph-bold ph-radar" style={{ fontSize: '20px' }} />
+            <span>SCAN</span>
           </button>
           
-          <button 
-            onClick={() => setActiveTab('feed')} 
-            className={`nav-tab ${activeTab === 'feed' ? 'active' : ''}`}
-          >
-            <i className={`ph-bold ph-bell ${activeTab === 'feed' ? 'text-2xl' : 'text-xl'}`} />
-            <span>Alerts</span>
+          <button onClick={() => setActiveTab('pulse')} className={`nav-item ${activeTab === 'pulse' ? 'active' : ''}`}>
+            <i className="ph-bold ph-activity" style={{ fontSize: '20px' }} />
+            <span>PULSE</span>
           </button>
           
-          <button 
-            onClick={() => setActiveTab('settings')} 
-            className={`nav-tab ${activeTab === 'settings' ? 'active' : ''}`}
-          >
-            <i className={`ph-bold ph-gear ${activeTab === 'settings' ? 'text-2xl' : 'text-xl'}`} />
-            <span>Settings</span>
+          <button onClick={() => setActiveTab('inbox')} className={`nav-item ${activeTab === 'inbox' ? 'active' : ''}`}>
+            <i className="ph-bold ph-tray" style={{ fontSize: '20px' }} />
+            <span>INBOX</span>
           </button>
+
+          <button onClick={() => setActiveTab('vault')} className={`nav-item ${activeTab === 'vault' ? 'active' : ''}`}>
+            <i className="ph-bold ph-lock-key" style={{ fontSize: '20px' }} />
+            <span>VAULT</span>
+          </button>
+
+          <button onClick={() => setActiveTab('config')} className={`nav-item ${activeTab === 'config' ? 'active' : ''}`}>
+            <i className="ph-bold ph-gear" style={{ fontSize: '20px' }} />
+            <span>CONFIG</span>
+          </button>
+
+          <div className="hidden sm:flex bg-[#30D158]/10 text-[#30D158] border border-[#30D158]/30 px-3 py-1.5 rounded-full badge-text">
+            SYSTEM READY
+          </div>
         </nav>
       )}
 
-      {/* ── SOS COUNTDOWN OVERLAY (Instruction 9 & 15) ── */}
+      {/* ── TACTICAL DEDICATED FULL-SCREEN MAP MODAL (Instruction 11) ── */}
+      <AnimatePresence>
+        {showMapModal && (
+          <div className="map-modal" role="dialog" aria-modal="true">
+            <header className="map-header">
+              <span className="heading-lg text-white">TACTICAL MAP</span>
+              <button 
+                onClick={() => setShowMapModal(false)}
+                className="w-10 h-10 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer"
+                aria-label="Close Map"
+              >
+                <i className="ph-bold ph-x" style={{ fontSize: '20px' }} />
+              </button>
+            </header>
+
+            <div id="map-container">
+              {/* Recenter button */}
+              <button 
+                onClick={() => {
+                  if (mapInstanceRef.current) mapInstanceRef.current.setView([22.0, 78.0], 5);
+                  showToast('info', 'Centering map on India coordinates');
+                }} 
+                className="map-recenter-btn pointer-events-auto"
+                style={{ zIndex: 1000 }}
+              >
+                <i className="ph-bold ph-crosshair" />
+                <span>Recenter Map</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── SOS BEACON COUNTDOWN INTERACTIVE DIALOG ── */}
       <AnimatePresence>
         {sosState === 'countdown' && (
-          <div className="sos-overlay" role="dialog" aria-modal="true">
-            <div style={{ textAlign: 'center', spaceY: '24px', maxWidth: '320px', width: '100%' }}>
-              <h2 className="text-hero text-white mb-2">BROADCASTING</h2>
-              <p className="text-body-sm text-slate-400 mb-8">
-                Your emergency beacon will be sent across all nearby devices in:
-              </p>
-
-              {/* Countdown circle */}
-              <div className="relative w-36 h-36 mx-auto flex items-center justify-center mb-8">
-                <svg className="absolute -rotate-90" width="144" height="144">
-                  <circle cx="72" cy="72" r="64" stroke="rgba(255,255,255,0.06)" strokeWidth="6" fill="transparent" />
+          <div className="sos-countdown-dialog" role="dialog" aria-modal="true">
+            <div style={{ textAlign: 'center', width: '100%', maxWidth: '320px' }} className="space-y-6">
+              <h2 className="heading-lg text-white">SOS BEACON ACTIVATE</h2>
+              <p className="body text-slate-400">Broadcasting emergency coordinates in:</p>
+              
+              <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
+                <svg className="absolute -rotate-90" width="128" height="128">
+                  <circle cx="64" cy="64" r="58" stroke="rgba(255,255,255,0.06)" strokeWidth="4" fill="transparent" />
                   <circle 
-                    cx="72" 
-                    cy="72" 
-                    r="64" 
-                    stroke="var(--emergency)" 
-                    strokeWidth="6" 
+                    cx="64" 
+                    cy="64" 
+                    r="58" 
+                    stroke="var(--accent-red)" 
+                    strokeWidth="4" 
                     fill="transparent" 
-                    strokeDasharray={402.1}
-                    strokeDashoffset={402.1 - (sosTimeLeft / 3.0) * 402.1}
+                    strokeDasharray={364.4}
+                    strokeDashoffset={364.4 - (sosTimeLeft / 3.0) * 364.4}
                     style={{ transition: 'stroke-dashoffset 100ms linear' }}
                   />
                 </svg>
-                <span className="text-hero text-white" style={{ fontSize: '3rem' }}>{Math.ceil(sosTimeLeft)}</span>
+                <span className="stat-number text-white" style={{ fontSize: '2.5rem' }}>{Math.ceil(sosTimeLeft)}</span>
               </div>
 
               <button 
                 onClick={handleSOSCancel}
-                className="btn-emergency w-full"
-                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-medium)', color: 'white' }}
+                className="w-full py-4 bg-slate-800 text-white rounded-xl font-bold text-xs uppercase hover:bg-slate-700 active:scale-95 transition-transform"
               >
-                Cancel Broadcast
+                Abort Beacon
               </button>
             </div>
           </div>
         )}
 
         {sosState === 'sending' && (
-          <div className="sos-overlay" role="dialog" aria-modal="true">
-            <div style={{ textAlign: 'center', maxWidth: '320px', width: '100%', spaceY: '16px' }}>
-              <i className="ph-bold ph-spinner animate-spin text-5xl text-[#FF3B30] mb-4 block mx-auto" />
-              <h2 className="text-h2 text-white">Broadcasting...</h2>
-              <p className="text-xs text-slate-500 leading-normal">
-                Propagating distress coordinates via adjacent radio transmitters.
-              </p>
+          <div className="sos-countdown-dialog" role="dialog" aria-modal="true">
+            <div style={{ textAlign: 'center', width: '100%', maxWidth: '320px' }} className="space-y-4">
+              <i className="ph-bold ph-spinner animate-spin text-4xl text-[#FF3B30] block mx-auto" />
+              <h2 className="heading-lg text-white">Broadcasting...</h2>
+              <p className="body text-slate-400">Propagating distress coordinates via Gossip repeaters.</p>
             </div>
           </div>
         )}
 
         {sosState === 'sent' && (
-          <div className="sos-overlay" role="dialog" aria-modal="true" style={{ background: '#0A0A0F' }}>
-            <div style={{ textAlign: 'center', maxWidth: '320px', width: '100%', spaceY: '24px' }}>
-              <div className="w-20 h-20 rounded-full bg-[#34C759]/10 border-2 border-[#34C759] flex items-center justify-center mx-auto mb-6">
-                <i className="ph-bold ph-check text-4xl text-[#34C759]" />
+          <div className="sos-countdown-dialog" role="dialog" aria-modal="true" style={{ background: '#0A0A0F' }}>
+            <div style={{ textAlign: 'center', width: '100%', maxWidth: '320px' }} className="space-y-6">
+              <div className="w-16 h-16 rounded-full bg-[#30D158]/10 border border-[#30D158] flex items-center justify-center mx-auto text-[#30D158]">
+                <i className="ph-bold ph-check text-3xl" />
               </div>
-              <h2 className="text-h1 text-white mb-2">Signal Sent</h2>
-              <p className="text-xs text-slate-400 leading-relaxed mb-6">
-                Your emergency beacon was broadcasted successfully. Nearby devices are acting as signal repeaters.
-              </p>
+              <h2 className="heading-lg text-white">Transmission Successful</h2>
+              <p className="body text-slate-400">Distress packet repeaters are echoing alert coordinates.</p>
               <button 
                 onClick={() => setSosState('idle')}
-                className="btn-primary"
-                style={{ background: 'var(--bg-elevated)', color: 'white' }}
+                className="w-full py-4 bg-slate-800 text-white rounded-xl font-bold text-xs uppercase hover:bg-slate-700 active:scale-95 transition-transform"
               >
-                Close Window
+                Close Dialog
               </button>
             </div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* ── TOAST STACKS (Instruction 2) ── */}
-      <div className="toast-container pointer-events-none" style={{ position: 'absolute', top: '48px', left: 0, right: 0, zIndex: 'var(--z-toast)' }}>
-        <AnimatePresence>
-          {toasts.map(toast => (
-            <motion.div 
-              key={toast.id}
-              initial={{ opacity: 0, y: -16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              className={`toast-box ${toast.type}`}
-            >
-              <span className="text-xs text-white font-bold">{toast.message}</span>
-              <button 
-                onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
-                className="text-slate-400 hover:text-white pointer-events-auto"
-              >
-                <i className="ph-bold ph-x" />
-              </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
-      {/* ── EMERGENCY DETAIL SHEET MODAL (Instruction 11) ── */}
+      {/* ── INTEL DROP GENERATOR SHEET MODAL ── */}
       <AnimatePresence>
-        {selectedSignal && (
-          <div className="modal-backdrop" role="dialog" aria-modal="true">
-            <div className="absolute inset-0" onClick={() => setSelectedSignal(null)} />
-            
-            <div className="modal-sheet">
-              <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'start' }}>
+        {showCreateModal && (
+          <div className="modal-details-backdrop" role="dialog" aria-modal="true">
+            <div className="modal-details-sheet">
+              <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-caption text-slate-500 mb-1 block">{selectedSignal.time} • {selectedSignal.location}</span>
-                  <h3 className="text-h2 text-white font-black">{selectedSignal.title}</h3>
+                  <span className="caption">Intel Drop Creator</span>
+                  <h3 className="heading-lg text-white">Shard Intelligence Drop</h3>
                 </div>
+                <button onClick={() => { setShowCreateModal(false); setIntelContent(''); setGeneratedShards([]); }} className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i className="ph-bold ph-x" /></button>
+              </div>
+
+              <div className="h-[1px] bg-slate-800 my-1" />
+
+              <div className="space-y-1.5">
+                <span className="caption">Distress intel payload copy</span>
+                <textarea 
+                  value={intelContent}
+                  onChange={e => setIntelContent(e.target.value)}
+                  placeholder="Enter medical status check, missing personnel names, or coordinates info..."
+                  className="w-full h-24 bg-[#141419] border border-slate-800 text-white text-xs rounded-lg p-3 focus:outline-none focus:border-[#0A84FF] resize-none"
+                />
+              </div>
+
+              {generatedShards.length > 0 && (
+                <div className="space-y-2">
+                  <span className="caption block">Generated Shard segments</span>
+                  <div className="space-y-1">
+                    {generatedShards.map(sh => (
+                      <div key={sh.id} className="p-2.5 bg-[#2C2C2E]/20 border border-slate-850 rounded text-[10px] text-slate-400 font-mono">
+                        {sh.content}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
                 <button 
-                  onClick={() => setSelectedSignal(null)}
-                  className="icon-btn"
-                  aria-label="Close modal"
+                  onClick={handleCreateIntelDrop}
+                  className="flex-1 py-3.5 bg-[#0A84FF] text-white rounded-xl text-xs font-bold uppercase active:scale-95 transition-transform"
                 >
-                  <i className="ph-bold ph-x" style={{ fontSize: '20px' }} />
+                  Generate Shard Elements
                 </button>
-              </div>
-
-              <div className="h-[1px] bg-slate-800" />
-
-              <div className="space-y-1">
-                <span className="text-caption block">Coordinates Description</span>
-                <p className="text-xs text-slate-300 leading-relaxed bg-[#2C2C2E]/30 p-3 rounded-lg border border-slate-800">
-                  {selectedSignal.description}
-                </p>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div className="p-3 bg-[#2C2C2E]/20 rounded-lg border border-slate-800/80">
-                  <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Device Source</span>
-                  <span className="text-xs font-bold text-white block mt-0.5">{selectedSignal.sender}</span>
-                </div>
-                <div className="p-3 bg-[#2C2C2E]/20 rounded-lg border border-slate-800/80">
-                  <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Device Battery</span>
-                  <span className="text-xs font-bold text-white block mt-0.5">{selectedSignal.battery}</span>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                {selectedSignal.status === 'active' && (
-                  <button 
-                    onClick={() => handleMarkResolved(selectedSignal.id)}
-                    className="flex-1 h-12 bg-[#34C759] text-white rounded-xl font-bold text-xs uppercase active:scale-95 transition-transform"
-                  >
-                    Mark Resolved
-                  </button>
-                )}
                 <button 
-                  onClick={() => setSelectedSignal(null)}
-                  className="flex-1 h-12 bg-slate-800 text-slate-300 rounded-xl font-bold text-xs uppercase active:scale-95 transition-transform"
+                  onClick={() => { setShowCreateModal(false); setIntelContent(''); setGeneratedShards([]); }}
+                  className="flex-1 py-3.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold uppercase active:scale-95 transition-transform"
                 >
-                  Close Window
+                  Cancel
                 </button>
               </div>
             </div>
@@ -1243,23 +1199,103 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* ── JUDGE ABOUT bluePRINT MODAL (Instruction 4) ── */}
+      {/* ── SAFE CHECK STATUS UPDATE MODAL ── */}
+      <AnimatePresence>
+        {showSafeCheckModal && (
+          <div className="modal-details-backdrop" role="dialog" aria-modal="true">
+            <div className="modal-details-sheet">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="caption">Safe Check Status Update</span>
+                  <h3 className="heading-lg text-white">Broadcast Your Status</h3>
+                </div>
+                <button onClick={() => setShowSafeCheckModal(false)} className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i className="ph-bold ph-x" /></button>
+              </div>
+
+              <div className="h-[1px] bg-slate-800 my-1" />
+
+              <div className="space-y-2.5">
+                {[
+                  { label: 'GREEN (SAFE - INTACT)', type: 'success', colorClass: 'bg-[#30D158] text-[#30D158]' },
+                  { label: 'AMBER (STABLE - NEED UTILITIES)', type: 'warning', colorClass: 'bg-[#FF9F0A] text-[#FF9F0A]' },
+                  { label: 'RED (DISTRESS - NEED IMMEDIATE ASSISTANCE)', type: 'error', colorClass: 'bg-[#FF3B30] text-[#FF3B30]' }
+                ].map(opt => (
+                  <button 
+                    key={opt.label}
+                    onClick={() => {
+                      showToast(opt.type, `Status Broadcasted: ${opt.label}`);
+                      setShowSafeCheckModal(false);
+                      AudioEngine.play('success');
+                      Haptic.success();
+                    }}
+                    className="w-full py-4 rounded-xl bg-[#2C2C2E]/30 border border-slate-800 text-xs font-bold uppercase hover:bg-slate-850 active:scale-98 transition-all flex items-center gap-3 px-4"
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: opt.type === 'success' ? '#30D158' : opt.type === 'warning' ? '#FF9F0A' : '#FF3B30' }} />
+                    <span className="text-white text-left truncate">{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── SURVIVAL KIT RESOURCES DETAILS SHEET ── */}
+      <AnimatePresence>
+        {showSurvivalKit && (
+          <div className="modal-details-backdrop" role="dialog" aria-modal="true">
+            <div className="modal-details-sheet">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="caption">Survival Resources Guide</span>
+                  <h3 className="heading-lg text-white">Disaster Survival Tools</h3>
+                </div>
+                <button onClick={() => setShowSurvivalKit(false)} className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i className="ph-bold ph-x" /></button>
+              </div>
+
+              <div className="h-[1px] bg-slate-800 my-1" />
+
+              <div className="space-y-3 text-xs leading-relaxed text-slate-400 max-h-[280px] overflow-y-auto pr-1 scroll-momentum-container no-scrollbar">
+                <div className="space-y-1">
+                  <strong className="text-white">🚨 Signal Mirror Flash Codes</strong>
+                  <p>In blackout grids: 3 short flashes, 3 long flashes, 3 short flashes for standard SOS. Aim flash reflection coordinates at rescue crafts.</p>
+                </div>
+                <div className="space-y-1">
+                  <strong className="text-white">💊 Basic First Aid Actions</strong>
+                  <p>Apply direct pressure to open wounds. If fracture is suspected, immobilize the limb with straight twigs and splint bindings.</p>
+                </div>
+                <div className="space-y-1">
+                  <strong className="text-white">📻 Airspace Gossip repeats</strong>
+                  <p>Keep Bluetooth activated. Gossip protocols propagate distress packet repeaters over adjacent transceivers automatically.</p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowSurvivalKit(false)}
+                className="w-full py-4 bg-[#BF5AF2] text-white rounded-xl font-bold text-xs uppercase hover:bg-fuchsia-600 active:scale-95 transition-transform"
+              >
+                Understood
+              </button>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── ABOUT SYSTEM bluePRINT MODAL ── */}
       <AnimatePresence>
         {showAboutModal && (
-          <div className="modal-backdrop" role="dialog" aria-modal="true">
-            <div className="absolute inset-0" onClick={() => setShowAboutModal(false)} />
-            
-            <div className="modal-sheet relative z-10" style={{ maxHeight: '85%' }}>
+          <div className="modal-details-backdrop" role="dialog" aria-modal="true">
+            <div className="modal-details-sheet relative z-10" style={{ maxHeight: '85%' }}>
               <div style={{ display: 'flex', justifyContent: 'between', alignItems: 'start' }}>
                 <div>
-                  <h3 className="text-h2 text-white font-black uppercase italic tracking-tight">SharedNet Blueprint</h3>
+                  <h3 className="heading-lg text-white">SharedNet Blueprint</h3>
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Founders Fest 2026 Build</span>
                 </div>
                 <button 
                   onClick={() => setShowAboutModal(false)}
-                  className="icon-btn"
+                  className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer"
                 >
-                  <i className="ph-bold ph-x" style={{ fontSize: '20px' }} />
+                  <i className="ph-bold ph-x" style={{ fontSize: '18px' }} />
                 </button>
               </div>
 
@@ -1287,7 +1323,7 @@ export default function App() {
                 </div>
 
                 <div className="bg-[#2C2C2E]/40 border border-slate-800 p-4 rounded-lg text-center space-y-2 my-2">
-                  <span className="text-[9px] text-[#FF9500] font-black uppercase tracking-widest block">Scan to Run App</span>
+                  <span className="text-[9px] text-[#FF9F0A] font-black uppercase tracking-widest block">Scan to Run App</span>
                   
                   {/* Mock inline SVG QR code */}
                   <svg viewBox="0 0 100 100" className="w-24 h-24 mx-auto bg-white p-1.5 rounded">
@@ -1342,7 +1378,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* ── KEYBOARD DEMO HELPERS CONSOLE (Shift + H) ── */}
+      {/* ── KEYBOARD DEMO HELPERS CONSOLE PANEL (Shift + H) ── */}
       {showHelpers && (
         <div className="fixed bottom-24 left-4 z-[9999] p-4 bg-[#1C1C1E] border border-slate-850 rounded-xl max-w-[280px] text-[10px] text-slate-400 space-y-2 shadow-2xl pointer-events-auto">
           <div className="flex justify-between items-center text-white font-bold uppercase tracking-wider">
@@ -1351,7 +1387,7 @@ export default function App() {
           </div>
           <div className="h-[1px] bg-slate-800" />
           <ul className="space-y-1 list-disc pl-3">
-            <li><b className="text-[#FF9500]">Shift + D</b>: Toggle Demo Mode</li>
+            <li><b className="text-[#FF9F0A]">Shift + D</b>: Toggle Demo Mode</li>
             <li><b className="text-[#FF3B30]">Shift + S</b>: Ingest Emergency Beacon</li>
             <li><b className="text-[#0A84FF]">Shift + T</b>: Age alerts by 1 hour</li>
             <li><b className="text-slate-200">Shift + R</b>: Nuclear Database Wipe</li>
@@ -1360,159 +1396,58 @@ export default function App() {
         </div>
       )}
 
-      {/* ── FIRST-TIME ONBOARDING FLOW OVERLAY (Instruction 1) ── */}
-      {!onboarded && (
-        <div className="onboarding fixed inset-0 z-[100000] bg-[#0A0A0F] flex flex-col justify-between p-6">
-          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at bottom, rgba(10,132,255,0.06) 0%, transparent 65%)' }} />
-
-          <div className="flex justify-end z-10">
-            <button 
-              onClick={handleFinishOnboarding}
-              className="text-slate-500 hover:text-slate-300 text-xs font-bold uppercase tracking-wider py-2 px-4"
+      {/* ── TOAST OVERLAYS DRAWER ── */}
+      <div className="toast-container pointer-events-none" style={{ position: 'fixed', top: '56px', left: 0, right: 0, zIndex: 'var(--z-toast)' }}>
+        <AnimatePresence>
+          {toasts.map(toast => (
+            <motion.div 
+              key={toast.id}
+              initial={{ opacity: 0, y: -16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              className={`toast-overlay ${toast.type}`}
             >
-              Skip
-            </button>
-          </div>
+              <span className="text-xs text-white font-bold">{toast.message}</span>
+              <button 
+                onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                className="text-slate-400 hover:text-white pointer-events-auto"
+              >
+                <i className="ph-bold ph-x" />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center max-w-sm mx-auto z-10">
-            <AnimatePresence mode="wait">
-              {onboardingSlide === 0 && (
-                <motion.div
-                  key="slide0"
-                  initial={{ x: 100, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -100, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col items-center text-center space-y-6"
-                >
-                  <div className="w-24 h-24 rounded-full bg-[#0A84FF]/10 flex items-center justify-center border border-[#0A84FF]/20 shadow-[0_0_20px_rgba(10,132,255,0.15)]">
-                    <i className="ph-fill ph-broadcast text-[#0A84FF] animate-pulse" style={{ fontSize: '56px' }} />
-                  </div>
-                  <div className="space-y-3">
-                    <h2 className="text-2xl font-black italic uppercase tracking-tight text-white leading-none">No Signal?<br/>No Problem.</h2>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      SharedNet links phone transceivers peer-to-peer. No internet or towers required.
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-
-              {onboardingSlide === 1 && (
-                <motion.div
-                  key="slide1"
-                  initial={{ x: 100, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -100, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col items-center text-center space-y-6"
-                >
-                  <div className="w-24 h-24 rounded-full bg-[#FF3B30]/10 flex items-center justify-center border border-[#FF3B30]/20 shadow-[0_0_20px_rgba(255,59,48,0.15)]">
-                    <i className="ph-fill ph-siren text-[#FF3B30] animate-bounce" style={{ fontSize: '56px' }} />
-                  </div>
-                  <div className="space-y-3">
-                    <h2 className="text-2xl font-black italic uppercase tracking-tight text-white leading-none">One Tap SOS</h2>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Broadcast coordinates instantly in flash floods, earthquakes, or coordinate rescue beacons with nearby repeaters.
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-
-              {onboardingSlide === 2 && (
-                <motion.div
-                  key="slide2"
-                  initial={{ x: 100, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -100, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col items-center text-center space-y-6"
-                >
-                  <div className="w-24 h-24 rounded-full bg-[#34C759]/10 flex items-center justify-center border border-[#34C759]/20 shadow-[0_0_20px_rgba(52,199,89,0.15)]">
-                    <i className="ph-fill ph-shield-check text-[#34C759]" style={{ fontSize: '56px' }} />
-                  </div>
-                  <div className="space-y-3">
-                    <h2 className="text-2xl font-black italic uppercase tracking-tight text-white leading-none">You're Protected</h2>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Your transceiver is secure, end-to-end encrypted, and ready to act as a lifeline in disaster grids.
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="space-y-6 max-w-sm w-full mx-auto z-10 pb-6">
-            <div className="flex justify-center items-center gap-2">
-              {[0, 1, 2].map(idx => (
-                <div
-                  key={idx}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    onboardingSlide === idx 
-                      ? 'w-6 bg-[#0A84FF]' 
-                      : 'w-2 bg-[#2C2C2E]'
-                  }`}
-                />
-              ))}
-            </div>
-
-            <div className="space-y-2">
-              {onboardingSlide < 2 ? (
-                <button
-                  onClick={() => {
-                    setOnboardingSlide(prev => prev + 1);
-                    AudioEngine.play('tap');
-                    Haptic.tap();
-                  }}
-                  className="w-full py-4 bg-[#0A84FF] text-white rounded-xl font-bold text-sm uppercase tracking-wider active:scale-[0.99] transition-transform"
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  onClick={handleFinishOnboarding}
-                  className="w-full py-4 bg-[#34C759] text-white rounded-xl font-bold text-sm uppercase tracking-wider active:scale-[0.99] transition-transform"
-                >
-                  Get Started
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── SPLASH SCREEN (Instruction 17) ── */}
+      {/* ── BOOT SPLASH SCREEN LAYOUT (Instruction 13) ── */}
       {showSplash && (
-        <div id="splash" className="z-[999999]">
+        <div id="splash" style={{ position: 'fixed', inset: 0, background: 'var(--bg-primary)', zIndex: 'var(--z-splash)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-4)' }}>
           <div className="w-16 h-16 rounded-full bg-[#0A84FF]/10 border border-[#0A84FF]/20 flex items-center justify-center shadow-[0_0_20px_rgba(10,132,255,0.2)]">
             <i className="ph-fill ph-shield-check text-[#0A84FF] animate-pulse" style={{ fontSize: '32px' }} />
           </div>
-          <h1 className="text-hero text-white uppercase tracking-[0.2em] italic mt-2">SharedNet</h1>
-          <p className="text-body-sm text-slate-500">Emergency Mesh Network</p>
+          <h1 className="title-app text-white uppercase tracking-[0.2em] italic mt-2" style={{ fontSize: '1.75rem' }}>SharedNet</h1>
+          <p className="caption" style={{ color: 'var(--text-secondary)' }}>Emergency Mesh Network</p>
         </div>
       )}
 
     </div>
   );
 
-  // Helper functions inside component scope
-  function handleSaveName() {
-    setDeviceAlias(tempAlias);
-    localStorage.setItem('setting_device_name', tempAlias);
-    setIsEditingAlias(false);
-    showToast('success', 'Alias updated');
-  }
-
-  function handleTestSOS() {
-    AudioEngine.play('warning');
-    Haptic.warning();
-    if (confirm("⚠️ Trigger emergency SOS test signal?")) {
-      handleSOSBroadcast();
-    }
+  function handleMarkResolved(id) {
+    setSignals(prev => prev.map(s => {
+      if (s.id === id) {
+        return { ...s, status: 'resolved' };
+      }
+      return s;
+    }));
+    AudioEngine.play('success');
+    Haptic.success();
+    showToast('success', 'Incident marked resolved across mesh repeaters');
   }
 }
 
-// Custom Toggle Switch primitive
-function ToggleSwitch({ checked, onChange, activeColor = '#34C759' }) {
+// Reusable Custom Toggle Switch primitive
+function ToggleSwitch({ checked, onChange, activeColor = '#30D158' }) {
   return (
     <button
       type="button"
