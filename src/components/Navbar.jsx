@@ -20,7 +20,7 @@ const Navbar = () => (
           to={to}
           end={to === '/'}
           className={({ isActive }) => `
-            flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-2xl transition-all duration-300
+            flex flex-col items-center gap-1 px-2 sm:px-4 py-2 rounded-2xl transition-all duration-300 shrink-0
             ${isActive ? 'bg-primary/20 text-primary scale-105 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'text-slate-500 hover:text-slate-300'}
           `}
           onClick={() => {
@@ -29,8 +29,8 @@ const Navbar = () => (
         >
           {({ isActive }) => (
             <>
-              <Icon size={isActive ? 20 : 18} />
-              <span className={`text-[8px] font-black uppercase tracking-widest leading-none ${isActive ? 'text-primary' : 'text-slate-500'}`}>
+              <Icon size={isActive ? 20 : 18} className="shrink-0" />
+              <span className={`text-[8px] font-black uppercase tracking-widest leading-none whitespace-nowrap ${isActive ? 'text-primary' : 'text-slate-500'}`}>
                 {label}
               </span>
             </>

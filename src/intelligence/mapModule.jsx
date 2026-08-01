@@ -238,11 +238,11 @@ const MeshMap = ({ messages = [], zoom = 13 }) => {
           <div style={{ display: 'flex', gap: 8 }}>
             <button 
               onClick={() => setActiveTab('local')}
-              style={{ background: activeTab === 'local' ? '#3b82f6' : 'transparent', color: activeTab === 'local' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase' }}
+              style={{ background: activeTab === 'local' ? '#3b82f6' : 'transparent', color: activeTab === 'local' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', whiteSpace: 'nowrap' }}
             >Local Scan</button>
             <button 
               onClick={() => setActiveTab('global')}
-              style={{ background: activeTab === 'global' ? '#3b82f6' : 'transparent', color: activeTab === 'global' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase' }}
+              style={{ background: activeTab === 'global' ? '#3b82f6' : 'transparent', color: activeTab === 'global' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', whiteSpace: 'nowrap' }}
             >Tactical Index</button>
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>

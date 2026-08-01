@@ -126,14 +126,12 @@ const Home = () => {
     background: 'rgba(255,255,255,0.02)',
     ...extra,
   });
-  return (
-    <div className="app-container">
-      <div className="noise-overlay" />
-      
+  return (
+    <div className="w-full">
       {/* ── BACKGROUND MAP LAYER ── */}
       <div className="map-layer">
         <MeshMap messages={messages} />
-        <div className="absolute inset-0 z-0 pointer-events-none bg-background/20" />
+        <div className="absolute inset-0 z-0 pointer-events-none bg-background/25" />
         
         <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
            <div className="w-full h-full border border-primary/20 rounded-full animate-pulse" style={{ animationDuration: '4s' }} />
@@ -146,218 +144,227 @@ const Home = () => {
       </div>
 
       {/* ── FOREGROUND UI OVERLAY ── */}
-      <div className="ui-overlay">
-        <div className="page-container">
-          
-          {/* ── HEADER ── */}
-          <header className="flex items-end justify-between mb-10 gap-6">
-            <div className="space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Node ID: {nodeId}</p>
-              <h1 className="heading-xl text-gradient">
-                Shared<span className="text-primary italic">Net</span>
-              </h1>
-            </div>
+      <div className="page-container relative z-10">
+        
+        {/* ── HEADER ── */}
+        <header className="flex items-end justify-between mb-10 gap-6">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Node ID: {nodeId}</p>
+            <h1 className="heading-xl text-gradient">
+              Shared<span className="text-primary italic">Net</span>
+            </h1>
+          </div>
 
-            <div className="flex items-center gap-3">
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-full glass border-white/10 ${emergency ? 'text-danger' : 'text-secondary'}`}>
-                <div className={`w-2 h-2 rounded-full animate-pulse ${emergency ? 'bg-danger shadow-[0_0_8px_#ef4444]' : 'bg-secondary shadow-[0_0_8px_#10b981]'}`} />
-                <span className="text-[10px] font-black uppercase tracking-widest">{emergency ? 'Alert' : 'Stable'}</span>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full glass border-white/10 ${emergency ? 'text-danger' : 'text-secondary'}`}>
+              <div className={`w-2 h-2 rounded-full animate-pulse ${emergency ? 'bg-danger shadow-[0_0_8px_#ef4444]' : 'bg-secondary shadow-[0_0_8px_#10b981]'}`} />
+              <span className="text-[10px] font-black uppercase tracking-widest">{emergency ? 'Alert' : 'Stable'}</span>
             </div>
-          </header>
+          </div>
+        </header>
 
-          <div className="bento-grid">
-            {/* SOS CARD (Feature) */}
-            <div className="bento-col-8">
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSOS}
-                className="bento-card w-full group relative min-h-[220px] justify-end border-danger/20 hover:border-danger/40"
-                style={{ background: 'linear-gradient(135deg, rgba(220,38,38,0.1) 0%, rgba(15,23,42,0.6) 100%)' }}
-              >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-danger to-transparent opacity-30" />
-                <div className="absolute top-6 right-6 p-4 bg-danger/10 rounded-2xl text-danger group-hover:scale-110 transition-transform">
-                  <ShieldAlert size={32} />
+        <div className="bento-grid">
+          {/* SOS CARD (Feature) */}
+          <div className="bento-col-8">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={handleSOS}
+              className="bento-card w-full h-full text-left min-h-[220px] bg-gradient-to-br from-danger/20 to-danger/5 border-danger/30 hover:border-danger/50 group relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-danger/[0.02] mix-blend-overlay" />
+              <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="p-4 bg-danger/20 rounded-2xl text-danger group-hover:animate-pulse">
+                    <ShieldAlert size={28} />
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-danger/10 border border-danger/20 rounded-full text-danger text-[9px] font-black uppercase tracking-widest">
+                    <span className="w-1.5 h-1.5 rounded-full bg-danger animate-ping" /> Priority Beacon
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <h2 className="heading-lg text-white">EMERGENCY SOS</h2>
-                  <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Instant Mesh Broadcast • Peer-to-Peer Relay</p>
-                </div>
-                <div className="scan-line !bg-danger/20" />
-              </motion.button>
-            </div>
-
-            {/* STATS CARD */}
-            <div className="bento-col-4">
-              <div className="bento-card h-full justify-between border-white/5">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-start">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Network Intel</p>
-                    <Activity size={16} className="text-primary" />
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-3xl font-black text-white">{stats.messageCount}</p>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase">Signals Received</p>
-                    </div>
-                    <div>
-                      <p className="text-3xl font-black text-white">{stats.shardCount}</p>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase">Fragments Cached</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="pt-4 border-t border-white/5 flex gap-2">
-                   <div className="w-1 h-4 bg-primary rounded-full" />
-                   <div className="w-1 h-4 bg-secondary rounded-full" />
-                   <div className="w-1 h-4 bg-accent rounded-full" />
+                  <h3 className="text-2xl font-black text-white italic tracking-tight">EMERGENCY SOS</h3>
+                  <p className="text-xs font-semibold text-slate-400 max-w-md leading-relaxed">
+                    Broadcast priority medical or distress beacon to all nearby nodes in the mesh. Operates offline without cellular infrastructure.
+                  </p>
                 </div>
               </div>
-            </div>
+            </motion.button>
+          </div>
 
-            {/* ACTION CARDS */}
-            <div className="bento-col-6">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/create?mode=intel')}
-                className="bento-card w-full h-full min-h-[140px] border-primary/20 hover:border-primary/40 text-left"
-              >
-                <div className="mb-4 text-primary bg-primary/10 w-fit p-3 rounded-2xl">
-                  <FileText size={24} />
+          {/* STATS CARD */}
+          <div className="bento-col-4">
+            <div className="bento-card justify-between min-h-[220px] border-white/5">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Telemetry</span>
+                  <h3 className="text-sm font-black text-white uppercase tracking-tight">NETWORK INTEL</h3>
                 </div>
-                <h3 className="text-lg font-bold text-white">INTEL DROP</h3>
-                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Share critical data</p>
-              </motion.button>
-            </div>
+                <div className="p-2.5 bg-white/5 rounded-xl text-primary">
+                  <Activity size={18} />
+                </div>
+              </div>
 
-            <div className="bento-col-6">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/create?mode=safe')}
-                className="bento-card w-full h-full min-h-[140px] border-secondary/20 hover:border-secondary/40 text-left"
-              >
-                <div className="mb-4 text-secondary bg-secondary/10 w-fit p-3 rounded-2xl">
-                  <CheckCircle2 size={24} />
+              <div className="grid grid-cols-2 gap-4 py-4 my-2 border-y border-white/5">
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Active Shards</p>
+                  <p className="text-2xl font-black text-primary font-mono">{stats.shardCount}</p>
                 </div>
-                <h3 className="text-lg font-bold text-white">SAFE CHECK</h3>
-                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Update your status</p>
-              </motion.button>
-            </div>
+                <div className="space-y-1">
+                  <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Reconstructed</p>
+                  <p className="text-2xl font-black text-secondary font-mono">{stats.messageCount}</p>
+                </div>
+              </div>
 
-            {/* SURVIVAL KIT LINK */}
-            <div className="bento-col-12">
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => navigate('/survival')}
-                className="bento-card flex-row items-center justify-between p-6 bg-accent/5 border-accent/20 hover:border-accent/40"
-              >
-                <div className="flex items-center gap-5">
-                  <div className="p-4 bg-accent/20 rounded-2xl text-accent">
-                    <Heart size={24} className="animate-pulse" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-xl font-black text-white italic">SURVIVAL KIT</h3>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">First Aid • Signal Tools • Guidelines</p>
-                  </div>
-                </div>
-                <div className="w-12 h-12 rounded-full glass border-white/10 flex items-center justify-center text-accent">
-                   <Zap size={20} />
-                </div>
-              </motion.button>
-            </div>
-
-            {/* MORE TOOLS TOGGLE */}
-            <div className="bento-col-12">
-               <button
-                 onClick={() => setShowMore(!showMore)}
-                 className="w-full py-4 glass border-white/5 rounded-[20px] text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-colors"
-               >
-                 {showMore ? 'Collapse Tactical Tools' : 'Explore Tactical Tools'}
-               </button>
+              <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-slate-400">
+                <span>Signal Integrity</span>
+                <span className="text-secondary">98.4% Nominal</span>
+              </div>
             </div>
           </div>
 
-          <AnimatePresence>
-            {showMore && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="mt-6 bento-grid"
-              >
-                <div className="bento-col-4">
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/scan')}
-                    className="bento-card w-full border-white/5 text-left h-full"
-                  >
-                    <div className="p-3 bg-white/5 w-fit rounded-xl mb-4 text-slate-400">
-                      <QrCode size={20} />
-                    </div>
-                    <h4 className="font-bold text-white">INTERCEPT</h4>
-                    <p className="text-[10px] font-medium text-slate-500 uppercase">Scan peer nodes</p>
-                  </motion.button>
-                </div>
+          {/* INTEL DROP LINK */}
+          <div className="bento-col-6">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/create?mode=intel')}
+              className="bento-card w-full h-full min-h-[140px] border-primary/20 hover:border-primary/40 text-left"
+            >
+              <div className="mb-4 text-primary bg-primary/10 w-fit p-3 rounded-2xl">
+                <Layers size={24} />
+              </div>
+              <h3 className="text-lg font-bold text-white">INTEL DROP</h3>
+              <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Share critical data</p>
+            </motion.button>
+          </div>
 
-                <div className="bento-col-4">
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/inbox')}
-                    className="bento-card w-full border-white/5 text-left h-full"
-                  >
-                    <div className="p-3 bg-white/5 w-fit rounded-xl mb-4 text-slate-400">
-                      <Inbox size={20} />
-                    </div>
-                    <h4 className="font-bold text-white">INTEL HUB</h4>
-                    <p className="text-[10px] font-medium text-slate-500 uppercase">Inbox & Records</p>
-                  </motion.button>
-                </div>
+          <div className="bento-col-6">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/create?mode=safe')}
+              className="bento-card w-full h-full min-h-[140px] border-secondary/20 hover:border-secondary/40 text-left"
+            >
+              <div className="mb-4 text-secondary bg-secondary/10 w-fit p-3 rounded-2xl">
+                <CheckCircle2 size={24} />
+              </div>
+              <h3 className="text-lg font-bold text-white">SAFE CHECK</h3>
+              <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Update your status</p>
+            </motion.button>
+          </div>
 
-                <div className="bento-col-4">
-                  <div className="bento-card border-white/5 h-full">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className={`p-3 rounded-xl ${vaultOpen ? 'bg-secondary/20 text-secondary' : 'bg-white/5 text-slate-500'}`}>
-                        {vaultOpen ? <Unlock size={20} /> : <Lock size={20} />}
-                      </div>
-                      <div className="space-y-1">
-                        <h4 className="font-bold text-white leading-none">STEALTH VAULT</h4>
-                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Encryption Active</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={toggleVault}
-                      className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${vaultOpen ? 'bg-secondary text-white' : 'glass border-white/10 text-slate-400'}`}
-                    >
-                      {vaultOpen ? 'SECURE VAULT' : 'ACCESS VAULT'}
-                    </button>
-                  </div>
+          {/* SURVIVAL KIT LINK */}
+          <div className="bento-col-12">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={() => navigate('/survival')}
+              className="bento-card flex-row items-center justify-between p-6 bg-accent/5 border-accent/20 hover:border-accent/40"
+            >
+              <div className="flex items-center gap-5">
+                <div className="p-4 bg-accent/20 rounded-2xl text-accent">
+                  <Heart size={24} className="animate-pulse" />
                 </div>
+                <div className="text-left">
+                  <h3 className="text-xl font-black text-white italic">SURVIVAL KIT</h3>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">First Aid • Signal Tools • Guidelines</p>
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-full glass border-white/10 flex items-center justify-center text-accent">
+                 <Zap size={20} />
+              </div>
+            </motion.button>
+          </div>
 
-                <div className="bento-col-12">
-                   <div className="bento-card flex-row items-center justify-between border-white/5 py-4">
-                      <div className="flex gap-6">
-                        <div>
-                          <p className="text-[8px] font-black text-slate-500 uppercase">System</p>
-                          <p className="text-[11px] font-bold text-slate-300 uppercase">v2.7.6-S</p>
-                        </div>
-                        <div>
-                          <p className="text-[8px] font-black text-slate-500 uppercase">Sync Status</p>
-                          <p className="text-[11px] font-bold text-secondary uppercase">Encrypted</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={runDemoMode} className="btn-premium btn-outline !py-2 !px-4 !text-[9px]">DEMO MODE</button>
-                        <button onClick={() => setShowEmergencyCard(true)} className="btn-premium btn-primary !py-2 !px-4 !text-[9px]">MY PROFILE</button>
-                      </div>
-                   </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* MORE TOOLS TOGGLE */}
+          <div className="bento-col-12">
+             <button
+               onClick={() => setShowMore(!showMore)}
+               className="w-full py-4 glass border-white/5 rounded-[20px] text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-colors"
+             >
+               {showMore ? 'Collapse Tactical Tools' : 'Explore Tactical Tools'}
+             </button>
+          </div>
         </div>
+
+        <AnimatePresence>
+          {showMore && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="mt-6 bento-grid"
+            >
+              <div className="bento-col-4">
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate('/scan')}
+                  className="bento-card w-full border-white/5 text-left h-full"
+                >
+                  <div className="p-3 bg-white/5 w-fit rounded-xl mb-4 text-slate-400">
+                    <QrCode size={20} />
+                  </div>
+                  <h4 className="font-bold text-white">INTERCEPT</h4>
+                  <p className="text-[10px] font-medium text-slate-500 uppercase">Scan peer nodes</p>
+                </motion.button>
+              </div>
+
+              <div className="bento-col-4">
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate('/inbox')}
+                  className="bento-card w-full border-white/5 text-left h-full"
+                >
+                  <div className="p-3 bg-white/5 w-fit rounded-xl mb-4 text-slate-400">
+                    <Inbox size={20} />
+                  </div>
+                  <h4 className="font-bold text-white">INTEL HUB</h4>
+                  <p className="text-[10px] font-medium text-slate-500 uppercase">Inbox & Records</p>
+                </motion.button>
+              </div>
+
+              <div className="bento-col-4">
+                <div className="bento-card border-white/5 h-full">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className={`p-3 rounded-xl ${vaultOpen ? 'bg-secondary/20 text-secondary' : 'bg-white/5 text-slate-500'}`}>
+                      {vaultOpen ? <Unlock size={20} /> : <Lock size={20} />}
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-white leading-none">STEALTH VAULT</h4>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Encryption Active</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={toggleVault}
+                    className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${vaultOpen ? 'bg-secondary text-white' : 'glass border-white/10 text-slate-400'}`}
+                  >
+                    {vaultOpen ? 'SECURE VAULT' : 'ACCESS VAULT'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="bento-col-12">
+                 <div className="bento-card flex-row items-center justify-between border-white/5 py-4">
+                    <div className="flex gap-6">
+                      <div>
+                        <p className="text-[8px] font-black text-slate-500 uppercase">System</p>
+                        <p className="text-[11px] font-bold text-slate-300 uppercase">v2.7.6-S</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black text-slate-500 uppercase">Sync Status</p>
+                        <p className="text-[11px] font-bold text-secondary uppercase">Encrypted</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={runDemoMode} className="btn-premium btn-outline !py-2 !px-4 !text-[9px]">DEMO MODE</button>
+                      <button onClick={() => setShowEmergencyCard(true)} className="btn-premium btn-primary !py-2 !px-4 !text-[9px]">MY PROFILE</button>
+                    </div>
+                 </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <EmergencyCard isOpen={showEmergencyCard} onClose={() => setShowEmergencyCard(false)} />
