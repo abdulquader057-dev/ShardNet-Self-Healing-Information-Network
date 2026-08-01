@@ -19,6 +19,8 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import L from 'leaflet';
 
+import PullToRefresh from '../components/PullToRefresh';
+
 // Setup custom Leaflet icons using L.divIcon
 const userIcon = L.divIcon({
   html: '<div class="user-marker-container"><div class="user-marker"></div><div class="pulse-ring"></div></div>',
@@ -124,8 +126,19 @@ export default function MeshPulse() {
     }, 3000);
   };
 
+  const handleRefresh = () => {
+    setLoading(true);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        setLoading(false);
+        resolve();
+      }, 1500);
+    });
+  };
+
   return (
-    <div className="space-y-6 pb-28">
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="space-y-6 pb-28">
       
       {/* ── HEADER TELEMETRY CARD ── */}
       <div className="card-elevated p-6 flex flex-col gap-4" style={{ background: 'var(--glass)' }}>
@@ -438,5 +451,6 @@ export default function MeshPulse() {
       </div>
 
     </div>
+    </PullToRefresh>
   );
 }

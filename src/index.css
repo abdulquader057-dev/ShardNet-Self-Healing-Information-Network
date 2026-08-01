@@ -555,6 +555,146 @@ h1, h2, h3, h4 {
   animation: map-pulse 2s infinite ease-out;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   BUTTON INTERACTION STATES, SHIMMERS, AND PULL REFRESH
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Focus Outlines for Accessibility (Instruction 9) */
+:focus-visible {
+  outline: 2px solid var(--action, #0A84FF) !important;
+  outline-offset: 2px !important;
+}
+
+/* Momentum scrolling & Scrollbar hiding (Instruction 8) */
+.scroll-momentum-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+.scroll-momentum-container::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* Shimmer Loading Screens (Instruction 3) */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.shimmer-card {
+  background: linear-gradient(90deg, #1c1c1e 25%, #2c2c2e 50%, #1c1c1e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Button Micro-interactions (Instruction 1) */
+button, 
+.btn, 
+.btn-primary, 
+.btn-emergency {
+  touch-action: manipulation;
+  transition: transform var(--transition-fast, 150ms) cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow var(--transition-fast, 150ms) ease-in-out, 
+              background-color var(--transition-fast, 150ms) ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+button:hover:not(:disabled),
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled),
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-emergency:active:not(:disabled) {
+  transform: scale(0.95) !important;
+}
+
+button:disabled,
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Subtle Active Ripple Pseudo-Effect */
+button:active::after,
+.btn:active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10);
+  opacity: 0;
+  transition: transform .4s, opacity .4s;
+}
+
+button:active:hover::after,
+.btn:active:hover::after {
+  transform: scale(0);
+  opacity: 0.15;
+  transition: 0s;
+}
+
+/* Screen Transitions (Instruction 2) */
+.screen--enter {
+  animation: screen-enter-anim 200ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+.screen--exit {
+  animation: screen-exit-anim 150ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes screen-enter-anim {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes screen-exit-anim {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+/* First load launch screen anim */
+.app-launch-anim {
+  animation: slide-up-launch 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slide-up-launch {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Leaflet Popup overrides for Dark Mode */
 .leaflet-popup-content-wrapper {
   background: var(--bg-surface, #1C1C1E) !important;
@@ -579,5 +719,6 @@ h1, h2, h3, h4 {
   color: var(--text-secondary, #8E8E93) !important;
   padding: 6px 8px 0 0 !important;
 }
+
 
 

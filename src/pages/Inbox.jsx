@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
+import PullToRefresh from '../components/PullToRefresh';
 
 export default function Inbox() {
   const navigate = useNavigate();
@@ -25,6 +26,19 @@ export default function Inbox() {
   const [selectedSignal, setSelectedSignal] = useState(null);
   const [activeBannerDismissed, setActiveBannerDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 200) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Pre-populate mock signals in global window.sharedNetData if empty
   useEffect(() => {
@@ -179,8 +193,19 @@ export default function Inbox() {
 
   const activeEmergency = signals.find(s => s.status === 'active');
 
+  const handleRefresh = () => {
+    setLoading(true);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        setLoading(false);
+        resolve();
+      }, 1500);
+    });
+  };
+
   return (
-    <div className="space-y-6 pb-28 relative">
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="space-y-6 pb-28 relative">
       
       {/* ── STICKY ACTIVE EMERGENCY BANNER (Instruction 2) ── */}
       {activeEmergency && !activeBannerDismissed && (
@@ -546,7 +571,18 @@ export default function Inbox() {
           </div>
         )}
       </AnimatePresence>
-
     </div>
+
+    {/* Scroll to Top Floating Button (Instruction 8) */}
+    {showScrollTop && (
+      <button 
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className="scroll-top-btn fixed bottom-24 right-4 w-12 h-12 rounded-full bg-[#1c1c1e] border border-slate-800 flex items-center justify-center text-white z-[80] shadow-2xl active:scale-95 transition-transform"
+      >
+        <i className="ph-bold ph-arrow-up" style={{ fontSize: '20px' }} />
+      </button>
+    )}
+
+    </PullToRefresh>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import CreateMessage from './pages/CreateMessage';
@@ -7,7 +7,6 @@ import StorageView from './pages/StorageView';
 import ScanPage from './pages/ScanPage';
 import ReconstructedView from './pages/ReconstructedView';
 import Inbox from './pages/Inbox';
-import BluetoothMesh from './pages/BluetoothMesh';
 import MeshPulse from './pages/MeshPulse';
 import MeshWhisper from './pages/MeshWhisper';
 import SilentRelay from './pages/SilentRelay';
@@ -20,6 +19,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import SOSButtonFlow from './components/SOSButtonFlow';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { AudioEngine, Haptic } from './core/feedback';
 
 function App() {
   const [demoActive, setDemoActive] = useState(localStorage.getItem('sharednet_demo_mode') === 'true');
@@ -60,223 +60,454 @@ function App() {
       const id = Math.random().toString();
       const newToast = { id, ...e.detail };
       setToasts(prev => [...prev, newToast]);
-      setTimeout(() => {
+      
+      // Setup auto-dismiss timeout
+      const dismissTimeout = setTimeout(() => {
         setToasts(prev => prev.filter(t => t.id !== id));
       }, 3000);
+
+      newToast.timeoutId = dismissTimeout;
     };
     window.addEventListener('show-toast', handleToast);
+
+    // Add audio and haptics to all button clicks globally
+    const handleGlobalClick = (e) => {
+      const target = e.target.closest('button, a, [role="button"]');
+      if (target && !target.disabled) {
+        AudioEngine.play('tap');
+        Haptic.tap();
+      }
+    };
+    document.addEventListener('click', handleGlobalClick);
 
     return () => {
       safeCall(cleanup, "Interval Cleanup");
       window.removeEventListener('demo-mode-changed', handleDemoChange);
       window.removeEventListener('show-toast', handleToast);
+      document.removeEventListener('click', handleGlobalClick);
     };
   }, []);
 
   const handleFinishOnboarding = () => {
     localStorage.setItem('sharednet_onboarded', 'true');
     setOnboarded(true);
+    AudioEngine.play('success');
+    Haptic.success();
   };
 
   return (
     <Router>
-      <div className="app-container flex flex-col min-h-screen">
-        
-        {/* ── PERSISTENT DEMO MODE BANNER (Instruction 2) ── */}
-        {demoActive && (
-          <div 
-            className="bg-[#FF9500] text-black text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center shrink-0 z-[10000]" 
-            style={{ height: '28px', borderBottom: '1px solid rgba(0,0,0,0.1)' }}
-          >
-            Demo Mode Active
-          </div>
-        )}
-
-        <div className="noise-overlay" />
-        <Navbar />
-        <SOSButtonFlow />
-
-        {/* ── TOAST NOTIFICATIONS DRAWER (Instruction 4) ── */}
-        <div className="toast-container fixed top-[56px] left-4 right-4 z-[99999] pointer-events-none flex flex-col gap-2">
-          <AnimatePresence>
-            {toasts.map(toast => {
-              const colors = {
-                success: 'border-l-[#34C759] bg-[#1C1C1E]',
-                error: 'border-l-[#FF3B30] bg-[#1C1C1E]',
-                info: 'border-l-[#0A84FF] bg-[#1C1C1E]'
-              };
-              const Icons = {
-                success: <CheckCircle className="text-[#34C759]" size={16} />,
-                error: <AlertTriangle className="text-[#FF3B30]" size={16} />,
-                info: <Info className="text-[#0A84FF]" size={16} />
-              };
-
-              return (
-                <motion.div
-                  key={toast.id}
-                  initial={{ y: -20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -20, opacity: 0 }}
-                  className={`p-4 border-l-4 rounded-lg shadow-2xl flex items-center gap-3 pointer-events-auto border border-slate-800/80 ${colors[toast.type] || colors.info}`}
-                >
-                  {Icons[toast.type] || Icons.info}
-                  <span className="text-white text-xs font-bold">{toast.message}</span>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-
-        {/* ── MAIN ROUTER SCREEN OVERLAY ── */}
-        <main className="ui-overlay flex-1">
-          <ErrorBoundary>
-            <Routes>
-              <Route path="/"            element={<Home />} />
-              <Route path="/create"      element={<CreateMessage />} />
-              <Route path="/storage"     element={<StorageView />} />
-              <Route path="/scan"        element={<ScanPage />} />
-              <Route path="/bluetooth"   element={<BluetoothMesh />} />
-              <Route path="/reconstructed" element={<ReconstructedView />} />
-              <Route path="/hub"         element={<ReconstructedView />} />
-              <Route path="/inbox"       element={<Inbox />} />
-              <Route path="/pulse"       element={<MeshPulse />} />
-              <Route path="/whisper"     element={<MeshWhisper />} />
-              <Route path="/relay"       element={<SilentRelay />} />
-              <Route path="/settings"    element={<Settings />} />
-              <Route path="/survival"    element={<SurvivalKit />} />
-              <Route path="/index.html"  element={<Home />} />
-            </Routes>
-          </ErrorBoundary>
-        </main>
-
-        {/* ── FIRST-TIME ONBOARDING FLOW OVERLAY (Instruction 1) ── */}
-        {!onboarded && (
-          <div className="onboarding fixed inset-0 z-[100000] bg-[#0A0A0F] flex flex-col justify-between p-6">
-            
-            {/* Background gradient flare */}
-            <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at bottom, rgba(10,132,255,0.06) 0%, transparent 65%)' }} />
-
-            {/* Skip Option at top */}
-            <div className="flex justify-end z-10">
-              <button 
-                onClick={handleFinishOnboarding}
-                className="text-slate-500 hover:text-slate-300 text-xs font-bold uppercase tracking-wider py-2 px-4"
-              >
-                Skip
-              </button>
-            </div>
-
-            {/* Slide Content wrapper with AnimatePresence */}
-            <div className="flex-1 flex flex-col items-center justify-center max-w-sm mx-auto z-10">
-              <AnimatePresence mode="wait">
-                {currentSlide === 0 && (
-                  <motion.div
-                    key="slide0"
-                    initial={{ x: 100, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: -100, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    className="flex flex-col items-center text-center space-y-6"
-                  >
-                    <div className="w-24 h-24 rounded-full bg-[#0A84FF]/10 flex items-center justify-center border border-[#0A84FF]/20 shadow-[0_0_20px_rgba(10,132,255,0.1)]">
-                      <i className="ph-fill ph-broadcast text-[#0A84FF] animate-pulse" style={{ fontSize: '56px' }} />
-                    </div>
-                    <div className="space-y-3">
-                      <h2 className="text-2xl font-black italic uppercase tracking-tight text-white leading-none">No Signal?<br/>No Problem.</h2>
-                      <p className="text-xs text-slate-400 leading-relaxed">
-                        SharedNet creates a direct connection between nearby phones. No towers. No internet. Just you and the people around you.
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-
-                {currentSlide === 1 && (
-                  <motion.div
-                    key="slide1"
-                    initial={{ x: 100, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: -100, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    className="flex flex-col items-center text-center space-y-6"
-                  >
-                    <div className="w-24 h-24 rounded-full bg-[#FF3B30]/10 flex items-center justify-center border border-[#FF3B30]/20 shadow-[0_0_20px_rgba(255,59,48,0.1)]">
-                      <i className="ph-fill ph-siren text-[#FF3B30] animate-bounce" style={{ fontSize: '56px' }} />
-                    </div>
-                    <div className="space-y-3">
-                      <h2 className="text-2xl font-black italic uppercase tracking-tight text-white leading-none">One Tap SOS</h2>
-                      <p className="text-xs text-slate-400 leading-relaxed">
-                        In an emergency, tap the red SOS button. Your signal reaches every device in range instantly — even if you're underground or in a remote area.
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-
-                {currentSlide === 2 && (
-                  <motion.div
-                    key="slide2"
-                    initial={{ x: 100, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: -100, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    className="flex flex-col items-center text-center space-y-6"
-                  >
-                    <div className="w-24 h-24 rounded-full bg-[#34C759]/10 flex items-center justify-center border border-[#34C759]/20 shadow-[0_0_20px_rgba(52,199,89,0.1)]">
-                      <i className="ph-fill ph-shield-check text-[#34C759]" style={{ fontSize: '56px' }} />
-                    </div>
-                    <div className="space-y-3">
-                      <h2 className="text-2xl font-black italic uppercase tracking-tight text-white leading-none">You're Protected</h2>
-                      <p className="text-xs text-slate-400 leading-relaxed">
-                        Your device is now part of the rescue network. Stay safe, and help others stay safe too.
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Slide Navigation footer */}
-            <div className="space-y-6 max-w-sm w-full mx-auto z-10 pb-6">
-              
-              {/* Pagination Dots */}
-              <div className="flex justify-center items-center gap-2">
-                {[0, 1, 2].map(idx => (
-                  <div
-                    key={idx}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      currentSlide === idx 
-                        ? 'w-6 bg-[#0A84FF]' 
-                        : 'w-2 bg-[#2C2C2E]'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-2">
-                {currentSlide < 2 ? (
-                  <button
-                    onClick={() => setCurrentSlide(prev => prev + 1)}
-                    className="w-full py-4 bg-[#0A84FF] text-white rounded-xl font-bold text-sm uppercase tracking-wider shadow-lg active:scale-[0.99] transition-transform"
-                  >
-                    Next
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleFinishOnboarding}
-                    className="w-full py-4 bg-[#34C759] text-white rounded-xl font-bold text-sm uppercase tracking-wider shadow-lg active:scale-[0.99] transition-transform"
-                  >
-                    Get Started
-                  </button>
-                )}
-              </div>
-
-            </div>
-
-          </div>
-        )}
-
-      </div>
+      <AppContent 
+        demoActive={demoActive}
+        setDemoActive={setDemoActive}
+        onboarded={onboarded}
+        setOnboarded={setOnboarded}
+        currentSlide={currentSlide}
+        setCurrentSlide={setCurrentSlide}
+        toasts={toasts}
+        setToasts={setToasts}
+        handleFinishOnboarding={handleFinishOnboarding}
+      />
     </Router>
+  );
+}
+
+// Inner component wrapper to safely query react-router location and navigate hooks
+function AppContent({
+  demoActive,
+  setDemoActive,
+  onboarded,
+  setOnboarded,
+  currentSlide,
+  setCurrentSlide,
+  toasts,
+  setToasts,
+  handleFinishOnboarding
+}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [transitionClass, setTransitionClass] = useState('app-launch-anim');
+
+  // Trigger page transition scaling animations on route changes (Instruction 2)
+  useEffect(() => {
+    setTransitionClass('screen--exit');
+    const timer1 = setTimeout(() => {
+      setTransitionClass('screen--enter');
+    }, 150);
+    const timer2 = setTimeout(() => {
+      setTransitionClass('');
+    }, 350);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [location.pathname]);
+
+  // Keyboard Shortcuts (Instruction 9)
+  useEffect(() => {
+    let keyHintShown = localStorage.getItem('key_hint_shown') === 'true';
+
+    const handleKeyDown = (e) => {
+      // Show hint banner on first modifier / key interaction
+      if (!keyHintShown && (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || ['s','n','e','d'].includes(e.key.toLowerCase()))) {
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { type: 'info', message: "Pro tip: Press 'S' for SOS, 'N' for Network, 'E' for Feed, 'D' for Demo Mode" }
+        }));
+        localStorage.setItem('key_hint_shown', 'true');
+        keyHintShown = true;
+      }
+
+      // Bypass shortcut actions if user is typing in forms
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+      if (key === 's') {
+        e.preventDefault();
+        AudioEngine.play('warning');
+        Haptic.warning();
+        if (confirm("🚨 WARNING: Trigger emergency SOS distress beacon?")) {
+          window.dispatchEvent(new CustomEvent('trigger-sos'));
+        }
+      } else if (key === 'n') {
+        e.preventDefault();
+        AudioEngine.play('tap');
+        navigate('/pulse');
+      } else if (key === 'e') {
+        e.preventDefault();
+        AudioEngine.play('tap');
+        navigate('/inbox');
+      } else if (key === 'd') {
+        e.preventDefault();
+        const currentMode = localStorage.getItem('sharednet_demo_mode') === 'true';
+        const nextMode = !currentMode;
+        
+        // Update LocalStorage & global parameters
+        localStorage.setItem('sharednet_demo_mode', nextMode.toString());
+        if (nextMode) {
+          if (!window.sharedNetData) window.sharedNetData = { signals: [] };
+          window.sharedNetData.signals = [
+            {
+              id: 'mock-1',
+              type: 'received',
+              title: 'Hiker-42 Emergency SOS',
+              status: 'active',
+              time: '4 min ago',
+              timestamp: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
+              location: '120m northeast',
+              description: "Distress signal from hiker. Message: 'Twisted ankle, cannot walk. Need medical assistance.'",
+              sender: 'Hiker-42',
+              range: '120m',
+              battery: '34%'
+            },
+            {
+              id: 'demo-sig-1',
+              type: 'received',
+              title: 'Flood Warning Alert',
+              status: 'active',
+              time: '1 min ago',
+              timestamp: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
+              location: '1.2km north',
+              description: "Flash flood warning issued for local sectors. Evacuate to higher ground immediately.",
+              sender: 'BaseCamp',
+              range: '1.2km',
+              battery: '98%'
+            },
+            {
+              id: 'mock-2',
+              type: 'received',
+              title: 'Vehicle Collision Alert',
+              status: 'resolved',
+              time: 'Yesterday, 6:42 PM',
+              timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+              location: '450m south',
+              description: "Multi-vehicle accident reported. Emergency services dispatched. All victims evacuated safely.",
+              sender: 'Vehicle-A1',
+              range: '450m',
+              battery: '82%'
+            },
+            {
+              id: 'demo-sig-2',
+              type: 'received',
+              title: 'Medical Rescue Resolved',
+              status: 'resolved',
+              time: 'Yesterday',
+              timestamp: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
+              location: '2.1km west',
+              description: "Cardiac incident reported. Rescue-01 intercepted and administered first-aid. Patient stabilized and evacuated.",
+              sender: 'Rescue-01',
+              range: '2.1km',
+              battery: '74%'
+            },
+            {
+              id: 'mock-3',
+              type: 'sent',
+              title: 'Your SOS Signal',
+              status: 'sent',
+              time: 'Today, 08:15 AM',
+              timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+              location: 'Your location',
+              description: "Test signal sent successfully. 3 nearby devices notified.",
+              sender: 'You (Self)',
+              range: 'Local Transceiver',
+              battery: '84%'
+            },
+            {
+              id: 'demo-sent-1',
+              type: 'sent',
+              title: 'Grid Status Check-in',
+              status: 'sent',
+              time: 'Today, 09:12 AM',
+              timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+              location: 'Your location',
+              description: "Status Check: Grid-4 secure, transceiver active.",
+              sender: 'You (Self)',
+              range: 'Local Transceiver',
+              battery: '84%'
+            },
+            {
+              id: 'mock-4',
+              type: 'sent',
+              title: 'Test Ping',
+              status: 'sent',
+              time: 'Today, 07:30 AM',
+              timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+              location: 'Your location',
+              description: "Network connectivity test. All systems operational.",
+              sender: 'You (Self)',
+              range: 'Local Transceiver',
+              battery: '84%'
+            }
+          ];
+        } else {
+          if (window.sharedNetData) window.sharedNetData.signals = [];
+        }
+
+        window.dispatchEvent(new CustomEvent('demo-mode-changed'));
+        
+        // Sound and vibrating feedbacks
+        AudioEngine.play(nextMode ? 'success' : 'warning');
+        Haptic.vibrate(nextMode ? [50, 100, 50] : 100);
+
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { 
+            type: 'info', 
+            message: `Demo Mode ${nextMode ? 'Activated: mock telemetry loaded' : 'Deactivated'}` 
+          }
+        }));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
+
+  return (
+    <div className="app-container flex flex-col min-h-screen">
+      
+      {/* ── PERSISTENT DEMO MODE BANNER ── */}
+      {demoActive && (
+        <div 
+          className="bg-[#FF9500] text-black text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center shrink-0 z-[10000]" 
+          style={{ height: '28px', borderBottom: '1px solid rgba(0,0,0,0.1)' }}
+        >
+          Demo Mode Active
+        </div>
+      )}
+
+      <div className="noise-overlay" />
+      <Navbar />
+      <SOSButtonFlow />
+
+      {/* ── TOAST NOTIFICATIONS CONTAINER (Instruction 4) ── */}
+      <div className="toast-container fixed top-[56px] left-4 right-4 z-[99999] pointer-events-none flex flex-col gap-2">
+        <AnimatePresence>
+          {toasts.map(toast => {
+            const colors = {
+              success: 'border-l-[#34C759] bg-[#1C1C1E]',
+              error: 'border-l-[#FF3B30] bg-[#1C1C1E]',
+              info: 'border-l-[#0A84FF] bg-[#1C1C1E]'
+            };
+            const Icons = {
+              success: <CheckCircle className="text-[#34C759]" size={16} />,
+              error: <AlertTriangle className="text-[#FF3B30]" size={16} />,
+              info: <Info className="text-[#0A84FF]" size={16} />
+            };
+
+            const handleMouseEnter = () => {
+              if (toast.timeoutId) clearTimeout(toast.timeoutId);
+            };
+
+            const handleMouseLeave = () => {
+              // Restart timer on mouse leave
+              const newTimeout = setTimeout(() => {
+                setToasts(prev => prev.filter(t => t.id !== toast.id));
+              }, 2000);
+              toast.timeoutId = newTimeout;
+            };
+
+            return (
+              <motion.div
+                key={toast.id}
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -20, opacity: 0, x: 20 }}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                className={`p-4 border-l-4 rounded-lg shadow-2xl flex items-center gap-3 pointer-events-auto border border-slate-800/80 ${colors[toast.type] || colors.info}`}
+              >
+                {Icons[toast.type] || Icons.info}
+                <span className="text-white text-xs font-bold">{toast.message}</span>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+
+      {/* ── MAIN ROUTER SCREEN OVERLAY ── */}
+      <main className={`ui-overlay flex-1 ${transitionClass}`}>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/"            element={<Home />} />
+            <Route path="/create"      element={<CreateMessage />} />
+            <Route path="/storage"     element={<StorageView />} />
+            <Route path="/scan"        element={<ScanPage />} />
+            <Route path="/bluetooth"   element={<BluetoothMesh />} />
+            <Route path="/reconstructed" element={<ReconstructedView />} />
+            <Route path="/hub"         element={<ReconstructedView />} />
+            <Route path="/inbox"       element={<Inbox />} />
+            <Route path="/pulse"       element={<MeshPulse />} />
+            <Route path="/whisper"     element={<MeshWhisper />} />
+            <Route path="/relay"       element={<SilentRelay />} />
+            <Route path="/settings"    element={<Settings />} />
+            <Route path="/survival"    element={<SurvivalKit />} />
+            <Route path="/index.html"  element={<Home />} />
+          </Routes>
+        </ErrorBoundary>
+      </main>
+
+      {/* ── FIRST-TIME ONBOARDING FLOW OVERLAY (Instruction 1) ── */}
+      {!onboarded && (
+        <div className="onboarding fixed inset-0 z-[100000] bg-[#0A0A0F] flex flex-col justify-between p-6">
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at bottom, rgba(10,132,255,0.06) 0%, transparent 65%)' }} />
+
+          <div className="flex justify-end z-10">
+            <button 
+              onClick={handleFinishOnboarding}
+              className="text-slate-500 hover:text-slate-300 text-xs font-bold uppercase tracking-wider py-2 px-4"
+            >
+              Skip
+            </button>
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center max-w-sm mx-auto z-10">
+            <AnimatePresence mode="wait">
+              {currentSlide === 0 && (
+                <motion.div
+                  key="slide0"
+                  initial={{ x: 100, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -100, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  className="flex flex-col items-center text-center space-y-6"
+                >
+                  <div className="w-24 h-24 rounded-full bg-[#0A84FF]/10 flex items-center justify-center border border-[#0A84FF]/20 shadow-[0_0_20px_rgba(10,132,255,0.1)]">
+                    <i className="ph-fill ph-broadcast text-[#0A84FF] animate-pulse" style={{ fontSize: '56px' }} />
+                  </div>
+                  <div className="space-y-3">
+                    <h2 className="text-2xl font-black italic uppercase tracking-tight text-white leading-none">No Signal?<br/>No Problem.</h2>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      SharedNet creates a direct connection between nearby phones. No towers. No internet. Just you and the people around you.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {currentSlide === 1 && (
+                <motion.div
+                  key="slide1"
+                  initial={{ x: 100, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -100, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  className="flex flex-col items-center text-center space-y-6"
+                >
+                  <div className="w-24 h-24 rounded-full bg-[#FF3B30]/10 flex items-center justify-center border border-[#FF3B30]/20 shadow-[0_0_20px_rgba(255,59,48,0.1)]">
+                    <i className="ph-fill ph-siren text-[#FF3B30] animate-bounce" style={{ fontSize: '56px' }} />
+                  </div>
+                  <div className="space-y-3">
+                    <h2 className="text-2xl font-black italic uppercase tracking-tight text-white leading-none">One Tap SOS</h2>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      In an emergency, tap the red SOS button. Your signal reaches every device in range instantly — even if you're underground or in a remote area.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {currentSlide === 2 && (
+                <motion.div
+                  key="slide2"
+                  initial={{ x: 100, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -100, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  className="flex flex-col items-center text-center space-y-6"
+                >
+                  <div className="w-24 h-24 rounded-full bg-[#34C759]/10 flex items-center justify-center border border-[#34C759]/20 shadow-[0_0_20px_rgba(52,199,89,0.1)]">
+                    <i className="ph-fill ph-shield-check text-[#34C759]" style={{ fontSize: '56px' }} />
+                  </div>
+                  <div className="space-y-3">
+                    <h2 className="text-2xl font-black italic uppercase tracking-tight text-white leading-none">You're Protected</h2>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Your device is now part of the rescue network. Stay safe, and help others stay safe too.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="space-y-6 max-w-sm w-full mx-auto z-10 pb-6">
+            <div className="flex justify-center items-center gap-2">
+              {[0, 1, 2].map(idx => (
+                <div
+                  key={idx}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    currentSlide === idx 
+                      ? 'w-6 bg-[#0A84FF]' 
+                      : 'w-2 bg-[#2C2C2E]'
+                  }`}
+                />
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              {currentSlide < 2 ? (
+                <button
+                  onClick={() => {
+                    setCurrentSlide(prev => prev + 1);
+                    AudioEngine.play('tap');
+                    Haptic.tap();
+                  }}
+                  className="w-full py-4 bg-[#0A84FF] text-white rounded-xl font-bold text-sm uppercase tracking-wider shadow-lg active:scale-[0.99] transition-transform"
+                >
+                  Next
+                </button>
+              ) : (
+                <button
+                  onClick={handleFinishOnboarding}
+                  className="w-full py-4 bg-[#34C759] text-white rounded-xl font-bold text-sm uppercase tracking-wider shadow-lg active:scale-[0.99] transition-transform"
+                >
+                  Get Started
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
   );
 }
 
