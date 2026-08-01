@@ -439,3 +439,17 @@ h1, h2, h3, h4 {
   color: white;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SVG MESH NETWORK ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes stroke-dash {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+.animate-dash-line {
+  stroke-dasharray: 6 6;
+  animation: stroke-dash 2s linear infinite;
+}
+
