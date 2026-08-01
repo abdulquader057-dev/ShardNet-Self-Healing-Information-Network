@@ -25,7 +25,6 @@ const Home = () => {
   const [demoRunning, setDemoRunning] = useState(false);
   const [showEmergencyCard, setShowEmergencyCard] = useState(false);
   const [showMore, setShowMore] = useState(false);
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [vaultOpen, setVaultOpen] = useState(false);
 
   useEffect(() => {
@@ -369,47 +368,7 @@ const Home = () => {
 
       <EmergencyCard isOpen={showEmergencyCard} onClose={() => setShowEmergencyCard(false)} />
 
-      {!showMore && (
-        <motion.button
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={handleSOS}
-          className="fixed bottom-28 right-6 z-[100] w-16 h-16 rounded-full bg-danger text-white shadow-2xl shadow-danger/40 flex items-center justify-center border-4 border-white/10"
-        >
-          <ShieldAlert size={28} />
-        </motion.button>
-      )}
 
-      <AnimatePresence>
-        {isBroadcasting && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] bg-background/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center"
-          >
-            <div className="relative mb-12">
-              <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-              <div className="w-32 h-32 bg-primary rounded-full flex items-center justify-center border-4 border-white/10">
-                <Bluetooth size={56} color="white" className="animate-pulse" />
-              </div>
-            </div>
-            
-            <h2 className="heading-lg text-white mb-4 italic">BROADCASTING SOS</h2>
-            <p className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] max-w-xs">
-              Initiating Bluetooth Mesh Beacon... <br />
-              Relaying Critical Signal to Peer Nodes.
-            </p>
-
-            <div className="mt-16 flex gap-3">
-              {[0, 0.2, 0.4].map(delay => (
-                <div key={delay} className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: `${delay}s` }} />
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

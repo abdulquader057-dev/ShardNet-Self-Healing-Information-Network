@@ -17,6 +17,7 @@ import { performSelfHealing } from './storage/db';
 import { messageManager } from './core/messageManager';
 import { safeInit, safeInterval, isLowBattery, safeCall } from './core/stability';
 import ErrorBoundary from './components/ErrorBoundary';
+import SOSButtonFlow from './components/SOSButtonFlow';
 
 function App() {
   useEffect(() => {
@@ -38,6 +39,7 @@ function App() {
       <div className="app-container">
         <div className="noise-overlay" />
         <Navbar />
+        <SOSButtonFlow />
         <main className="ui-overlay">
           <ErrorBoundary>
             <Routes>
