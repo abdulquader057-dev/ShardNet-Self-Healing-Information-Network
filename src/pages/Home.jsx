@@ -9,6 +9,7 @@ import {
   setVaultKey, clearVaultKey, isVaultLocked, clearAllData, saveMessage, saveShard
 } from '../storage/db';
 import { useNavigate } from 'react-router-dom';
+import MeshMap from '../intelligence/mapModule';
 import { EmergencyCard } from '../modules/EmergencyCard';
 import { monitorBattery, initShakeDetection } from '../utils/survival';
 import { safeInit, safeInterval, safeCall } from '../core/stability';
@@ -124,7 +125,7 @@ const Home = () => {
   return (
     <div className="page-container relative z-10 min-h-screen bg-[#0A0A0F] pb-28">
       
-      {/* ── HEADER (Instruction 3) ── */}
+      {/* ── HEADER ── */}
       <header className="flex flex-col mb-8 gap-4">
         <div className="flex justify-between items-center w-full">
           <h1 className="text-3xl font-black text-white italic uppercase tracking-tight">
@@ -149,10 +150,10 @@ const Home = () => {
         </div>
       </header>
 
-      {/* ── BENTO GRID SYSTEM (Instruction 5) ── */}
+      {/* ── BENTO GRID SYSTEM ── */}
       <div className="bento-grid gap-4">
         
-        {/* SOS CARD (Instruction 7) */}
+        {/* SOS CARD */}
         <div className="bento-col-8">
           <motion.button
             whileHover={{ scale: 1.01 }}
@@ -214,6 +215,33 @@ const Home = () => {
           </div>
         </div>
 
+        {/* TACTICAL MAP INTEGRATED CARD */}
+        <div className="bento-col-12">
+          <div 
+            className="bento-card relative overflow-hidden p-0 border-slate-800 bg-[#0a0a0c]"
+            style={{ height: '280px' }}
+            data-label="Bento Radar Map"
+          >
+            {/* Header overlay for high contrast */}
+            <div className="absolute top-4 left-4 z-20 bg-[#1C1C1E]/95 border border-slate-850 px-3 py-1.5 rounded-lg flex items-center gap-2 pointer-events-auto">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#0A84FF] animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-white">Tactical Mesh radar</span>
+            </div>
+
+            <button 
+              onClick={() => navigate('/pulse')}
+              className="absolute top-4 right-4 z-20 bg-[#0A84FF] text-white px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider hover:bg-[#0A84FF]/80 active:scale-95 transition-all pointer-events-auto shadow-md"
+            >
+              Expand Radar
+            </button>
+
+            {/* Render the full interactive leaflet map module within this card frame */}
+            <div className="w-full h-full z-10">
+              <MeshMap messages={messages} />
+            </div>
+          </div>
+        </div>
+
         {/* INTEL DROP LINK */}
         <div className="bento-col-4">
           <motion.button
@@ -242,51 +270,27 @@ const Home = () => {
               <CheckCircle2 size={24} />
             </div>
             <h3 className="text-lg font-bold text-white">SAFE CHECK</h3>
-            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Update your status</p>
-          </motion.button>
-        </div>
-
-        {/* NETWORK PULSE LINK (Instruction 2) */}
-        <div className="bento-col-4">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/pulse')}
-            className="bento-card w-full h-full min-h-[140px] border-slate-800 bg-[#1C1C1E] text-left"
-            data-label="Network Map Link"
-          >
-            <div className="mb-4 text-[#FF9500] bg-[#FF9500]/10 w-fit p-3 rounded-2xl">
-              <Navigation size={24} />
-            </div>
-            <h3 className="text-lg font-bold text-white">NETWORK PULSE</h3>
-            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Map & Node Telemetry</p>
+            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Update status</p>
           </motion.button>
         </div>
 
         {/* SURVIVAL KIT LINK */}
-        <div className="bento-col-12">
+        <div className="bento-col-4">
           <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/survival')}
-            className="bento-card flex-row items-center justify-between p-6 border-slate-800 bg-[#1C1C1E] hover:border-slate-700"
+            className="bento-card w-full h-full min-h-[140px] border-slate-800 bg-[#1C1C1E] text-left"
           >
-            <div className="flex items-center gap-5">
-              <div className="p-4 bg-rose-500/10 rounded-2xl text-rose-500">
-                <Heart size={24} className="animate-pulse" />
-              </div>
-              <div className="text-left">
-                <h3 className="text-xl font-black text-white italic">SURVIVAL KIT</h3>
-                <p className="text-[10px] font-bold text-slate-500 tracking-[0.2em]">First Aid • Signal Tools • Guidelines</p>
-              </div>
+            <div className="mb-4 text-rose-500 bg-rose-500/10 w-fit p-3 rounded-2xl">
+              <Heart size={24} />
             </div>
-            <div className="w-12 h-12 rounded-full bg-white/5 border border-slate-800 flex items-center justify-center text-rose-400">
-              <Zap size={20} />
-            </div>
+            <h3 className="text-lg font-bold text-white">SURVIVAL KIT</h3>
+            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">First Aid Kits</p>
           </motion.button>
         </div>
 
-        {/* EXPLORE TACTICAL TOOLS COLLAPSIBLE TRIGGER (Instruction 5) */}
+        {/* EXPLORE TACTICAL TOOLS COLLAPSIBLE TRIGGER */}
         <div className="bento-col-12">
           <button
             onClick={() => setShowMore(!showMore)}
@@ -352,52 +356,6 @@ const Home = () => {
                 >
                   {vaultOpen ? 'SECURE VAULT' : 'ACCESS VAULT'}
                 </button>
-              </div>
-            </div>
-
-            {/* Collapsible Tactical Index List (Instruction 6) */}
-            <div className="bento-col-12">
-              <div className="bento-card border-slate-800 bg-[#1C1C1E] p-5 space-y-4">
-                <div className="flex justify-between items-center">
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-black text-[#0A84FF] uppercase tracking-widest">Tactical Coordinates</span>
-                    <h4 className="font-bold text-white text-sm uppercase tracking-tight">Nearby Infrastructure Index</h4>
-                  </div>
-                  <span className="status-pill status-pill--success uppercase tracking-wider text-[9px]">
-                    Offline-Indexed
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {[
-                    { type: 'hospital', name: 'Trauma Center Node', coords: '17.4105, 78.4792', info: 'Emergency surgical capacity' },
-                    { type: 'reservoir', name: 'Water Reserve Node', coords: '17.4035, 78.4822', info: 'Purified water distribution' },
-                    { type: 'shelter', name: 'Emergency Bunker Command', coords: '17.4125, 78.4762', info: 'Disaster responder support' }
-                  ].map(hub => {
-                    const icons = {
-                      hospital: '🏥',
-                      reservoir: '💧',
-                      shelter: '🏠'
-                    };
-                    const typeColors = {
-                      hospital: 'text-rose-500',
-                      reservoir: 'text-[#06b6d4]',
-                      shelter: 'text-[#0A84FF]'
-                    };
-                    return (
-                      <div key={hub.name} className="p-3 bg-[#2C2C2E] border border-slate-800 rounded-xl space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className={`text-[10px] font-black uppercase tracking-wider ${typeColors[hub.type]}`}>
-                            {icons[hub.type]} {hub.type}
-                          </span>
-                          <span className="font-mono text-[9px] text-[#0A84FF] font-bold">{hub.coords}</span>
-                        </div>
-                        <h5 className="font-bold text-white text-xs">{hub.name}</h5>
-                        <p className="text-[10px] text-slate-400 leading-normal">{hub.info}</p>
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
             </div>
 

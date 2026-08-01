@@ -7,7 +7,7 @@ export function emit(event, data) {
 }
 
 export function listen(event, handler) {
-  window.addEventListener(event, (e) => {
+  const listener = (e) => {
     if (typeof handler === "function") {
       try {
         handler(e.detail);
@@ -17,5 +17,9 @@ export function listen(event, handler) {
     } else {
       console.warn(`Event listener for ${event} is not a function`, handler);
     }
-  });
+  };
+  window.addEventListener(event, listener);
+  return () => {
+    window.removeEventListener(event, listener);
+  };
 }
