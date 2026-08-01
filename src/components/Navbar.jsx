@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Shield, QrCode, Inbox, Database, Share2, HelpCircle } from 'lucide-react';
+import { Shield, QrCode, Inbox, Database, Share2, Settings } from 'lucide-react';
 
 const navItems = [
   { to: '/',        icon: Shield,    label: 'Home'  },
@@ -8,7 +8,7 @@ const navItems = [
   { to: '/pulse',   icon: Share2,    label: 'Pulse' },
   { to: '/inbox',   icon: Inbox,     label: 'Inbox' },
   { to: '/storage', icon: Database,  label: 'Vault' },
-  { to: '/help',    icon: HelpCircle,label: 'Help'  },
+  { to: '/settings', icon: Settings, label: 'Config' },
 ];
 
 const Navbar = () => (
@@ -42,3 +42,4 @@ const Navbar = () => (
 );
 
 export default Navbar;
+

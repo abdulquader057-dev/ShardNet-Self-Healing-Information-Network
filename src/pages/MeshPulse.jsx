@@ -58,21 +58,42 @@ export default function MeshPulse() {
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  const [devices, setDevices] = useState([
-    { id: '1', name: 'Rescue-01', type: 'Mobile', signal: 'Strong', lastSeen: '2m ago', icon: Smartphone, status: 'success', coords: [17.4100, 78.4750] },
-    { id: '2', name: 'Hiker-42', type: 'Mobile', signal: 'Strong', lastSeen: '5m ago', icon: User, status: 'success', coords: [17.4040, 78.4800] },
-    { id: '3', name: 'Drone-X', type: 'Drone', signal: 'Medium', lastSeen: '1m ago', icon: Navigation, status: 'warning', coords: [17.4080, 78.4720] },
-    { id: '4', name: 'Vehicle-A1', type: 'Vehicle', signal: 'Weak', lastSeen: '8m ago', icon: Car, status: 'emergency', coords: [17.4020, 78.4780] }
-  ]);
+  const getInitialDevices = () => {
+    const isDemo = localStorage.getItem('sharednet_demo_mode') === 'true';
+    const base = [
+      { id: '1', name: 'Rescue-01', type: 'Mobile', signal: 'Strong', lastSeen: '2m ago', icon: Smartphone, status: 'success', coords: [17.4100, 78.4750] },
+      { id: '2', name: 'Hiker-42', type: 'Mobile', signal: 'Strong', lastSeen: '5m ago', icon: User, status: 'success', coords: [17.4040, 78.4800] },
+      { id: '3', name: 'Drone-X', type: 'Drone', signal: 'Medium', lastSeen: '1m ago', icon: Navigation, status: 'warning', coords: [17.4080, 78.4720] },
+      { id: '4', name: 'Vehicle-A1', type: 'Vehicle', signal: 'Weak', lastSeen: '8m ago', icon: Car, status: 'emergency', coords: [17.4020, 78.4780] }
+    ];
+    if (isDemo) {
+      return [
+        ...base,
+        { id: 'demo-dev-1', name: 'Trekker-09', type: 'Mobile', signal: 'Strong', lastSeen: '1m ago', icon: Smartphone, status: 'success', coords: [17.4010, 78.4700] },
+        { id: 'demo-dev-2', name: 'BaseCamp', type: 'HQ Station', signal: 'Strong', lastSeen: 'Just now', icon: Globe, status: 'success', coords: [17.4150, 78.4850] }
+      ];
+    }
+    return base;
+  };
 
-  // Initial skeleton loader for 1.5 seconds
+  const [devices, setDevices] = useState(getInitialDevices());
+
+  // Initial skeleton loader and demo-mode event listeners
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-      // Simulate map tile load delay
       setTimeout(() => setMapLoaded(true), 300);
     }, 1500);
-    return () => clearTimeout(timer);
+
+    const handleDemoChange = () => {
+      setDevices(getInitialDevices());
+    };
+    window.addEventListener('demo-mode-changed', handleDemoChange);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('demo-mode-changed', handleDemoChange);
+    };
   }, []);
 
   const handleScan = () => {

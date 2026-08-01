@@ -99,7 +99,18 @@ export default function Inbox() {
       setLoading(false);
     }, 1000);
 
-    return () => clearTimeout(timer);
+    const handleDemoChange = () => {
+      const sortedSignals = [...window.sharedNetData.signals].sort((a, b) => {
+        return new Date(b.timestamp) - new Date(a.timestamp);
+      });
+      setSignals(sortedSignals);
+    };
+    window.addEventListener('demo-mode-changed', handleDemoChange);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('demo-mode-changed', handleDemoChange);
+    };
   }, []);
 
   const refreshSignalsList = () => {

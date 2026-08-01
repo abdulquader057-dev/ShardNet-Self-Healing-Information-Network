@@ -108,15 +108,27 @@ export default function SOSButtonFlow() {
     lastTickRef.current = 4;
   };
 
-  // Custom Event Listener to trigger SOS from anywhere in the app
+  // Custom Event Listeners to trigger SOS from settings/home in the app
   useEffect(() => {
     const handleSOSEvent = () => {
       if (state === 'idle') {
         handleTrigger();
       }
     };
+    const handleSOSTestEvent = () => {
+      if (state === 'idle') {
+        // Direct test SOS bypass: jump straight to sending state
+        playSound('beep');
+        triggerVibrate(200);
+        triggerBroadcast();
+      }
+    };
     window.addEventListener('trigger-sos', handleSOSEvent);
-    return () => window.removeEventListener('trigger-sos', handleSOSEvent);
+    window.addEventListener('trigger-sos-test', handleSOSTestEvent);
+    return () => {
+      window.removeEventListener('trigger-sos', handleSOSEvent);
+      window.removeEventListener('trigger-sos-test', handleSOSTestEvent);
+    };
   }, [state]);
 
   // State Machine logic
@@ -163,14 +175,21 @@ export default function SOSButtonFlow() {
       const newSignal = {
         id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
         type: 'sent',
+        title: 'Your SOS Signal',
+        status: 'sent',
+        time: 'Just now',
         timestamp: new Date().toISOString(),
-        status: 'active',
-        location: 'Approximate GPS (Delhi Sector)',
-        nodeCount: 3,
-        message: 'Emergency SOS Distress Beacon'
+        location: 'Your location',
+        description: 'Critical SOS distress beacon broadcast successfully via proximity BLE and Wi-Fi transceivers.',
+        sender: 'You (Self)',
+        range: 'Local Transceiver',
+        battery: '84%'
       };
       
       window.sharedNetData.signals.push(newSignal);
+
+      // Dispatch global event so the feed updates dynamically if open
+      window.dispatchEvent(new CustomEvent('demo-mode-changed'));
 
       setState('sent');
       
