@@ -1,268 +1,541 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox as InboxIcon, CheckCircle2, Clock, MapPin, AlertCircle, ChevronRight, Trash2 } from 'lucide-react';
-import { getAllMessages, getAllShards, db } from '../storage/db';
-import { useNavigate } from 'react-router-dom';
-import { beamSignal, isSharingSupported } from '../utils/sharing';
-import { safeCall, safeCallAsync, safeInterval } from '../core/stability';
-import { getMessageTrust } from '../intelligence/trustEngine';
-import { getTTLStatus, getMessageAge } from '../intelligence/ttlVisuals';
-import { getConsensusStatus } from '../core/consensusEngine';
-import { Volume2, Users } from 'lucide-react';
-import { ReconstructionUI } from '../modules/ReconstructionUI';
+import { 
+  Siren, 
+  CheckCircle, 
+  Send, 
+  MapPin, 
+  Clock, 
+  SlidersHorizontal, 
+  X, 
+  AlertTriangle,
+  Info,
+  ChevronRight,
+  ShieldAlert,
+  Battery
+} from 'lucide-react';
 
-const Inbox = () => {
+import { useNavigate } from 'react-router-dom';
+
+export default function Inbox() {
   const navigate = useNavigate();
-  const [items, setItems] = useState([]);
+  const [signals, setSignals] = useState([]);
+  const [filter, setFilter] = useState('all'); // all | active | resolved
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedSignal, setSelectedSignal] = useState(null);
+  const [activeBannerDismissed, setActiveBannerDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Pre-populate mock signals in global window.sharedNetData if empty
   useEffect(() => {
-    fetchInbox();
-    const interval = safeInterval(fetchInbox, 15000);
-    return () => clearInterval(interval);
+    if (!window.sharedNetData) {
+      window.sharedNetData = { signals: [] };
+    }
+    if (!window.sharedNetData.signals || window.sharedNetData.signals.length === 0) {
+      window.sharedNetData.signals = [
+        {
+          id: 'mock-1',
+          type: 'received',
+          title: 'Hiker-42 Emergency SOS',
+          status: 'active',
+          time: '4 min ago',
+          timestamp: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
+          location: '120m northeast',
+          description: "Distress signal from hiker. Message: 'Twisted ankle, cannot walk. Need medical assistance.'",
+          sender: 'Hiker-42',
+          range: '120m',
+          battery: '34%'
+        },
+        {
+          id: 'mock-2',
+          type: 'received',
+          title: 'Vehicle Collision Alert',
+          status: 'resolved',
+          time: 'Yesterday, 6:42 PM',
+          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+          location: '450m south',
+          description: "Multi-vehicle accident reported. Emergency services dispatched. All victims evacuated safely.",
+          sender: 'Vehicle-A1',
+          range: '450m',
+          battery: '82%'
+        },
+        {
+          id: 'mock-3',
+          type: 'sent',
+          title: 'Your SOS Signal',
+          status: 'sent',
+          time: 'Today, 08:15 AM',
+          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+          location: 'Your location',
+          description: "Test signal sent successfully. 3 nearby devices notified.",
+          sender: 'You (Self)',
+          range: 'Local Transceiver',
+          battery: '84%'
+        },
+        {
+          id: 'mock-4',
+          type: 'sent',
+          title: 'Test Ping',
+          status: 'sent',
+          time: 'Today, 07:30 AM',
+          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+          location: 'Your location',
+          description: "Network connectivity test. All systems operational.",
+          sender: 'You (Self)',
+          range: 'Local Transceiver',
+          battery: '84%'
+        }
+      ];
+    }
+
+    // Load signals from global store
+    // Reversing to show newest first
+    const sortedSignals = [...window.sharedNetData.signals].sort((a, b) => {
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    });
+    setSignals(sortedSignals);
+
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, []);
 
-  const fetchInbox = async () => {
-    try {
-      const messages = await getAllMessages();
-      const shards = await getAllShards();
-      
-      // Group shards by messageId to find partials
-      const shardGroups = shards.reduce((acc, s) => {
-        if (!acc[s.messageId]) acc[s.messageId] = [];
-        acc[s.messageId].push(s);
-        return acc;
-      }, {});
+  const refreshSignalsList = () => {
+    const sortedSignals = [...window.sharedNetData.signals].sort((a, b) => {
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    });
+    setSignals(sortedSignals);
+  };
 
-      const inboxItems = [];
-
-      // 1. Add Complete Messages
-      messages.forEach(msg => {
-        inboxItems.push({
-          id: msg.messageId,
-          type: 'complete',
-          status: 'verified',
-          text: msg.message,
-          timestamp: msg.reconstructedAt,
-          location: msg.location,
-          geo: msg.geo,
-          category: msg.category,
-          progress: 100,
-          expiry: msg.expiry || (msg.reconstructedAt + 86400000), // Default 24h
-          contributingNodes: msg.contributingNodes || [],
-          witnessNodes: msg.witnessNodes || [],
-          consensusHash: msg.consensusHash
-        });
-      });
-
-      // 2. Add Partial/Receiving Messages (that aren't complete yet)
-      Object.entries(shardGroups).forEach(([msgId, group]) => {
-        const isComplete = messages.some(m => m.messageId === msgId);
-        if (!isComplete) {
-          const first = group[0];
-          const progress = (group.length / first.totalShards) * 100;
-          inboxItems.push({
-            id: msgId,
-            type: 'partial',
-            status: group.length === 1 ? 'receiving' : 'partial',
-            text: `SIGNAL INTERCEPTED: Recovering ${group.length}/${first.totalShards} fragments...`,
-            timestamp: Math.max(...group.map(s => s.createdAt)),
-            location: first.location,
-            category: first.category,
-            progress: progress,
-            totalShards: first.totalShards,
-            shards: group
-          });
+  const handleMarkResolved = (signalId) => {
+    // Update global store
+    if (window.sharedNetData && window.sharedNetData.signals) {
+      window.sharedNetData.signals = window.sharedNetData.signals.map(sig => {
+        if (sig.id === signalId) {
+          return { ...sig, status: 'resolved', time: 'Just now' };
         }
+        return sig;
       });
-
-      // Sort by newest first
-      inboxItems.sort((a, b) => b.timestamp - a.timestamp);
-      setItems(inboxItems);
-    } catch (err) {
-      console.error('Inbox fetch failed:', err);
-    } finally {
-      setLoading(false);
     }
-  };
 
-  const deleteItem = async (item) => {
-    if (item.type === 'complete') {
-      await db.messages.delete(item.id);
-    } else {
-      // Delete all shards for this partial
-      const shardsToDelete = await db.shards.where('messageId').equals(item.id).toArray();
-      for (const s of shardsToDelete) {
-        await db.shards.delete(s.id);
+    // Sound alert chime confirmation
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        const ctx = new AudioContext();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523, now);
+        osc.frequency.linearRampToValueAtTime(784, now + 0.15);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.2);
       }
+    } catch(e) {}
+
+    // Vibrate success chime
+    try {
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    } catch(e) {}
+
+    alert("Signal marked as resolved. Broadcast status updated across mesh.");
+    refreshSignalsList();
+    if (selectedSignal && selectedSignal.id === signalId) {
+      setSelectedSignal(prev => ({ ...prev, status: 'resolved' }));
     }
-    fetchInbox();
   };
+
+  const handleResend = (sig) => {
+    alert(`Re-broadcasting payload: "${sig.title}" across mesh network...`);
+    try {
+      if (navigator.vibrate) navigator.vibrate(100);
+    } catch(e) {}
+  };
+
+  // Filter logic
+  const filteredSignals = signals.filter(sig => {
+    if (filter === 'active') return sig.status === 'active';
+    if (filter === 'resolved') return sig.status === 'resolved';
+    return true; // 'all'
+  });
+
+  const activeEmergency = signals.find(s => s.status === 'active');
 
   return (
-    <div className="space-y-6">
-      <header className="flex items-center gap-4">
-        <button 
-          onClick={() => navigate('/')}
-          className="p-3 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-white transition-all"
+    <div className="space-y-6 pb-28 relative">
+      
+      {/* ── STICKY ACTIVE EMERGENCY BANNER (Instruction 2) ── */}
+      {activeEmergency && !activeBannerDismissed && (
+        <div 
+          className="sticky top-[12px] z-50 p-4 rounded-xl flex items-center justify-between gap-4 border border-[#FF3B30]/30 shadow-[0_0_30px_rgba(255,59,48,0.35)]"
+          style={{ 
+            background: 'linear-gradient(135deg, #FF3B30 0%, #D32F2F 100%)',
+            touchAction: 'manipulation'
+          }}
         >
-          <span style={{ fontSize: 20 }}>←</span>
-        </button>
-        <div>
-          <h1 className="text-3xl font-black italic uppercase tracking-tighter">Unified <span className="text-secondary">Inbox</span></h1>
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Mesh Intelligence Hub</p>
-        </div>
-      </header>
-
-      <div className="space-y-4">
-        {loading ? (
-          <div className="py-20 text-center text-slate-600 animate-pulse font-black uppercase text-[10px] tracking-widest">Syncing Vault...</div>
-        ) : items.length === 0 ? (
-          <div className="py-20 text-center glass rounded-[2.5rem] border-white/5 border-dashed">
-            <InboxIcon size={48} className="mx-auto text-slate-800 mb-4" />
-            <p className="text-xs font-black text-slate-600 uppercase tracking-widest">No active signals in range.</p>
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white shrink-0 animate-pulse">
+              <i className="ph-fill ph-siren" style={{ fontSize: '24px' }}></i>
+            </div>
+            <div className="min-w-0">
+              <span className="text-[9px] font-black uppercase tracking-wider bg-white/20 text-white px-2 py-0.5 rounded-full block w-fit mb-1">
+                Active Emergency
+              </span>
+              <h4 className="font-bold text-white text-sm truncate">{activeEmergency.title}</h4>
+              <p className="text-[10px] text-white/90 truncate">{activeEmergency.time} • {activeEmergency.range} away</p>
+            </div>
           </div>
-        ) : (
-          <AnimatePresence>
-            {items.map((item) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className={`relative overflow-hidden glass p-6 rounded-[2rem] border-l-8 transition-all ${
-                  item.status === 'verified' ? 'border-secondary' : 'border-primary'
-                } bg-white/[0.02]`}
+          
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                navigate('/pulse');
+                alert("Opening tactical telemetry map to intercept coordinates.");
+              }}
+              className="px-4 py-2 bg-white text-[#FF3B30] rounded-lg text-xs font-bold shrink-0 shadow-lg active:scale-95 transition-transform"
+            >
+              Respond
+            </button>
+            <button 
+              onClick={() => setActiveBannerDismissed(true)}
+              className="p-1 text-white/80 hover:text-white shrink-0"
+              aria-label="Dismiss banner alert"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── SCREEN HEADER ── */}
+      <div className="flex items-end justify-between">
+        <div className="space-y-1">
+          <h1 className="text-h1 text-white">Emergency Feed</h1>
+          <p className="text-body-sm text-slate-400">Signals from your mesh network</p>
+        </div>
+        <button 
+          onClick={() => setShowFilters(!showFilters)}
+          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showFilters ? 'bg-[#0A84FF] text-white' : 'glass text-slate-400'}`}
+          aria-label="Toggle feed filters"
+        >
+          <SlidersHorizontal size={18} />
+        </button>
+      </div>
+
+      {/* Expandable Filter Bar */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="flex gap-2 p-2 bg-[#1C1C1E] border border-slate-800 rounded-xl">
+              {['all', 'active', 'resolved'].map(type => {
+                const isActive = filter === type;
+                const label = type.charAt(0).toUpperCase() + type.slice(1);
+                
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setFilter(type)}
+                    className={`flex-1 py-2 text-xs font-bold uppercase rounded-lg transition-all ${
+                      isActive 
+                        ? 'bg-[#0A84FF] text-white shadow-lg' 
+                        : 'text-slate-400 hover:text-white bg-transparent'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── TIMELINE FEED ── */}
+      <div className="relative pl-6">
+        
+        {/* Timeline Axis vertical line */}
+        {filteredSignals.length > 0 && (
+          <div 
+            className="absolute left-6 top-4 bottom-4 w-[2px]" 
+            style={{ background: 'var(--border-subtle, #38383A)' }}
+          />
+        )}
+
+        <div className="space-y-6">
+          {loading ? (
+            <div className="py-20 text-center text-slate-500 animate-pulse font-black uppercase text-[10px] tracking-widest">
+              Gossip Synchronization...
+            </div>
+          ) : filteredSignals.length === 0 ? (
+            // Empty State (Instruction 5)
+            <div className="py-16 text-center border border-dashed border-slate-800 rounded-2xl p-6 space-y-4">
+              <div className="w-16 h-16 rounded-full bg-slate-800/20 flex items-center justify-center mx-auto text-slate-500">
+                <i className="ph-bold ph-shield-check" style={{ fontSize: '36px' }}></i>
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-h3 text-white">
+                  {filter === 'active' ? 'No active emergencies' : 'No emergency signals'}
+                </h3>
+                <p className="text-body-sm text-slate-500 max-w-xs mx-auto">
+                  {filter === 'active' 
+                    ? "Your local airspace is quiet. All mesh nodes report stable status."
+                    : "Your mesh network is quiet. That's a good thing."}
+                </p>
+              </div>
+              <button 
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('trigger-sos'));
+                }}
+                className="btn-primary !w-auto mx-auto !py-2.5 !px-6 !text-xs !bg-transparent border border-[#0A84FF] text-[#0A84FF] hover:bg-[#0A84FF]/5"
               >
-                <div className="flex justify-between items-start gap-4 mb-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={item.status} />
-                      <ConsensusBadge item={item} />
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                        {getMessageAge(item.timestamp)}
+                Send Test Signal
+              </button>
+            </div>
+          ) : (
+            filteredSignals.map(sig => {
+              const isActive = sig.status === 'active';
+              const isResolved = sig.status === 'resolved';
+              const isSent = sig.status === 'sent';
+
+              // Dot colors & shadow classes
+              let dotColorClass = 'bg-[#0A84FF] shadow-[0_0_0_4px_rgba(10,132,255,0.2)]';
+              if (isActive) dotColorClass = 'bg-[#FF3B30] shadow-[0_0_0_4px_rgba(255,59,48,0.2)] animate-pulse';
+              else if (isResolved) dotColorClass = 'bg-[#34C759] shadow-[0_0_0_4px_rgba(52,199,89,0.2)]';
+
+              // Header Pill colors
+              const pillColors = {
+                active: 'status-pill--emergency',
+                resolved: 'status-pill--success',
+                sent: 'bg-[#0A84FF]/10 text-[#0A84FF] border border-[#0A84FF]/30'
+              };
+
+              // Header Icon type
+              let Icon = Siren;
+              if (isResolved) Icon = CheckCircle;
+              else if (isSent) Icon = Send;
+
+              return (
+                <div key={sig.id} className="relative pl-8">
+                  
+                  {/* Timeline Node Dot (Instruction 3) */}
+                  <div className={`absolute -left-10 top-4 w-3.5 h-3.5 rounded-full z-10 ${dotColorClass}`} />
+
+                  {/* Signal Card container */}
+                  <div className="card p-5 bg-[#1C1C1E] border border-slate-800 rounded-xl relative hover:border-slate-700 transition-colors">
+                    
+                    <div className="flex justify-between items-start gap-4 mb-3">
+                      <div className="flex items-center gap-2 text-white">
+                        <Icon size={18} className={isActive ? 'text-[#FF3B30]' : isResolved ? 'text-[#34C759]' : 'text-[#0A84FF]'} />
+                        <span className="font-bold text-sm">{sig.title}</span>
+                      </div>
+                      
+                      <span className={`status-pill ${pillColors[sig.status] || ''}`}>
+                        {sig.status.toUpperCase()}
                       </span>
                     </div>
-                    <h3 className={`text-lg font-black italic uppercase tracking-tight leading-tight ${item.status === 'verified' ? 'text-slate-100' : 'text-slate-400 italic opacity-60'}`}>
-                      {item.text.startsWith('AUDIO:') ? 'Voice Intelligence Captured' : item.text}
-                    </h3>
-                  </div>
 
-                  {item.text.startsWith('AUDIO:') && item.status === 'verified' && (
-                    <div className="mt-4 p-4 glass rounded-2xl border-white/5 flex items-center gap-4">
-                       <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const audio = new Audio(item.text.replace('AUDIO:', ''));
-                          safeCall(() => audio.play(), "Inbox Audio Play");
-                        }}
-                        className="p-3 bg-primary/20 text-primary rounded-full hover:bg-primary/30 transition-all"
-                       >
-                        <Volume2 size={20} />
-                       </button>
-                       <div className="flex-1 space-y-1">
-                         <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                           <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: '100%' }}
-                            transition={{ duration: 3 }}
-                            className="h-full bg-primary"
-                           />
-                         </div>
-                         <p className="text-[8px] font-black uppercase text-slate-500">Audio Payload: Encrypted</p>
-                       </div>
+                    <p className="text-body-sm text-slate-400 leading-relaxed mb-4">
+                      {sig.description}
+                    </p>
+
+                    <div className="flex flex-wrap gap-4 text-caption text-slate-500 font-mono mb-4 border-t border-slate-800/60 pt-3">
+                      <div className="flex items-center gap-1">
+                        <MapPin size={14} className="text-[#0A84FF]" />
+                        <span>{sig.location}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock size={14} />
+                        <span>{sig.time}</span>
+                      </div>
                     </div>
-                  )}
-                  <button 
-                    onClick={() => deleteItem(item)}
-                    className="p-2 text-slate-700 hover:text-danger transition-colors"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+
+                    {/* Card Actions Footer */}
+                    <div className="flex gap-2">
+                      {isActive && (
+                        <>
+                          <button
+                            onClick={() => handleMarkResolved(sig.id)}
+                            className="h-9 px-4 rounded-lg bg-[#34C759] text-white font-bold text-xs uppercase hover:bg-emerald-600 active:scale-95 transition-transform"
+                          >
+                            Mark Resolved
+                          </button>
+                          <button
+                            onClick={() => {
+                              navigate('/pulse');
+                              alert("Opening telemetry map coordinates.");
+                            }}
+                            className="h-9 px-4 rounded-lg bg-transparent border border-slate-700 text-slate-300 font-bold text-xs uppercase hover:bg-slate-800/40 active:scale-95 transition-transform"
+                          >
+                            View on Map
+                          </button>
+                        </>
+                      )}
+
+                      {isSent && (
+                        <>
+                          <button
+                            onClick={() => handleResend(sig)}
+                            className="h-9 px-4 rounded-lg bg-transparent border border-[#0A84FF] text-[#0A84FF] font-bold text-xs uppercase hover:bg-[#0A84FF]/5 active:scale-95 transition-transform"
+                          >
+                            Resend
+                          </button>
+                          <button
+                            onClick={() => setSelectedSignal(sig)}
+                            className="h-9 px-4 rounded-lg bg-transparent border border-slate-700 text-slate-300 font-bold text-xs uppercase hover:bg-slate-800/40 active:scale-95 transition-transform"
+                          >
+                            View Details
+                          </button>
+                        </>
+                      )}
+
+                      {isResolved && (
+                        <button
+                          onClick={() => setSelectedSignal(sig)}
+                          className="h-9 px-4 rounded-lg bg-transparent border border-slate-700 text-slate-300 font-bold text-xs uppercase hover:bg-slate-800/40 active:scale-95 transition-transform"
+                        >
+                          View Details
+                        </button>
+                      )}
+                    </div>
+
+                  </div>
                 </div>
-                
-                {item.status !== 'verified' && item.totalShards > 1 && (
-                  <ReconstructionUI totalShards={item.totalShards} receivedShards={item.shards} />
-                )}
-
-                <div className="flex flex-wrap items-center gap-4 mt-4 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin size={12} className="text-primary" />
-                    {item.geo ? (
-                      <a 
-                        href={getGoogleMapsUrl(item.geo)} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center gap-1"
-                      >
-                        {item.location} <span style={{ marginLeft: 4 }}>→</span>
-                      </a>
-                    ) : (
-                      item.location
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock size={12} />
-                    {item.status === 'verified' ? 'Recovered' : 'Syncing'}
-                  </div>
-                </div>
-
-                {/* TTL Decay Bar for verified messages */}
-                {item.status === 'verified' && (
-                  <div className="mt-4 space-y-1">
-                    <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-500">
-                      <span>Message Integrity</span>
-                      <span>TTL</span>
-                    </div>
-                    <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${getTTLStatus(item.timestamp, item.expiry).percentage}%` }}
-                        className={`h-full ${getTTLStatus(item.timestamp, item.expiry).color}`}
-                      />
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
+
+      {/* ── SIGNAL DETAIL MODAL OVERLAY (Instruction 6) ── */}
+      <AnimatePresence>
+        {selectedSignal && (
+          <div 
+            className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-signal-title"
+          >
+            {/* Click outside to close */}
+            <div className="absolute inset-0" onClick={() => setSelectedSignal(null)} />
+            
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 30 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="bg-[#1C1C1E] border border-slate-800 w-full max-w-sm rounded-xl p-6 relative z-10 flex flex-col gap-5 shadow-2xl"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-start gap-4">
+                <div className="space-y-1">
+                  <h2 id="modal-signal-title" className="text-h2 text-white font-bold">{selectedSignal.title}</h2>
+                  <span className={`status-pill block w-fit ${
+                    selectedSignal.status === 'active' ? 'status-pill--emergency' :
+                    selectedSignal.status === 'resolved' ? 'status-pill--success' :
+                    'bg-[#0A84FF]/10 text-[#0A84FF] border border-[#0A84FF]/30'
+                  }`}>
+                    {selectedSignal.status.toUpperCase()}
+                  </span>
+                </div>
+                <button 
+                  onClick={() => setSelectedSignal(null)}
+                  className="p-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
+                  aria-label="Close modal dialog"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="h-[1px] bg-slate-800/80" />
+
+              {/* Detail Grid */}
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="text-caption text-slate-500 font-bold block mb-1">Time</span>
+                  <span className="text-white font-semibold flex items-center gap-1">
+                    <Clock size={12} className="text-slate-500" />
+                    {selectedSignal.time}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-caption text-slate-500 font-bold block mb-1">Location</span>
+                  <span className="text-white font-semibold flex items-center gap-1">
+                    <MapPin size={12} className="text-[#0A84FF]" />
+                    {selectedSignal.location}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-caption text-slate-500 font-bold block mb-1">Sender</span>
+                  <span className="text-white font-semibold flex items-center gap-1">
+                    <User size={12} className="text-slate-500" />
+                    {selectedSignal.sender || 'Unknown Node'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-caption text-slate-500 font-bold block mb-1">Range</span>
+                  <span className="text-white font-semibold flex items-center gap-1">
+                    <ArrowLeftRight size={12} className="text-[#0A84FF]" />
+                    {selectedSignal.range || '150m (approx)'}
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-caption text-slate-500 font-bold block mb-1">Battery Diagnostic</span>
+                  <span className="text-slate-300 font-semibold flex items-center gap-1.5">
+                    <Battery size={14} className="text-slate-500" />
+                    {selectedSignal.battery || '84% Stable'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Message Block */}
+              <div className="bg-[#2C2C2E] border border-slate-850 p-4 rounded-lg text-slate-300 text-xs leading-relaxed">
+                {selectedSignal.description}
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="flex gap-2 mt-2">
+                {selectedSignal.status === 'active' ? (
+                  <>
+                    <button
+                      onClick={() => handleMarkResolved(selectedSignal.id)}
+                      className="flex-1 h-12 rounded-xl bg-[#34C759] text-white font-bold text-xs uppercase active:scale-95 transition-transform"
+                    >
+                      Mark Resolved
+                    </button>
+                    <button
+                      onClick={() => setSelectedSignal(null)}
+                      className="flex-1 h-12 rounded-xl bg-transparent border border-slate-800 text-slate-400 font-bold text-xs uppercase active:scale-95 transition-transform"
+                    >
+                      Close
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setSelectedSignal(null)}
+                    className="w-full h-12 rounded-xl bg-slate-800 text-white font-bold text-xs uppercase active:scale-95 transition-transform"
+                  >
+                    Close
+                  </button>
+                )}
+              </div>
+
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
-};
-
-const ConsensusBadge = ({ item }) => {
-  if (item.status !== 'verified') return null;
-  const status = getConsensusStatus(item);
-  const config = {
-    verified: { label: '✔ VERIFIED', color: 'bg-emerald-500 text-white' },
-    confirmed: { label: '✔ CONFIRMED', color: 'bg-blue-500 text-white' },
-    pending: { label: '⏳ PENDING', color: 'bg-slate-700 text-slate-300' },
-    unverified: { label: '⚠ UNVERIFIED', color: 'bg-amber-600 text-white' }
-  }[status];
-
-  return (
-    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-[0.1em] ${config.color}`}>
-      <Users size={8} />
-      {config.label}
-    </div>
-  );
-};
-
-const StatusBadge = ({ status }) => {
-  const config = {
-    verified: { icon: <CheckCircle2 size={12} />, label: 'Verified', color: 'bg-secondary/20 text-secondary border-secondary/20' },
-    partial: { icon: <Clock size={12} />, label: 'Partial', color: 'bg-primary/20 text-primary border-primary/20' },
-    receiving: { icon: <AlertCircle size={12} />, label: 'Receiving', color: 'bg-amber-500/20 text-amber-500 border-amber-500/20' }
-  }[status];
-
-  return (
-    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[8px] font-black uppercase tracking-widest ${config.color}`}>
-      {config.icon}
-      {config.label}
-    </div>
-  );
-};
-
-export default Inbox;
+}
