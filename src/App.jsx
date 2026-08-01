@@ -543,6 +543,7 @@ export default function App() {
       showToast('info', `Tap version ${5 - nextTaps} more times for presentation settings`);
     }
   };
+  const activeEmergency = signals.find(s => s.status === 'active');
 
   return (
     <div id="app">
