@@ -124,6 +124,8 @@ export default function App() {
   const [highContrast, setHighContrast] = useState(localStorage.getItem('setting_high_contrast') === 'true');
   const [largeText, setLargeText] = useState(localStorage.getItem('setting_large_text') === 'true');
   const [reduceMotion, setReduceMotion] = useState(localStorage.getItem('setting_reduce_motion') === 'true');
+  const [soundAlerts, setSoundAlerts] = useState(localStorage.getItem('setting_sound_alerts') !== 'false');
+  const [vibration, setVibration] = useState(localStorage.getItem('setting_vibration') !== 'false');
   const [showHelpers, setShowHelpers] = useState(false);
   const [toasts, setToasts] = useState([]);
 
@@ -661,21 +663,26 @@ export default function App() {
                   <i className="ph-bold ph-activity text-xl text-[#0A84FF]" />
                   <span className="caption text-slate-500">TELEMETRY</span>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <h3 className="heading-lg text-white">NETWORK INTEL</h3>
-                  <div className="flex gap-6 pt-1">
-                    <div>
-                      <span className="caption block">ACTIVE SHARDS</span>
-                      <span className="stat-number text-[#0A84FF]">1</span>
+                  <div className="space-y-2 pt-1">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="caption text-slate-500">Active Shards</span>
+                      <span className="font-mono font-bold text-[#0A84FF]">01 / 01 ACTIVE</span>
                     </div>
-                    <div>
-                      <span className="caption block">RECONSTRUCTED</span>
-                      <span className="stat-number text-[#30D158]">1</span>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="caption text-slate-500">Reconstructed</span>
+                      <span className="font-mono font-bold text-[#30D158]">01 / 01 READY</span>
                     </div>
-                  </div>
-                  <div className="flex justify-between items-center pt-1.5 border-t border-slate-800/60">
-                    <span className="caption">SIGNAL INTEGRITY</span>
-                    <span className="badge-text text-[#30D158] font-black">98.4% NOMINAL</span>
+                    <div className="space-y-1.5 pt-2 border-t border-slate-800/60">
+                      <div className="flex justify-between items-center">
+                        <span className="caption text-slate-500">Signal Integrity</span>
+                        <span className="font-mono font-bold text-[#30D158]">98.4% NOMINAL</span>
+                      </div>
+                      <div className="w-full bg-[#1C1C24] h-1.5 rounded-full overflow-hidden border border-slate-800">
+                        <div className="bg-[#30D158] h-full rounded-full" style={{ width: '98.4%' }} />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1408,7 +1415,13 @@ export default function App() {
               exit={{ opacity: 0, y: -16 }}
               className={`toast-overlay ${toast.type}`}
             >
-              <span className="text-xs text-white font-bold">{toast.message}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {toast.type === 'success' && <i className="ph-fill ph-check-circle text-[#30D158]" style={{ fontSize: '18px' }} />}
+                {toast.type === 'error' && <i className="ph-fill ph-x-circle text-[#FF3B30]" style={{ fontSize: '18px' }} />}
+                {toast.type === 'warning' && <i className="ph-fill ph-warning-octagon text-[#FF9F0A]" style={{ fontSize: '18px' }} />}
+                {toast.type === 'info' && <i className="ph-fill ph-info text-[#0A84FF]" style={{ fontSize: '18px' }} />}
+                <span className="text-xs text-white font-bold">{toast.message}</span>
+              </div>
               <button 
                 onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
                 className="text-slate-400 hover:text-white pointer-events-auto"

@@ -25,31 +25,31 @@ html, body {
   height: 100%;
   background: #050505; /* body is always black */
   color: #FFFFFF;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow-x: hidden;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   DESIGN TOKENS (Instruction 2)
+   DESIGN TOKENS (Instruction 2 & OKLCH Color Law)
    ═══════════════════════════════════════════════════════════════ */
 :root {
-  --bg-primary: #0A0A0F;
-  --bg-surface: #141419;
-  --bg-elevated: #1C1C24;
-  --bg-card: #16161D;
-  --border-subtle: #25252E;
-  --border-medium: #33333D;
-  --text-primary: #FFFFFF;
-  --text-secondary: #8B8B9E;
-  --text-tertiary: #5A5A6B;
+  --bg-primary: oklch(10% 0.006 250); /* Tinted toward brand blue-gray */
+  --bg-surface: oklch(13% 0.010 250);
+  --bg-elevated: oklch(17% 0.014 250);
+  --bg-card: oklch(15% 0.008 250);
+  --border-subtle: oklch(20% 0.012 250);
+  --border-medium: oklch(28% 0.016 250);
+  --text-primary: oklch(99% 0.002 250); /* Never pure #fff */
+  --text-secondary: oklch(78% 0.008 250);
+  --text-tertiary: oklch(52% 0.010 250);
   
-  /* Semantic Accents */
-  --accent-red: #FF3B30;
-  --accent-green: #30D158;
-  --accent-blue: #0A84FF;
-  --accent-purple: #BF5AF2;
-  --accent-orange: #FF9F0A;
-  --accent-cyan: #5AC8FA;
+  /* Semantic Accents - OKLCH (Perceptually Uniform) */
+  --accent-red: oklch(62% 0.22 29);     /* Distress alerts */
+  --accent-green: oklch(76% 0.18 142);   /* System stable */
+  --accent-blue: oklch(62% 0.18 250);    /* Interactive keys */
+  --accent-purple: oklch(58% 0.16 300);  /* Survival kits */
+  --accent-orange: oklch(72% 0.20 60);   /* Warnings */
+  --accent-cyan: oklch(75% 0.14 200);    /* Map overlays */
   
   /* Layout Spacing */
   --radius-sm: 10px;
@@ -96,7 +96,7 @@ html, body {
   min-height: 100vh;
   background: var(--bg-primary);
   color: #FFFFFF;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   position: relative;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -439,23 +439,30 @@ html, body {
   right: var(--space-4);
   z-index: var(--z-toast);
   background: var(--bg-surface);
-  border-left: 4px solid var(--accent-blue);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 .toast-overlay.success {
-  border-left-color: var(--accent-green);
+  border-color: rgba(48, 209, 88, 0.35);
+  background: oklch(12% 0.015 142);
 }
 .toast-overlay.error {
-  border-left-color: var(--accent-red);
+  border-color: rgba(255, 59, 48, 0.35);
+  background: oklch(12% 0.015 29);
 }
 .toast-overlay.warning {
-  border-left-color: var(--accent-orange);
+  border-color: rgba(255, 159, 10, 0.35);
+  background: oklch(12% 0.015 60);
+}
+.toast-overlay.info {
+  border-color: rgba(10, 132, 255, 0.35);
+  background: oklch(12% 0.015 250);
 }
 
 .sos-countdown-dialog {
