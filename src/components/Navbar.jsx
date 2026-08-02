@@ -39,7 +39,7 @@ const Navbar = () => {
                 <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-[#3B82F6]/10' : ''}`}>
                   <Icon size={isActive ? 22 : 20} strokeWidth={isActive ? 2.5 : 2} />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider">
+                <span className="text-[14px] font-bold uppercase tracking-wider">
                   {label}
                 </span>
               </>

@@ -84,7 +84,7 @@ const MeshWhisper = () => {
         </button>
         <div>
           <h1 className="text-2xl font-black italic uppercase tracking-tight">Mesh Whisper</h1>
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Acoustic Proximity Sync</p>
+          <p className="text-[14px] font-bold text-slate-500 uppercase tracking-widest">Acoustic Proximity Sync</p>
         </div>
       </header>
 
@@ -106,7 +106,7 @@ const MeshWhisper = () => {
           
           <div className="space-y-2">
             <h3 className="text-xl font-black italic uppercase">Acoustic Intercept</h3>
-            <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] max-w-[200px]">
+            <p className="text-[14px] text-slate-500 uppercase tracking-[0.2em] max-w-[200px]">
               Listening for near-ultrasonic metadata chirps from nearby nodes.
             </p>
           </div>
@@ -125,7 +125,7 @@ const MeshWhisper = () => {
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="space-y-2">
               <h3 className="text-lg font-black italic uppercase">Transmit Beacon</h3>
-              <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em]">
+              <p className="text-[14px] text-slate-500 uppercase tracking-[0.2em]">
                 Broadcast your node signature via sonic pulse.
               </p>
             </div>
@@ -138,7 +138,7 @@ const MeshWhisper = () => {
               }`}
             >
               <Volume2 size={32} className={isTransmitting ? 'animate-bounce' : ''} />
-              <span className="text-[10px] font-black tracking-widest uppercase">
+              <span className="text-[14px] font-black tracking-widest uppercase">
                 {isTransmitting ? 'PULSING...' : 'EMIT SONIC PULSE'}
               </span>
             </button>
@@ -155,7 +155,7 @@ const MeshWhisper = () => {
             >
               <Zap size={24} className="animate-pulse" />
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Signal Detected</p>
+                <p className="text-[14px] font-black uppercase tracking-widest opacity-60">Signal Detected</p>
                 <p className="text-sm font-bold">{detectedSignal.id}</p>
               </div>
             </motion.div>
@@ -165,7 +165,7 @@ const MeshWhisper = () => {
 
       <div className="p-6 glass rounded-[2rem] border-white/5 flex items-start gap-4">
         <AlertTriangle size={20} className="text-warning mt-1" />
-        <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
+        <p className="text-[14px] text-slate-400 leading-relaxed font-medium">
           <span className="text-warning font-black uppercase">Technical Note:</span> Sonic Sync is highly experimental. It uses high-frequency sine waves (18kHz) which may be audible to some users or pets. Use with caution.
         </p>
       </div>

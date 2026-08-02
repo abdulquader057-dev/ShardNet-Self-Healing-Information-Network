@@ -211,7 +211,7 @@ export default function Settings() {
 
   const handleTestSOS = () => {
     window.dispatchEvent(new CustomEvent('trigger-sos-test'));
-    showToast('success', 'Bypassing countdown: Mock SOS transmission sent');
+    showToast('success', 'Bypassing countdown: Test SOS transmission sent');
   };
 
   const handleResetNetwork = () => {
@@ -249,7 +249,7 @@ export default function Settings() {
           
           <div className="pb-3 flex justify-between items-center">
             <div>
-              <span className="text-[10px] text-slate-500 font-bold block">Device Alias</span>
+              <span className="text-[14px] text-slate-500 font-bold block">Device Alias</span>
               {isEditingName ? (
                 <div className="flex gap-2 mt-1">
                   <input 
@@ -274,8 +274,8 @@ export default function Settings() {
 
           <div className="py-3 flex justify-between items-center">
             <div>
-              <span className="text-[10px] text-slate-500 font-bold block">Transceiver ID</span>
-              <span className="text-slate-400 font-mono text-[10px]">{deviceId}</span>
+              <span className="text-[14px] text-slate-500 font-bold block">Transceiver ID</span>
+              <span className="text-slate-400 font-mono text-[14px]">{deviceId}</span>
             </div>
             <button onClick={copyToClipboard} className="text-slate-400 hover:text-[#0A84FF] p-1" aria-label="Copy Device ID">
               <Copy size={14} />
@@ -284,7 +284,7 @@ export default function Settings() {
 
           <div className="pt-3 flex justify-between items-center">
             <div>
-              <span className="text-[10px] text-slate-500 font-bold block">Network Role</span>
+              <span className="text-[14px] text-slate-500 font-bold block">Network Role</span>
               <span className="text-slate-400 text-xs">Propagates background gossip</span>
             </div>
             <span className="status-pill status-pill--success uppercase tracking-wider">
@@ -309,7 +309,7 @@ export default function Settings() {
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold">Identity & Contacts</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Manage keys and friends</p>
+                <p className="text-[14px] text-slate-500 font-medium mt-0.5">Manage keys and friends</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
@@ -325,7 +325,7 @@ export default function Settings() {
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold">Squad Channels</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Encrypted private groups</p>
+                <p className="text-[14px] text-slate-500 font-medium mt-0.5">Encrypted private groups</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
@@ -341,7 +341,7 @@ export default function Settings() {
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold">Share App Offline</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">AirDrop or QR code install</p>
+                <p className="text-[14px] text-slate-500 font-medium mt-0.5">AirDrop or QR code install</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
@@ -357,7 +357,7 @@ export default function Settings() {
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold">Change Master PIN</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Reset your security code</p>
+                <p className="text-[14px] text-slate-500 font-medium mt-0.5">Reset your security code</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
@@ -372,7 +372,7 @@ export default function Settings() {
           <div className="flex justify-between items-center">
             <div>
               <span className="text-white font-semibold text-xs">Battery Saver</span>
-              <p className="text-[10px] text-slate-500">Reduce GPS polling and animations.</p>
+              <p className="text-[14px] text-slate-500">Reduce GPS polling and animations.</p>
             </div>
             <ToggleSwitch 
               checked={batterySaver} 
@@ -389,7 +389,7 @@ export default function Settings() {
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold">Export Data to CSV</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Backup messages and contacts</p>
+                <p className="text-[14px] text-slate-500 font-medium mt-0.5">Backup messages and contacts</p>
               </div>
             </div>
             <DownloadCloud size={18} className="text-slate-600 group-hover:text-white transition-colors" />
@@ -404,7 +404,7 @@ export default function Settings() {
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold text-[#FF3B30]">Reset All Data</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Wipe device entirely</p>
+                <p className="text-[14px] text-slate-500 font-medium mt-0.5">Wipe device entirely</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
@@ -426,7 +426,7 @@ export default function Settings() {
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold">Local Datastore</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{dbSize} • IndexedDB (Encrypted)</p>
+                <p className="text-[14px] text-slate-500 font-medium mt-0.5">{dbSize} • IndexedDB (Encrypted)</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
@@ -447,7 +447,7 @@ export default function Settings() {
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold">Download Offline Region</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                <p className="text-[14px] text-slate-500 font-medium mt-0.5">
                   {downloadingMap ? `Caching tiles... ${downloadProgress}%` : 'Save 10km radius to device'}
                 </p>
               </div>
@@ -463,10 +463,10 @@ export default function Settings() {
           
           <div className="flex justify-between items-center">
             <div>
-              <span className="text-[10px] text-slate-500 font-bold block">Mesh Node ID</span>
+              <span className="text-[14px] text-slate-500 font-bold block">Mesh Node ID</span>
               <span className="text-white font-mono text-xs font-semibold">{meshNodeId || '...'}</span>
             </div>
-            <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${isReady ? 'bg-[#34C759]/20 text-[#34C759]' : 'bg-slate-700 text-slate-400'}`}>
+            <div className={`px-2 py-1 rounded-md text-[14px] font-black uppercase tracking-wider ${isReady ? 'bg-[#34C759]/20 text-[#34C759]' : 'bg-slate-700 text-slate-400'}`}>
               {isReady ? 'Online' : 'Initializing'}
             </div>
           </div>
@@ -474,15 +474,15 @@ export default function Settings() {
           <div className="grid grid-cols-3 gap-3 py-2 border-y border-slate-800/60">
             <div className="text-center">
               <p className="text-lg font-black text-[#0A84FF] font-mono">{peerCount}</p>
-              <p className="text-[8px] font-bold text-slate-500 uppercase">Direct</p>
+              <p className="text-[14px] font-bold text-slate-500 uppercase">Direct</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-black text-[#34C759] font-mono">{reachableCount}</p>
-              <p className="text-[8px] font-bold text-slate-500 uppercase">Reachable</p>
+              <p className="text-[14px] font-bold text-slate-500 uppercase">Reachable</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-black text-[#FF9500] font-mono">{pendingMessages.length}</p>
-              <p className="text-[8px] font-bold text-slate-500 uppercase">Queued</p>
+              <p className="text-[14px] font-bold text-slate-500 uppercase">Queued</p>
             </div>
           </div>
 
@@ -490,7 +490,7 @@ export default function Settings() {
             <div className="pt-2 border-t border-slate-800/60">
               <button 
                 onClick={() => setShowQueue(!showQueue)}
-                className="w-full flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-slate-400 py-2"
+                className="w-full flex justify-between items-center text-[14px] font-black uppercase tracking-wider text-slate-400 py-2"
               >
                 <span>Store-and-Forward Queue</span>
                 <ChevronRight size={14} className={`transition-transform ${showQueue ? 'rotate-90' : ''}`} />
@@ -509,9 +509,9 @@ export default function Settings() {
                         <div key={i} className="flex justify-between items-center bg-[#2C2C2E]/50 rounded-lg p-2">
                           <div className="flex items-center gap-2">
                             <Clock size={12} className="text-[#FF9500]" />
-                            <span className="text-[9px] font-mono text-slate-300">To: {msg.to.slice(0, 6)}</span>
+                            <span className="text-[14px] font-mono text-slate-300">To: {msg.to.slice(0, 6)}</span>
                           </div>
-                          <span className="text-[8px] uppercase font-black text-slate-500">{msg.type}</span>
+                          <span className="text-[14px] uppercase font-black text-slate-500">{msg.type}</span>
                         </div>
                       ))}
                     </div>
@@ -537,7 +537,7 @@ export default function Settings() {
                   console.error('[Pairing] Offer failed:', err);
                 }
               }}
-              className="flex-1 py-3 bg-[#0A84FF] text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              className="flex-1 py-3 bg-[#0A84FF] text-white rounded-xl text-[14px] font-black uppercase tracking-wider flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
             >
               <QrCode size={14} /> Show My QR
             </button>
@@ -548,7 +548,7 @@ export default function Settings() {
                 setPairStatus('');
                 setAnswerInput('');
               }}
-              className="flex-1 py-3 bg-[#2C2C2E] border border-slate-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              className="flex-1 py-3 bg-[#2C2C2E] border border-slate-700 text-white rounded-xl text-[14px] font-black uppercase tracking-wider flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
             >
               <ScanLine size={14} /> Scan Peer QR
             </button>
@@ -594,17 +594,17 @@ export default function Settings() {
                     <p className="text-red-400 text-xs text-center py-4">Failed to create offer. Try again.</p>
                   ) : (
                     <>
-                      <div className="text-[10px] text-slate-500 text-center mb-2">Step 1: Have the other device scan this</div>
+                      <div className="text-[14px] text-slate-500 text-center mb-2">Step 1: Have the other device scan this</div>
                       <div className="bg-white p-4 rounded-xl flex items-center justify-center">
                         <QRCodeSVG value={offerPayload} size={200} level="L" />
                       </div>
                       <div className="space-y-2">
-                        <p className="text-[10px] text-slate-500 text-center">Step 2: Paste the answer code from their device:</p>
+                        <p className="text-[14px] text-slate-500 text-center">Step 2: Paste the answer code from their device:</p>
                         <textarea
                           value={answerInput}
                           onChange={(e) => setAnswerInput(e.target.value)}
                           placeholder="Paste the answer payload here..."
-                          className="w-full bg-[#2C2C2E] border border-slate-700 text-white rounded-lg px-3 py-2 text-[10px] font-mono h-20 resize-none focus:outline-none focus:border-[#0A84FF]"
+                          className="w-full bg-[#2C2C2E] border border-slate-700 text-white rounded-lg px-3 py-2 text-[14px] font-mono h-20 resize-none focus:outline-none focus:border-[#0A84FF]"
                         />
                         <button
                           onClick={() => {
@@ -621,7 +621,7 @@ export default function Settings() {
                               console.error('[Pairing]', err);
                             }
                           }}
-                          className="w-full py-3 bg-[#34C759] text-white rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-[0.98] transition-transform"
+                          className="w-full py-3 bg-[#34C759] text-white rounded-xl text-[14px] font-black uppercase tracking-wider active:scale-[0.98] transition-transform"
                         >
                           Complete Connection
                         </button>
@@ -635,7 +635,7 @@ export default function Settings() {
                             window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Offer copied to clipboard' } }));
                           }
                         }}
-                        className="w-full py-2 bg-[#2C2C2E] border border-slate-700 text-slate-300 rounded-xl text-[9px] font-bold uppercase tracking-wider"
+                        className="w-full py-2 bg-[#2C2C2E] border border-slate-700 text-slate-300 rounded-xl text-[14px] font-bold uppercase tracking-wider"
                       >
                         Share Code Instead
                       </button>
@@ -652,12 +652,12 @@ export default function Settings() {
 
               {pairMode === 'scan' && (
                 <div className="space-y-4">
-                  <p className="text-[10px] text-slate-500 text-center">Paste the offer code from the other device:</p>
+                  <p className="text-[14px] text-slate-500 text-center">Paste the offer code from the other device:</p>
                   <textarea
                     value={answerInput}
                     onChange={(e) => setAnswerInput(e.target.value)}
                     placeholder="Paste the offer payload here..."
-                    className="w-full bg-[#2C2C2E] border border-slate-700 text-white rounded-lg px-3 py-2 text-[10px] font-mono h-24 resize-none focus:outline-none focus:border-[#0A84FF]"
+                    className="w-full bg-[#2C2C2E] border border-slate-700 text-white rounded-lg px-3 py-2 text-[14px] font-mono h-24 resize-none focus:outline-none focus:border-[#0A84FF]"
                   />
                   {pairStatus === 'connected' ? (
                     <div className="text-center py-4">
@@ -666,7 +666,7 @@ export default function Settings() {
                     </div>
                   ) : pairStatus === 'answering' ? (
                     <div className="space-y-3">
-                      <div className="text-[10px] text-slate-500 text-center">Show this answer to the other device:</div>
+                      <div className="text-[14px] text-slate-500 text-center">Show this answer to the other device:</div>
                       <div className="bg-white p-4 rounded-xl flex items-center justify-center">
                         <QRCodeSVG value={offerPayload} size={200} level="L" />
                       </div>
@@ -679,7 +679,7 @@ export default function Settings() {
                             window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Answer copied to clipboard' } }));
                           }
                         }}
-                        className="w-full py-2 bg-[#2C2C2E] border border-slate-700 text-slate-300 rounded-xl text-[9px] font-bold uppercase tracking-wider"
+                        className="w-full py-2 bg-[#2C2C2E] border border-slate-700 text-slate-300 rounded-xl text-[14px] font-bold uppercase tracking-wider"
                       >
                         Share Answer Code
                       </button>
@@ -697,7 +697,7 @@ export default function Settings() {
                           console.error('[Pairing] Accept failed:', err);
                         }
                       }}
-                      className="w-full py-3 bg-[#0A84FF] text-white rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-[0.98] transition-transform"
+                      className="w-full py-3 bg-[#0A84FF] text-white rounded-xl text-[14px] font-black uppercase tracking-wider active:scale-[0.98] transition-transform"
                     >
                       Accept & Generate Answer
                     </button>
@@ -719,7 +719,7 @@ export default function Settings() {
           <div className="flex justify-between items-center">
             <div>
               <span className="text-white font-semibold text-xs">Auto-Connect to Mesh</span>
-              <p className="text-[10px] text-slate-500">Automatically sync with nearest transceivers.</p>
+              <p className="text-[14px] text-slate-500">Automatically sync with nearest transceivers.</p>
             </div>
             <ToggleSwitch 
               checked={autoConnect} 
@@ -730,7 +730,7 @@ export default function Settings() {
           <div className="flex justify-between items-center">
             <div>
               <span className="text-white font-semibold text-xs">Bluetooth Fallback</span>
-              <p className="text-[10px] text-slate-500">Auto background synchronization via BLE links.</p>
+              <p className="text-[14px] text-slate-500">Auto background synchronization via BLE links.</p>
             </div>
             <ToggleSwitch 
               checked={btFallback} 
@@ -741,7 +741,7 @@ export default function Settings() {
           <div className="flex justify-between items-center">
             <div>
               <span className="text-white font-semibold text-xs">Background Broadcasting</span>
-              <p className="text-[10px] text-slate-500">Propagate encrypted shards when app is minimized.</p>
+              <p className="text-[14px] text-slate-500">Propagate encrypted shards when app is minimized.</p>
             </div>
             <ToggleSwitch 
               checked={bgBroadcast} 
@@ -766,7 +766,7 @@ export default function Settings() {
           <div className="flex justify-between items-center">
             <div>
               <span className="text-white font-semibold text-xs">Sound Alerts</span>
-              <p className="text-[10px] text-slate-500">Play acoustic warning sweeps on incoming alerts.</p>
+              <p className="text-[14px] text-slate-500">Play acoustic warning sweeps on incoming alerts.</p>
             </div>
             <ToggleSwitch 
               checked={soundAlerts} 
@@ -777,7 +777,7 @@ export default function Settings() {
           <div className="flex justify-between items-center">
             <div>
               <span className="text-white font-semibold text-xs">Tactile Haptics</span>
-              <p className="text-[10px] text-slate-500">Vibrate patterns during transmissions.</p>
+              <p className="text-[14px] text-slate-500">Vibrate patterns during transmissions.</p>
             </div>
             <ToggleSwitch 
               checked={vibration} 
@@ -801,7 +801,7 @@ export default function Settings() {
           <div className="flex justify-between items-center">
             <div>
               <span className="text-white font-semibold text-xs">High Contrast Mode</span>
-              <p className="text-[10px] text-slate-500">Increases borders and visual readability.</p>
+              <p className="text-[14px] text-slate-500">Increases borders and visual readability.</p>
             </div>
             <ToggleSwitch 
               checked={highContrast} 
@@ -812,7 +812,7 @@ export default function Settings() {
           <div className="flex justify-between items-center">
             <div>
               <span className="text-white font-semibold text-xs">Large UI Text</span>
-              <p className="text-[10px] text-slate-500">Scales interfaces up to 120% magnification.</p>
+              <p className="text-[14px] text-slate-500">Scales interfaces up to 120% magnification.</p>
             </div>
             <ToggleSwitch 
               checked={largeText} 
@@ -823,7 +823,7 @@ export default function Settings() {
           <div className="flex justify-between items-center">
             <div>
               <span className="text-white font-semibold text-xs">Reduce Interface Motion</span>
-              <p className="text-[10px] text-slate-500">Bypasses visual scale & float animations.</p>
+              <p className="text-[14px] text-slate-500">Bypasses visual scale & float animations.</p>
             </div>
             <ToggleSwitch 
               checked={reduceMotion} 

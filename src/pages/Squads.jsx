@@ -55,7 +55,7 @@ export default function Squads() {
       </div>
 
       <div className="card p-6 bg-[#1C1C1E] border border-slate-800 rounded-xl space-y-4">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Join / Create Squad</h3>
+        <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-500">Join / Create Squad</h3>
         <div className="space-y-3">
           <input 
             type="text" 
@@ -85,7 +85,7 @@ export default function Squads() {
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Active Squads</h3>
+        <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-500 mb-2">Active Squads</h3>
         {squads.length === 0 ? (
           <div className="text-center p-8 border border-dashed border-white/10 rounded-2xl">
             <Shield className="mx-auto mb-2 text-slate-600" size={24} />
@@ -100,7 +100,7 @@ export default function Squads() {
                 </div>
                 <div>
                   <p className="font-bold text-white text-sm">{s.name}</p>
-                  <p className="text-[10px] text-slate-500 font-mono">Encrypted Channel</p>
+                  <p className="text-[14px] text-slate-500 font-mono">Encrypted Channel</p>
                 </div>
               </div>
               <button onClick={() => handleDelete(s.name)} className="text-slate-500 hover:text-[#FF3B30] transition-colors">

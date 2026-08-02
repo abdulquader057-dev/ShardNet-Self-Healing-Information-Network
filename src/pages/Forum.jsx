@@ -151,7 +151,7 @@ export default function Forum() {
             </h1>
             <p className="text-[#8B8B9A] text-sm">Decentralized Emergency Comms</p>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#22C55E] bg-[#22C55E]/10 px-3 py-1.5 rounded-full border border-[#22C55E]/20">
+          <div className="flex items-center gap-1.5 text-[14px] font-bold uppercase tracking-widest text-[#22C55E] bg-[#22C55E]/10 px-3 py-1.5 rounded-full border border-[#22C55E]/20">
             <Globe size={12} /> {isReady ? 'Live' : 'Syncing'}
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function Forum() {
                 className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
               >
                 {!isMine && (
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#5A5A6A] ml-1 mb-1">
+                  <span className="text-[14px] font-bold uppercase tracking-widest text-[#5A5A6A] ml-1 mb-1">
                     {post.authorAlias} <span className="font-mono">({post.authorNodeId.slice(0,6)})</span>
                   </span>
                 )}
@@ -215,11 +215,11 @@ export default function Forum() {
                 `}>
                   {/* Badge Row */}
                   <div className={`px-4 py-2 flex items-center justify-between gap-4 border-b ${isMine ? 'border-white/20 bg-black/10' : 'border-[#2A2A35] bg-black/20'}`}>
-                    <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider ${!isMine ? catInfo.color : 'text-white'}`}>
+                    <div className={`flex items-center gap-1.5 text-[14px] font-bold uppercase tracking-wider ${!isMine ? catInfo.color : 'text-white'}`}>
                       <catInfo.icon size={12} />
                       {catInfo.label}
                     </div>
-                    <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider opacity-70">
+                    <div className="flex items-center gap-1 text-[14px] font-bold uppercase tracking-wider opacity-70">
                       <Timer size={10} /> TTL: {ttlHours}H
                     </div>
                   </div>
@@ -227,7 +227,7 @@ export default function Forum() {
                   <div className="p-4">
                     {post.content.startsWith('data:audio/') ? (
                       <div className="flex flex-col gap-2">
-                        <span className="text-[10px] uppercase font-bold tracking-widest opacity-70">Voice Intel</span>
+                        <span className="text-[14px] uppercase font-bold tracking-widest opacity-70">Voice Intel</span>
                         <audio controls src={post.content} className="max-w-[200px] h-8 rounded" />
                       </div>
                     ) : (
@@ -237,15 +237,15 @@ export default function Forum() {
                 </div>
                 
                 <div className="flex items-center gap-3 mt-1 mx-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#5A5A6A] flex items-center gap-1">
+                  <span className="text-[14px] font-bold uppercase tracking-widest text-[#5A5A6A] flex items-center gap-1">
                     <Clock size={10} /> {getRelativeTime(post.timestamp)}
                   </span>
                   {!isMine && (
                     <div className="flex gap-2">
-                      <button onClick={() => handleRebroadcast(post)} className="text-[10px] font-bold uppercase tracking-widest text-[#3B82F6] flex items-center gap-1 hover:text-white transition-colors">
+                      <button onClick={() => handleRebroadcast(post)} className="text-[14px] font-bold uppercase tracking-widest text-[#3B82F6] flex items-center gap-1 hover:text-white transition-colors">
                         <Repeat size={10} /> Relay
                       </button>
-                      <button onClick={() => handleShowQR(post)} className="text-[10px] font-bold uppercase tracking-widest text-[#10B981] flex items-center gap-1 hover:text-white transition-colors">
+                      <button onClick={() => handleShowQR(post)} className="text-[14px] font-bold uppercase tracking-widest text-[#10B981] flex items-center gap-1 hover:text-white transition-colors">
                         <QrCode size={10} /> QR
                       </button>
                     </div>
@@ -280,7 +280,7 @@ export default function Forum() {
               <button
                 key={t.id}
                 onClick={() => setSelectedTTL(t.id)}
-                className={`px-2 py-1 text-[10px] font-bold uppercase rounded-lg transition-colors flex items-center ${
+                className={`px-2 py-1 text-[14px] font-bold uppercase rounded-lg transition-colors flex items-center ${
                   selectedTTL === t.id ? 'bg-white text-black' : 'text-[#5A5A6A] hover:bg-[#141419]'
                 }`}
               >
@@ -288,7 +288,7 @@ export default function Forum() {
               </button>
             ))}
           </div>
-          <span className={`text-[10px] font-mono font-bold ${inputText.length > MAX_CHARS ? 'text-[#EF4444]' : 'text-[#5A5A6A]'}`}>
+          <span className={`text-[14px] font-mono font-bold ${inputText.length > MAX_CHARS ? 'text-[#EF4444]' : 'text-[#5A5A6A]'}`}>
             {inputText.length}/{MAX_CHARS}
           </span>
         </div>

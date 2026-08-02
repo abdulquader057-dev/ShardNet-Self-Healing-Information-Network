@@ -90,13 +90,13 @@ const SilentRelay = () => {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Cpu size={14} className="animate-pulse" />
-            <h1 className="text-[10px] font-bold uppercase tracking-[0.3em]">SysMon v4.0.2-Relay</h1>
+            <h1 className="text-[14px] font-bold uppercase tracking-[0.3em]">SysMon v4.0.2-Relay</h1>
           </div>
-          <p className="text-[8px] opacity-40 uppercase">Kernel: 5.15.0-76-generic</p>
+          <p className="text-[14px] opacity-40 uppercase">Kernel: 5.15.0-76-generic</p>
         </div>
         <button 
           onClick={() => navigate('/')} 
-          className="text-[10px] border border-emerald-900/50 px-3 py-1 rounded hover:bg-emerald-900/20 transition-all opacity-40 hover:opacity-100"
+          className="text-[14px] border border-emerald-900/50 px-3 py-1 rounded hover:bg-emerald-900/20 transition-all opacity-40 hover:opacity-100"
         >
           [ EXIT_DASH ]
         </button>
@@ -113,8 +113,8 @@ const SilentRelay = () => {
       {/* ── LOG CONSOLE ───────────────────────────────────────────────── */}
       <div className="flex-1 bg-emerald-950/10 border border-emerald-900/20 rounded-lg p-4 space-y-2 min-h-[200px]">
         <div className="flex justify-between items-center border-b border-emerald-900/20 pb-2 mb-4">
-          <span className="text-[8px] font-bold uppercase tracking-widest">Process_Relay_Logs</span>
-          <span className="text-[8px] animate-pulse">● LIVE</span>
+          <span className="text-[14px] font-bold uppercase tracking-widest">Process_Relay_Logs</span>
+          <span className="text-[14px] animate-pulse">● LIVE</span>
         </div>
         <LogLine text="Init system security protocols..." />
         <LogLine text="Daemon 'mesh_pulse_d' started [PID: 2842]" />
@@ -135,9 +135,9 @@ const SilentRelay = () => {
       <footer className="fixed bottom-0 left-0 right-0 p-6 bg-black/90 backdrop-blur-sm border-t border-emerald-900/30 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-          <span className="text-[8px] font-bold tracking-widest opacity-60">HEARTBEAT_ACTIVE</span>
+          <span className="text-[14px] font-bold tracking-widest opacity-60">HEARTBEAT_ACTIVE</span>
         </div>
-        <div className="text-[9px] opacity-40 uppercase tracking-widest font-bold">
+        <div className="text-[14px] opacity-40 uppercase tracking-widest font-bold">
           SECURE_NODE_RELAY: ACTIVE
         </div>
       </footer>
@@ -152,14 +152,14 @@ const MetricCard = ({ icon, label, value }) => (
   <div className="border border-emerald-900/20 p-4 rounded-lg bg-emerald-950/5 space-y-1">
     <div className="flex items-center gap-2 opacity-40">
       {icon}
-      <span className="text-[8px] font-bold uppercase tracking-widest">{label}</span>
+      <span className="text-[14px] font-bold uppercase tracking-widest">{label}</span>
     </div>
     <div className="text-xl font-bold tracking-tighter">{value}</div>
   </div>
 );
 
 const LogLine = ({ text, color = "text-emerald-900/60" }) => (
-  <div className={`text-[9px] ${color}`}>
+  <div className={`text-[14px] ${color}`}>
     <span className="opacity-40 mr-2">[{new Date().toLocaleTimeString([], { hour12: false })}]</span>
     {text}
   </div>

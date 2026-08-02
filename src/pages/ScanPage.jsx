@@ -43,11 +43,11 @@ const MessageReconstructor = ({ result, onClear, onRebroadcast }) => {
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0 mr-1">
-            <span className={`text-[8px] font-black px-2 py-1 rounded-full border border-white/20 ${isEmergency ? 'bg-red-500 text-white' : 'bg-primary text-white'}`}>
+            <span className={`text-[14px] font-black px-2 py-1 rounded-full border border-white/20 ${isEmergency ? 'bg-red-500 text-white' : 'bg-primary text-white'}`}>
               {result.category || 'Info'}
             </span>
             {getConsensusStatus(result) === 'verified' && (
-              <span className="bg-emerald-500 text-white text-[8px] font-black px-2 py-1 rounded-full flex items-center gap-1 animate-pulse">
+              <span className="bg-emerald-500 text-white text-[14px] font-black px-2 py-1 rounded-full flex items-center gap-1 animate-pulse">
                 <Users size={8} /> VERIFIED
               </span>
             )}
@@ -95,7 +95,7 @@ const MessageReconstructor = ({ result, onClear, onRebroadcast }) => {
                 {result.location || 'Unknown Location'}
               </span>
             </div>
-            <span className={`text-[9px] font-mono ${isEmergency ? 'text-red-200' : 'text-slate-500'}`}>
+            <span className={`text-[14px] font-mono ${isEmergency ? 'text-red-200' : 'text-slate-500'}`}>
               Node: {result.originNodeId || 'unknown'}
             </span>
           </div>
@@ -104,7 +104,7 @@ const MessageReconstructor = ({ result, onClear, onRebroadcast }) => {
               href={getGoogleMapsUrl(result.geo.lat, result.geo.lng)}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all ${
+              className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-[14px] font-black uppercase tracking-widest transition-all ${
                 isEmergency 
                   ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' 
                   : 'bg-primary/10 border-primary/20 text-primary hover:bg-primary/20'
@@ -442,20 +442,20 @@ const ScanPage = () => {
         </div>
         <div className="space-y-1">
           <h2 className="heading-lg text-white italic uppercase tracking-tighter">Manual Link</h2>
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol: Mesh-Gossip</p>
+          <p className="text-[14px] font-black text-slate-500 uppercase tracking-widest">Protocol: Mesh-Gossip</p>
         </div>
         <div className="ml-auto flex bg-[#141419] p-1 rounded-xl border border-[#2A2A35]">
           <button 
             onClick={() => setScanMode('shard')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${scanMode === 'shard' ? 'bg-[#3B82F6] text-white' : 'text-[#8B8B9A] hover:text-white'}`}
           >
-            SHARD
+            PAIR DEVICE
           </button>
           <button 
             onClick={() => setScanMode('read')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${scanMode === 'read' ? 'bg-[#3B82F6] text-white' : 'text-[#8B8B9A] hover:text-white'}`}
           >
-            READ
+            READ MESSAGE
           </button>
         </div>
       </div>
@@ -524,11 +524,11 @@ const ScanPage = () => {
                 <div className="flex justify-between items-center px-4">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-danger rounded-full animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Live Intercept</span>
+                    <span className="text-[14px] font-black uppercase tracking-widest text-slate-400">Live Intercept</span>
                   </div>
                   <button 
                     onClick={() => setFacingMode(prev => prev === 'environment' ? 'user' : 'environment')}
-                    className="btn-premium btn-outline !py-2 !px-4 !text-[9px]"
+                    className="btn-premium btn-outline !py-2 !px-4 !text-[14px]"
                   >
                     <RefreshCw size={12} /> FLIP LENS
                   </button>
@@ -545,7 +545,7 @@ const ScanPage = () => {
                 
                 <button
                   onClick={() => setIsScanning(false)}
-                  className="btn-premium btn-outline !text-[10px] !py-4 opacity-60 hover:opacity-100"
+                  className="btn-premium btn-outline !text-[14px] !py-4 opacity-60 hover:opacity-100"
                 >
                   ABORT SCAN
                 </button>
@@ -566,7 +566,7 @@ const ScanPage = () => {
                 </div>
                 <div className="text-center space-y-2">
                   <p className="text-primary font-black uppercase tracking-[0.3em] text-sm">Decrypting Payload</p>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase">Checking Signal Integrity...</p>
+                  <p className="text-[14px] font-bold text-slate-500 uppercase">Checking Signal Integrity...</p>
                 </div>
               </div>
             )}
@@ -598,7 +598,7 @@ const ScanPage = () => {
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-xl font-black text-white italic uppercase">Bundle Sync Success</h3>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-loose">
+                    <p className="text-[14px] font-black text-slate-500 uppercase tracking-widest leading-loose">
                       {scanResult.newCount} fragments ingested <br />
                       {scanResult.dupCount} signals verified <br />
                       {scanResult.errCount > 0 && <span className="text-danger">{scanResult.errCount} failures purged</span>}
@@ -650,7 +650,7 @@ const ScanPage = () => {
         {recentShards.length > 0 && (
           <div className="bento-col-12">
             <div className="bento-card border-white/5 bg-white/[0.02] p-5">
-              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Recent Intercepts</h4>
+              <h4 className="text-[14px] font-black text-slate-500 uppercase tracking-widest mb-4">Recent Intercepts</h4>
               <div className="space-y-3">
                 {recentShards.map((shard, i) => {
                   const age = shard.receivedAt ? Math.round((Date.now() - shard.receivedAt) / 60000) : null;
@@ -661,10 +661,10 @@ const ScanPage = () => {
                         <div className="w-2 h-2 rounded-full bg-[#0A84FF] animate-pulse" />
                         <div>
                           <span className="text-xs font-bold text-white">{shard.category || 'Info'} Fragment</span>
-                          <span className="text-[10px] text-slate-500 ml-2">{shard.location || 'Unknown'}</span>
+                          <span className="text-[14px] text-slate-500 ml-2">{shard.location || 'Unknown'}</span>
                         </div>
                       </div>
-                      <span className="text-[10px] font-mono text-slate-500">{ageLabel}</span>
+                      <span className="text-[14px] font-mono text-slate-500">{ageLabel}</span>
                     </div>
                   );
                 })}

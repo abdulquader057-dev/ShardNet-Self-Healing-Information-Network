@@ -238,7 +238,7 @@ function AppContent({
       {/* ── OFFLINE STATUS BANNER (Instruction 2) ── */}
       {!isOnline && (
         <div 
-          className="offline-banner bg-[#FF9500] text-black text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center shrink-0 z-[9999]" 
+          className="offline-banner bg-[#FF9500] text-black text-[14px] font-black uppercase tracking-widest text-center flex items-center justify-center shrink-0 z-[9999]" 
           style={{ height: '32px', borderBottom: '1px solid rgba(0,0,0,0.1)' }}
         >
           <i className="ph-bold ph-plugs-warning mr-1.5" />

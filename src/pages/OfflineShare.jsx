@@ -112,7 +112,7 @@ export default function OfflineShare() {
             <QRCodeSVG value={appUrl} size={220} level="H" />
           </div>
           
-          <p className="text-[10px] font-mono text-slate-400 break-all text-center">
+          <p className="text-[14px] font-mono text-slate-400 break-all text-center">
             {appUrl}
           </p>
 

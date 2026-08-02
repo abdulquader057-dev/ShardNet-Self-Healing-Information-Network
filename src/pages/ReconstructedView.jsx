@@ -169,14 +169,14 @@ const ReconstructedView = () => {
           </div>
           <div>
             <h2 className="text-3xl font-black italic uppercase tracking-tighter">Intel Hub</h2>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Consolidated Mesh Intelligence</p>
+            <p className="text-[14px] font-black text-slate-500 uppercase tracking-widest">Consolidated Mesh Intelligence</p>
           </div>
         </div>
         <div className="flex gap-3">
           {['All', 'Emergency', 'Safe Route'].map(f => (
             <button 
               key={f} onClick={() => setSearchParams({ filter: f })}
-              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${filter === f ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}
+              className={`px-4 py-2 rounded-xl text-[14px] font-black uppercase tracking-widest border transition-all ${filter === f ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-slate-500'}`}
             >
               {f}
             </button>
@@ -194,7 +194,7 @@ const ReconstructedView = () => {
               <section key={groupKey} className="space-y-6">
                 <div className="flex items-center gap-3 px-2">
                   <Map size={14} className="text-slate-500" />
-                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">{groupKey}</h3>
+                  <h3 className="text-[14px] font-black text-slate-500 uppercase tracking-[0.3em]">{groupKey}</h3>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6">
@@ -211,7 +211,7 @@ const ReconstructedView = () => {
                         >
                           {/* 3. Redundancy Indicator */}
                           {msg.similarCount > 0 && (
-                            <div className="absolute top-0 left-0 bg-accent px-4 py-1 text-[8px] font-black uppercase tracking-widest text-white rounded-br-2xl">
+                            <div className="absolute top-0 left-0 bg-accent px-4 py-1 text-[14px] font-black uppercase tracking-widest text-white rounded-br-2xl">
                               {msg.similarCount} similar signals merged
                             </div>
                           )}
@@ -223,25 +223,25 @@ const ReconstructedView = () => {
                                                status === 'confirmed' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' : 
                                                'text-slate-500 bg-white/5 border-white/10';
                               return (
-                                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${iconStyle}`}>
+                                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[14px] font-black uppercase tracking-widest ${iconStyle}`}>
                                   {status === 'verified' ? <CheckCircle2 size={10} /> : status === 'confirmed' ? <Activity size={10} /> : <Info size={10} />}
                                   {status}
                                 </div>
                               );
                             })()}
-                            <div className={`px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${getCategoryStyle(msg.category)}`}>
+                            <div className={`px-3 py-1 rounded-full border text-[14px] font-black uppercase tracking-widest ${getCategoryStyle(msg.category)}`}>
                               {msg.category}
                             </div>
                           </div>
 
                           <div className="flex items-center gap-4 mb-6">
-                            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest font-black">
+                            <span className="text-[14px] font-mono text-slate-500 uppercase tracking-widest font-black">
                               {new Date(msg.reconstructedAt).toLocaleTimeString()}
                             </span>
                             <span className="text-slate-800">|</span>
                             <div className="flex items-center gap-2">
                               <Globe size={12} className="text-secondary" />
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Reached {msg.deviceCount || 1} devices</span>
+                              <span className="text-[14px] font-black text-slate-400 uppercase tracking-widest">Reached {msg.deviceCount || 1} devices</span>
                             </div>
                           </div>
 
@@ -276,7 +276,7 @@ const ReconstructedView = () => {
                             </div>
                             
                             <div className="flex items-center gap-4">
-                              <div className={`px-3 py-1 rounded-lg bg-white/5 text-[9px] font-black uppercase tracking-widest ${trust.color}`}>
+                              <div className={`px-3 py-1 rounded-lg bg-white/5 text-[14px] font-black uppercase tracking-widest ${trust.color}`}>
                                Trust: {trust.label}
                               </div>
                               <div className="flex gap-2">
@@ -306,11 +306,11 @@ const ReconstructedView = () => {
             </h3>
             <div className="space-y-3">
               {incompleteMessages.length === 0 && (
-                <p className="text-center py-8 text-[10px] font-black text-slate-700 uppercase tracking-widest">No active fragments.</p>
+                <p className="text-center py-8 text-[14px] font-black text-slate-700 uppercase tracking-widest">No active fragments.</p>
               )}
               {incompleteMessages.map((msg) => (
                 <div key={msg.messageId} className="glass p-4 rounded-2xl border-white/5 space-y-3">
-                  <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest">
+                  <div className="flex justify-between items-center text-[14px] font-black uppercase tracking-widest">
                     <span className="text-slate-500">{msg.category}</span>
                     <span className="text-primary">{msg.count}/{msg.total}</span>
                   </div>

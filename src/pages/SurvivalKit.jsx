@@ -76,7 +76,7 @@ const SurvivalKit = () => {
         <div className="flex gap-2">
           <button 
             onClick={() => setIsSirenActive(!isSirenActive)}
-            className={`px-4 py-2 rounded-xl font-black text-[10px] tracking-widest border transition-all ${isSirenActive ? 'bg-danger border-danger animate-pulse shadow-lg shadow-danger/40' : 'bg-white/5 border-white/10 text-slate-500'}`}
+            className={`px-4 py-2 rounded-xl font-black text-[14px] tracking-widest border transition-all ${isSirenActive ? 'bg-danger border-danger animate-pulse shadow-lg shadow-danger/40' : 'bg-white/5 border-white/10 text-slate-500'}`}
           >
             {isSirenActive ? 'STOP SIREN' : 'SIREN SOS'}
           </button>
@@ -101,7 +101,7 @@ const SurvivalKit = () => {
           <button
             key={tab}
             onClick={() => setActiveView(tab)}
-            className={`flex-1 py-3 rounded-xl font-black text-[10px] tracking-widest transition-all ${activeView === tab ? 'bg-primary text-white shadow-xl shadow-primary/20' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`flex-1 py-3 rounded-xl font-black text-[14px] tracking-widest transition-all ${activeView === tab ? 'bg-primary text-white shadow-xl shadow-primary/20' : 'text-slate-500 hover:text-slate-300'}`}
           >
             {tab}
           </button>
@@ -121,16 +121,16 @@ const SurvivalKit = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-2">
                   <Pill size={16} className="text-secondary" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary">Apothecary Index</span>
+                  <span className="text-[14px] font-black uppercase tracking-[0.2em] text-secondary">Apothecary Index</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredMeds.map(med => (
                     <div key={med.name} className="glass p-5 rounded-3xl border-white/5 space-y-2 hover:border-secondary/30 transition-all group">
                       <div className="flex justify-between items-start">
                         <h4 className="font-black text-lg text-slate-100 italic">{med.name}</h4>
-                        <span className="bg-secondary/10 text-secondary text-[8px] font-black px-2 py-1 rounded-full">{med.type}</span>
+                        <span className="bg-secondary/10 text-secondary text-[14px] font-black px-2 py-1 rounded-full">{med.type}</span>
                       </div>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-relaxed">{med.use}</p>
+                      <p className="text-[14px] text-slate-500 font-bold uppercase tracking-wider leading-relaxed">{med.use}</p>
                     </div>
                   ))}
                 </div>
@@ -139,7 +139,7 @@ const SurvivalKit = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-2">
                   <Activity size={16} className="text-primary" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Survival Protocols</span>
+                  <span className="text-[14px] font-black uppercase tracking-[0.2em] text-primary">Survival Protocols</span>
                 </div>
                 <div className="grid grid-cols-1 gap-4">
                   {filteredMeasures.map(measure => (
@@ -148,7 +148,7 @@ const SurvivalKit = () => {
                       <div className="space-y-3">
                         {measure.steps.map((step, idx) => (
                           <div key={idx} className="flex gap-4 items-start">
-                            <span className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black shrink-0 text-primary">{idx + 1}</span>
+                            <span className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[14px] font-black shrink-0 text-primary">{idx + 1}</span>
                             <p className="text-xs font-bold text-slate-400 leading-relaxed uppercase">{step}</p>
                           </div>
                         ))}
@@ -170,7 +170,7 @@ const SurvivalKit = () => {
             >
               <div className="flex items-center gap-2 px-2">
                 <MapPin size={16} className="text-accent" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">Resilience Index (India Focus)</span>
+                <span className="text-[14px] font-black uppercase tracking-[0.2em] text-accent">Resilience Index (India Focus)</span>
               </div>
               <div className="space-y-3">
                 {GLOBAL_HUBS.filter(h => h.name.toLowerCase().includes(searchQuery.toLowerCase())).map(hub => (
@@ -181,12 +181,12 @@ const SurvivalKit = () => {
                       </div>
                       <div>
                         <h4 className="font-black text-slate-100 uppercase text-sm tracking-tight">{hub.name}</h4>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{hub.info}</p>
+                        <p className="text-[14px] text-slate-500 font-bold uppercase tracking-widest">{hub.info}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                       <p className="text-[9px] font-mono text-slate-600">{hub.lat.toFixed(4)}, {hub.lng.toFixed(4)}</p>
-                       <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-md mt-1 inline-block ${hub.id.startsWith('in') ? 'bg-orange-500/20 text-orange-500' : 'bg-primary/20 text-primary'}`}>
+                       <p className="text-[14px] font-mono text-slate-600">{hub.lat.toFixed(4)}, {hub.lng.toFixed(4)}</p>
+                       <span className={`text-[14px] font-black uppercase px-2 py-0.5 rounded-md mt-1 inline-block ${hub.id.startsWith('in') ? 'bg-orange-500/20 text-orange-500' : 'bg-primary/20 text-primary'}`}>
                          {hub.id.startsWith('in') ? 'INDIA REGION' : 'GLOBAL HUB'}
                        </span>
                     </div>

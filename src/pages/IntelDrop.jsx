@@ -111,7 +111,7 @@ export default function IntelDrop() {
             <Upload size={32} className="text-slate-500" />
             <div className="text-center">
               <p className="text-sm font-bold text-white">Select File to Broadcast</p>
-              <p className="text-[10px] text-slate-500 font-mono mt-1">Max 500KB (Images/Docs)</p>
+              <p className="text-[14px] text-slate-500 font-mono mt-1">Max 500KB (Images/Docs)</p>
             </div>
             <input 
               type="file" 
@@ -128,7 +128,7 @@ export default function IntelDrop() {
                 <FileImage size={24} className="text-[#34C759]" />
                 <div>
                   <p className="text-sm font-bold text-white truncate max-w-[200px]">{file.name}</p>
-                  <p className="text-[10px] text-slate-500 font-mono">{(file.size / 1024).toFixed(1)} KB</p>
+                  <p className="text-[14px] text-slate-500 font-mono">{(file.size / 1024).toFixed(1)} KB</p>
                 </div>
               </div>
               <button onClick={() => { setFile(null); setPreview(null); }} className="text-slate-500 hover:text-white">
@@ -159,7 +159,7 @@ export default function IntelDrop() {
 
       {/* Received Files Section */}
       <div className="space-y-3">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Received Intel</h3>
+        <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-500 mb-2">Received Intel</h3>
         {receivedFiles.length === 0 ? (
           <div className="text-center p-8 border border-dashed border-white/10 rounded-2xl">
             <ShieldAlert className="mx-auto mb-2 text-slate-600" size={24} />
@@ -171,7 +171,7 @@ export default function IntelDrop() {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-bold text-white text-sm truncate">{rf.name}</p>
-                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">From: {rf.sender.slice(0, 8)}</p>
+                  <p className="text-[14px] text-slate-500 font-mono mt-0.5">From: {rf.sender.slice(0, 8)}</p>
                 </div>
                 <CheckCircle2 size={16} className="text-[#34C759]" />
               </div>

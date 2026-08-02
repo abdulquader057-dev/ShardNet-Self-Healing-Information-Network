@@ -107,8 +107,8 @@ export default function SOSButtonFlow() {
     playSound('beep');
     triggerVibrate(200);
     setState('countdown');
-    setTimeLeft(3.0);
-    lastTickRef.current = 4;
+    setTimeLeft(5.0);
+    lastTickRef.current = 6;
   };
 
   // Custom Event Listeners to trigger SOS from settings/home in the app
@@ -297,7 +297,7 @@ export default function SOSButtonFlow() {
           onClick={handleTrigger}
           className="sos-trigger"
           data-label="SOS System"
-          aria-label="Emergency SOS Button. Tap to initiate 3-second countdown distress beacon."
+          aria-label="Emergency SOS Button. Tap to initiate 5-second countdown distress beacon."
           style={{ touchAction: 'manipulation' }}
         >
           <i className="ph-fill ph-shield-warning" style={{ fontSize: '32px' }} aria-hidden="true"></i>
@@ -307,8 +307,8 @@ export default function SOSButtonFlow() {
 
       {/* ── STATE 2: COUNTDOWN OVERLAY ── */}
       {state === 'countdown' && (
-        <div className="sos-overlay" role="dialog" aria-modal="true" aria-labelledby="sos-countdown-title">
-          <div className="flex flex-col items-center gap-6 max-w-sm w-full text-center">
+        <div className="sos-overlay cursor-pointer" role="dialog" aria-modal="true" aria-labelledby="sos-countdown-title" onClick={handleCancel}>
+          <div className="flex flex-col items-center gap-6 max-w-sm w-full text-center pointer-events-none">
             
             {/* SVG circular countdown container */}
             <div className="relative w-[130px] h-[130px] flex items-center justify-center">
@@ -346,15 +346,14 @@ export default function SOSButtonFlow() {
 
             <div className="space-y-2 mt-4">
               <h2 className="text-xl font-bold uppercase tracking-wide text-white">Distress Countdown</h2>
-              <p className="text-sm text-slate-400 max-w-xs leading-relaxed">
-                Broadcasting emergency coordinates to all nearby nodes in the mesh network.
+              <p className="text-[18px] text-white font-bold max-w-xs leading-relaxed uppercase mt-2">
+                TAP ANYWHERE TO CANCEL
               </p>
             </div>
 
             {/* Cancel Button */}
             <button
-              onClick={handleCancel}
-              className="mt-6 w-full flex items-center justify-center rounded-xl font-bold animate-pulse"
+              className="mt-6 w-full flex items-center justify-center rounded-xl font-bold animate-pulse pointer-events-auto"
               style={{
                 height: '56px',
                 background: 'var(--bg-elevated, #2C2C2E)',

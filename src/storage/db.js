@@ -5,114 +5,22 @@ import { encryptData, decryptData, calculateHash } from '../core/sharding';
 
 let activeVaultKey = null; // Stays in memory only
 
-// 1. Define the Mock Store Factory first to avoid temporal dead zone
-const createMockStore = (name) => {
-  const getStore = () => {
-    try {
-      return JSON.parse(sessionStorage.getItem(`mock_${name}`) || '[]');
-    } catch(e) { return []; }
-  };
-  const setStore = (data) => {
-    try {
-      sessionStorage.setItem(`mock_${name}`, JSON.stringify(data));
-    } catch(e) {}
-  };
-  
-  return {
-    put: async (item) => {
-      const store = getStore();
-      const idx = store.findIndex(x => (x.id && x.id === item.id) || (x.messageId && x.messageId === item.messageId));
-      if (idx >= 0) store[idx] = item; else store.push(item);
-      setStore(store);
-      return item.id || item.messageId;
-    },
-    get: async (id) => getStore().find(x => x.id === id || x.messageId === id),
-    toArray: async () => getStore(),
-    count: async () => getStore().length,
-    add: async (item) => {
-      const store = getStore();
-      const id = item.id || Date.now() + Math.random();
-      store.push({ ...item, id });
-      setStore(store);
-      return id;
-    },
-    clear: async () => sessionStorage.removeItem(`mock_${name}`),
-    delete: async (id) => {
-      const store = getStore();
-      setStore(store.filter(x => x.id !== id && x.messageId !== id));
-    },
-    orderBy: (prop) => ({
-      first: async () => {
-         const s = getStore().sort((a,b) => a[prop] - b[prop]);
-         return s[0];
-      },
-      reverse: () => ({
-        limit: (n) => ({ toArray: async () => getStore().sort((a,b) => b[prop] - a[prop]).slice(0, n) })
-      }),
-      limit: (n) => ({ toArray: async () => getStore().sort((a,b) => a[prop] - b[prop]).slice(0, n) })
-    }),
-    where: (prop) => ({
-      equals: (val) => ({ toArray: async () => getStore().filter(x => x[prop] === val) }),
-      below: (val) => ({ delete: async () => {
-        const store = getStore();
-        const keep = store.filter(x => x[prop] >= val);
-        setStore(keep);
-        return store.length - keep.length;
-      }})
-    }),
-    update: async (id, changes) => {
-      const store = getStore();
-      const idx = store.findIndex(x => (x.id === id) || (x.messageId === id));
-      if (idx >= 0) {
-        store[idx] = { ...store[idx], ...changes };
-        setStore(store);
-        return 1;
-      }
-      return 0;
-    }
-  };
-};
-
-// 2. Initialize with Mock by default (Guaranteed non-null)
-let db = {
-  shards: createMockStore('shards'),
-  messages: createMockStore('messages'),
-  logs: createMockStore('logs'),
-  settings: createMockStore('settings'),
-  history: createMockStore('history'),
-  contacts: createMockStore('contacts'),
-  forum: createMockStore('forum'),
-  emergencyContacts: createMockStore('emergencyContacts'),
-  evidence: createMockStore('evidence'),
-  open: async () => { console.log("Mock DB Open"); },
-  version: () => ({ stores: () => {} }) // Mock Dexie versioning
-};
-
-// 3. Attempt to upgrade to real Dexie if available
-try {
-  if (typeof Dexie === 'function' || (Dexie && Dexie.default)) {
-    const D = Dexie.default || Dexie;
-    const realDb = new D('ShardNetDB');
-    realDb.version(12).stores({
-      shards: 'id, messageId, shardIndex, expiry, createdAt, trustScore, nodeId, priority, location, relayCount, deviceCount',
-      messages: 'messageId, reconstructedAt, shardCount, priority, previousMessageId, category, lifecycle, usefulness, lastInteraction, location, impact, *contributingNodes, consensusHash, *witnessNodes',
-      logs: '++id, timestamp, type, message',
-      settings: 'id, value',
-      history: '++id, timestamp, type, data',
-      contacts: 'nodeId, alias, addedAt, lastSeen',
-      forum: 'id, timestamp, authorNodeId, authorAlias, content, category, ttl, receivedAt',
-      squads: 'name, secretKey, addedAt',
-      mapTiles: 'url, data, timestamp',
-      emergencyContacts: '++id, name, phone',
-      evidence: 'id, type, category, timestamp, ttl'
-    });
-    db = realDb; // Swap to real DB
-  }
-} catch (e) {
-  console.warn("🛡️ DB_SHIELD: Failed to instantiate Dexie, keeping mock.", e);
-}
-
-export { db };
+const D = Dexie.default || Dexie;
+export const db = new D('ShardNetDB');
+db.version(12).stores({
+  shards: 'id, messageId, shardIndex, expiry, createdAt, trustScore, nodeId, priority, location, relayCount, deviceCount',
+  messages: 'messageId, reconstructedAt, shardCount, priority, previousMessageId, category, lifecycle, usefulness, lastInteraction, location, impact, *contributingNodes, consensusHash, *witnessNodes',
+  logs: '++id, timestamp, type, message',
+  settings: 'id, value',
+  history: '++id, timestamp, type, data',
+  contacts: 'nodeId, alias, addedAt, lastSeen',
+  forum: 'id, timestamp, authorNodeId, authorAlias, content, category, ttl, receivedAt',
+  squads: 'name, secretKey, addedAt',
+  mapTiles: 'url, data, timestamp',
+  emergencyContacts: '++id, name, phone',
+  evidence: 'id, type, category, timestamp, ttl',
+  meshNodes: 'id'
+});
 export let isStoragePersistent = true;
 
 export const globalInit = async () => {

@@ -40,13 +40,13 @@ const ShardGroup = ({ messageId, messageShards, nodeId, onRebroadcast, onShareBu
       <div className="bento-card p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 border-white/10">
         <div className="flex flex-col gap-3 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${getCategoryStyle(firstShard.category)}`}>
+            <div className={`px-4 py-1 rounded-full text-[14px] font-black uppercase tracking-widest ${getCategoryStyle(firstShard.category)}`}>
               {firstShard.category || 'Info'}
             </div>
-            <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${getLifecycleColor(lifecycle)}`}>
+            <div className={`px-4 py-1 rounded-full text-[14px] font-black uppercase tracking-widest ${getLifecycleColor(lifecycle)}`}>
               {lifecycle}
             </div>
-            <span className="text-[10px] font-mono text-slate-500 font-black uppercase tracking-widest">SIGNAL: {messageId.substring(0, 12)}</span>
+            <span className="text-[14px] font-mono text-slate-500 font-black uppercase tracking-widest">SIGNAL: {messageId.substring(0, 12)}</span>
           </div>
           <div className="flex items-center gap-3">
             <div className={`w-2 h-2 rounded-full shrink-0 ${isComplete ? 'bg-secondary' : 'bg-primary'} animate-pulse shadow-[0_0_8px_currentColor]`} />
@@ -68,14 +68,14 @@ const ShardGroup = ({ messageId, messageShards, nodeId, onRebroadcast, onShareBu
           <div className="flex gap-3">
             <button 
               onClick={() => onShareBundle(messageId)}
-              className="btn-premium btn-primary !py-2.5 !px-6 !text-[9px]"
+              className="btn-premium btn-primary !py-2.5 !px-6 !text-[14px]"
             >
               <Layers size={14} /> PROPAGATION BUNDLE
             </button>
             {isSharingSupported() && (
               <button 
                 onClick={() => onBeamBundle(messageId)}
-                className="btn-premium btn-outline !py-2.5 !px-6 !text-[9px]"
+                className="btn-premium btn-outline !py-2.5 !px-6 !text-[14px]"
               >
                 <Bluetooth size={14} /> MESH BEAM
               </button>
@@ -98,37 +98,37 @@ const ShardGroup = ({ messageId, messageShards, nodeId, onRebroadcast, onShareBu
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Fragment #{shard.shardIndex + 1}</p>
+                  <p className="text-[14px] font-black uppercase tracking-widest text-slate-500">Fragment #{shard.shardIndex + 1}</p>
                   <div className="flex items-center gap-2">
                     <Map size={10} className="text-slate-500" />
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{shard.location || 'Unknown Sector'}</span>
+                    <span className="text-[14px] font-black text-slate-400 uppercase tracking-widest">{shard.location || 'Unknown Sector'}</span>
                   </div>
                 </div>
-                <div className={`px-2 py-1 rounded-lg glass border-white/10 text-[8px] font-black uppercase tracking-widest ${trust.color}`}>
+                <div className={`px-2 py-1 rounded-lg glass border-white/10 text-[14px] font-black uppercase tracking-widest ${trust.color}`}>
                   Trust: {trust.label}
                 </div>
               </div>
 
               <div className="flex items-center justify-between py-4 border-y border-white/5">
                 <div>
-                   <p className="text-[8px] font-black text-slate-500 uppercase">Relays</p>
+                   <p className="text-[14px] font-black text-slate-500 uppercase">Relays</p>
                    <p className="text-xs font-bold text-white">{shard.relayCount || 0}</p>
                 </div>
                 <div className="text-right">
-                   <p className="text-[8px] font-black text-slate-500 uppercase">Density</p>
+                   <p className="text-[14px] font-black text-slate-500 uppercase">Density</p>
                    <p className="text-xs font-bold text-white">{shard.deviceCount || 1} Nodes</p>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-widest ${isExpired ? 'text-danger' : 'text-slate-400'}`}>
+                <div className={`flex items-center gap-2 text-[14px] font-black uppercase tracking-widest ${isExpired ? 'text-danger' : 'text-slate-400'}`}>
                   <Clock size={12} /> {isExpired ? 'SIGNAL EXPIRED' : `TTL: ${formatTime(shard.expiry)}`}
                 </div>
 
                 <div className="flex gap-2">
                   <button 
                     onClick={() => onRebroadcast(shard)}
-                    className="flex-1 btn-premium btn-outline !py-2.5 !text-[9px]"
+                    className="flex-1 btn-premium btn-outline !py-2.5 !text-[14px]"
                   >
                     <Share2 size={12} /> BROADCAST
                   </button>
@@ -228,12 +228,12 @@ const StorageView = () => {
           </div>
           <div className="space-y-1">
             <h2 className="heading-lg text-white italic uppercase tracking-tighter">Mesh Vault</h2>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Physical Fragment Storage</p>
+            <p className="text-[14px] font-black text-slate-500 uppercase tracking-widest">Physical Fragment Storage</p>
           </div>
         </div>
         <div className="flex items-center gap-3 px-5 py-2.5 glass border-white/10 rounded-full">
           <div className="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.5)]"></div>
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Storage Core Active</span>
+          <span className="text-[14px] font-black uppercase tracking-[0.2em] text-slate-400">Storage Core Active</span>
         </div>
       </div>
 
@@ -260,7 +260,7 @@ const StorageView = () => {
           </div>
           <div className="space-y-2">
             <p className="text-slate-500 font-black italic uppercase tracking-[0.3em] text-xs">Storage Volume Empty</p>
-            <p className="text-[10px] text-slate-600 uppercase font-black tracking-widest">No mesh fragments detected in local cache</p>
+            <p className="text-[14px] text-slate-600 uppercase font-black tracking-widest">No mesh fragments detected in local cache</p>
           </div>
         </div>
       ) : (

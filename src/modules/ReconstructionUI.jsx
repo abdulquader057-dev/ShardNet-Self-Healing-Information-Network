@@ -17,10 +17,10 @@ export const ReconstructionUI = ({ totalShards, receivedShards }) => {
   return (
     <div className="w-full flex flex-col gap-3 mt-4 p-4 bg-black/40 rounded-2xl border border-white/5">
       <div className="flex justify-between items-center">
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+        <span className="text-[14px] font-black uppercase tracking-widest text-slate-500">
           Assembly Matrix
         </span>
-        <span className={`text-[10px] font-black uppercase tracking-widest ${isComplete ? 'text-primary' : 'text-accent'}`}>
+        <span className={`text-[14px] font-black uppercase tracking-widest ${isComplete ? 'text-primary' : 'text-accent'}`}>
           {isComplete ? 'INTEGRITY 100%' : 'RECOVERING...'}
         </span>
       </div>

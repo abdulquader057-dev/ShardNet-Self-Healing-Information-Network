@@ -91,7 +91,7 @@ const BluetoothMesh = () => {
         </div>
         <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
           <div className={`w-2 h-2 rounded-full ${connectedDevice ? 'bg-secondary' : 'bg-slate-500'} animate-pulse`}></div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+          <span className="text-[14px] font-black uppercase tracking-widest text-slate-400">
             {connectedDevice ? `Linked: ${connectedDevice.name}` : 'Scanning Local Airspace'}
           </span>
         </div>
@@ -112,7 +112,7 @@ const BluetoothMesh = () => {
               <button 
                 onClick={handleScan}
                 disabled={scanning}
-                className="flex items-center gap-2 px-6 py-3 bg-accent/20 hover:bg-accent/30 border border-accent/20 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                className="flex items-center gap-2 px-6 py-3 bg-accent/20 hover:bg-accent/30 border border-accent/20 rounded-2xl text-[14px] font-black uppercase tracking-widest transition-all"
               >
                 {scanning ? <RefreshCw className="animate-spin" size={14} /> : <Bluetooth size={14} />}
                 {scanning ? 'Searching...' : 'Scan Area'}
@@ -139,12 +139,12 @@ const BluetoothMesh = () => {
                       </div>
                       <div>
                         <p className="text-lg font-black italic">{device.name || 'Anonymous Node'}</p>
-                        <p className="text-[10px] font-mono text-slate-600 uppercase">Device ID: {device.id.substring(0, 12)}...</p>
+                        <p className="text-[14px] font-mono text-slate-600 uppercase">Device ID: {device.id.substring(0, 12)}...</p>
                       </div>
                     </div>
                     <button 
                       onClick={() => handleConnect(device)}
-                      className="px-6 py-3 bg-white/5 hover:bg-accent hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                      className="px-6 py-3 bg-white/5 hover:bg-accent hover:text-white rounded-xl text-[14px] font-black uppercase tracking-widest transition-all"
                     >
                       Sync Link
                     </button>
@@ -177,8 +177,8 @@ const BluetoothMesh = () => {
             <div className="space-y-6">
               <div className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Active Link</p>
-                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${syncStatus === 'complete' ? 'bg-secondary/20 text-secondary' : 'bg-slate-500/20 text-slate-500'}`}>
+                  <p className="text-[14px] font-black uppercase tracking-widest text-slate-500">Active Link</p>
+                  <span className={`px-2 py-0.5 rounded text-[14px] font-black uppercase ${syncStatus === 'complete' ? 'bg-secondary/20 text-secondary' : 'bg-slate-500/20 text-slate-500'}`}>
                     {syncStatus.toUpperCase()}
                   </span>
                 </div>
@@ -192,18 +192,18 @@ const BluetoothMesh = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-1">Fragments Received</p>
+                  <p className="text-[14px] font-black uppercase tracking-widest text-slate-600 mb-1">Fragments Received</p>
                   <p className="text-2xl font-black text-secondary">{stats.received}</p>
                 </div>
                 <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-1">Fragments Sent</p>
+                  <p className="text-[14px] font-black uppercase tracking-widest text-slate-600 mb-1">Fragments Sent</p>
                   <p className="text-2xl font-black text-primary">{stats.sent}</p>
                 </div>
               </div>
 
               {syncStatus === 'syncing' && (
                 <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-black uppercase text-slate-500">
+                  <div className="flex justify-between text-[14px] font-black uppercase text-slate-500">
                     <span>Synchronizing Shards</span>
                     <span className="animate-pulse">Active</span>
                   </div>
@@ -221,7 +221,7 @@ const BluetoothMesh = () => {
           </div>
 
           <div className="glass p-8 rounded-[2.5rem] border-white/5 space-y-4">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Mode Protocol</h4>
+            <h4 className="text-[14px] font-black uppercase tracking-widest text-slate-500">Mode Protocol</h4>
             <div className="space-y-2">
               <ProtocolItem icon={<QrCode size={14} />} label="QR Manual" active={false} />
               <ProtocolItem icon={<Bluetooth size={14} />} label="BT Direct" active={true} />
@@ -238,7 +238,7 @@ const ProtocolItem = ({ icon, label, active }) => (
   <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${active ? 'bg-accent/10 border-accent/30 text-accent' : 'bg-white/5 border-white/5 text-slate-600'}`}>
     <div className="flex items-center gap-3">
       {icon}
-      <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+      <span className="text-[14px] font-black uppercase tracking-widest">{label}</span>
     </div>
     {active && <CheckCircle2 size={14} />}
   </div>

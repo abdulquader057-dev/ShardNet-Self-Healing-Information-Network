@@ -165,7 +165,7 @@ const MeshMap = ({ messages = [], zoom = 13, minimal = false }) => {
     h.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (!mounted) return <div className="h-full w-full bg-black flex items-center justify-center text-primary font-mono text-[10px]">INITIALIZING MESH-GRID...</div>;
+  if (!mounted) return <div className="h-full w-full bg-black flex items-center justify-center text-primary font-mono text-[14px]">INITIALIZING MESH-GRID...</div>;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', background: '#0a0a0c', gap: '8px' }}>

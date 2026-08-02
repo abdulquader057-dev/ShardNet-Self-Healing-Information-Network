@@ -149,7 +149,7 @@ export default function Inbox() {
             </div>
             <div>
               <h2 className="text-white font-bold text-sm">{activeContact.alias}</h2>
-              <p className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">ID: {activeContact.nodeId.slice(0, 6)}</p>
+              <p className="text-[14px] text-slate-500 font-mono tracking-widest uppercase">ID: {activeContact.nodeId.slice(0, 6)}</p>
             </div>
           </div>
         </div>
@@ -162,7 +162,7 @@ export default function Inbox() {
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-3 opacity-50">
               <MessageSquare size={40} strokeWidth={1.5} />
-              <p className="text-[10px] uppercase tracking-widest font-black">No messages yet</p>
+              <p className="text-[14px] uppercase tracking-widest font-black">No messages yet</p>
             </div>
           ) : (
             messages.map(msg => {
@@ -183,7 +183,7 @@ export default function Inbox() {
                   `}>
                     <p className="whitespace-pre-wrap">{msg.data.text}</p>
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-600 mt-1 mx-1 flex items-center gap-1">
+                  <span className="text-[14px] font-black uppercase tracking-widest text-slate-600 mt-1 mx-1 flex items-center gap-1">
                     <Clock size={10} /> {formatTime(msg.timestamp)}
                     {isMine && (
                       <span className="ml-1 flex -space-x-1">

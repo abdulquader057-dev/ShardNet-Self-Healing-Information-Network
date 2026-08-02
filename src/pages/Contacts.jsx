@@ -69,14 +69,14 @@ export default function Contacts() {
           className="bento-card p-4 flex flex-col items-center justify-center gap-2 border-white/5 hover:border-[#0A84FF]/50 transition-colors"
         >
           <QrCodeIcon size={24} className="text-[#0A84FF]" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">My QR Card</span>
+          <span className="text-[14px] font-black uppercase tracking-widest text-slate-300">My QR Card</span>
         </button>
         <button 
           onClick={() => setMode('scan_qr')}
           className="bento-card p-4 flex flex-col items-center justify-center gap-2 border-white/5 hover:border-[#34C759]/50 transition-colors"
         >
           <Scan size={24} className="text-[#34C759]" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Scan QR</span>
+          <span className="text-[14px] font-black uppercase tracking-widest text-slate-300">Scan QR</span>
         </button>
       </div>
 
@@ -128,7 +128,7 @@ export default function Contacts() {
       </AnimatePresence>
 
       <div className="space-y-3">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Saved Contacts</h3>
+        <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-500 mb-2">Saved Contacts</h3>
         {contacts.length === 0 ? (
           <div className="text-center p-8 border border-dashed border-white/10 rounded-2xl">
             <UserPlus className="mx-auto mb-2 text-slate-600" size={24} />
@@ -139,7 +139,7 @@ export default function Contacts() {
             <div key={c.nodeId} className="p-4 bento-card border-white/5 flex items-center justify-between">
               <div>
                 <p className="font-bold text-white text-sm">{c.alias}</p>
-                <p className="text-[10px] text-slate-500 font-mono mt-0.5">{c.nodeId}</p>
+                <p className="text-[14px] text-slate-500 font-mono mt-0.5">{c.nodeId}</p>
               </div>
               <CheckCircle2 size={16} className="text-[#34C759]" />
             </div>

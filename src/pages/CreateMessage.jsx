@@ -185,14 +185,14 @@ const CreateMessage = () => {
                   <User size={16} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Originating Node</p>
+                  <p className="text-[14px] font-black uppercase tracking-widest text-slate-500">Originating Node</p>
                   <p className="text-sm font-bold font-mono">{nodeId}</p>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Signal Location</label>
+              <label className="text-[14px] font-black text-slate-500 uppercase tracking-widest">Signal Location</label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
@@ -227,7 +227,7 @@ const CreateMessage = () => {
                     }`}
                   >
                     {cat.icon}
-                    <span className="text-[9px] font-black uppercase tracking-widest">{cat.label}</span>
+                    <span className="text-[14px] font-black uppercase tracking-widest">{cat.label}</span>
                   </button>
                 ))}
               </div>
@@ -264,7 +264,7 @@ const CreateMessage = () => {
                     }`}
                   >
                     <span className="text-lg font-black">{p}</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest">{p === 1 ? 'Low' : p === 2 ? 'Med' : 'High'}</span>
+                    <span className="text-[14px] font-black uppercase tracking-widest">{p === 1 ? 'Low' : p === 2 ? 'Med' : 'High'}</span>
                   </button>
                 ))}
               </div>
@@ -276,7 +276,7 @@ const CreateMessage = () => {
               <label className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Intel Input</label>
               <div className="flex gap-2">
                 {(audioPreview || imagePreview) && (
-                  <button type="button" onClick={() => { setAudioPreview(null); setImagePreview(null); setMessage(''); }} className="text-[10px] font-black text-danger uppercase tracking-widest hover:underline">
+                  <button type="button" onClick={() => { setAudioPreview(null); setImagePreview(null); setMessage(''); }} className="text-[14px] font-black text-danger uppercase tracking-widest hover:underline">
                     Clear Media
                   </button>
                 )}
@@ -361,18 +361,18 @@ const CreateMessage = () => {
                 </div>
                 <div className="bg-white p-3 rounded-xl border-2 border-primary/10 shadow-inner">
                   <img src={qrCodes[shard.id]} alt={`Shard ${index}`} className="w-40 h-40" />
-                  <p className="text-[8px] text-center font-black text-slate-300 uppercase tracking-widest mt-2">Scan to Collect</p>
+                  <p className="text-[14px] text-center font-black text-slate-300 uppercase tracking-widest mt-2">Scan to Collect</p>
                 </div>
                 <div className="w-full flex gap-2">
                   <button 
                     onClick={() => shareImage(qrCodes[shard.id], `shard-${shard.id}.png`).catch(e => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Sharing failed. Use Download instead.' } })))}
-                    className="flex-1 py-3 bg-secondary/10 hover:bg-secondary/20 border border-secondary/20 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-secondary transition-all"
+                    className="flex-1 py-3 bg-secondary/10 hover:bg-secondary/20 border border-secondary/20 rounded-xl flex items-center justify-center gap-2 text-[14px] font-black uppercase tracking-widest text-secondary transition-all"
                   >
                     <Share2 size={14} /> Share
                   </button>
                   <button 
                     onClick={() => downloadImage(qrCodes[shard.id], `shard-${shard.id}.png`)}
-                    className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-all"
+                    className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl flex items-center justify-center gap-2 text-[14px] font-black uppercase tracking-widest text-slate-400 transition-all"
                   >
                     <Download size={14} /> Download
                   </button>

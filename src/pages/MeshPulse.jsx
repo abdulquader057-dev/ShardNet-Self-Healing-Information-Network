@@ -203,20 +203,20 @@ export default function MeshPulse() {
               <span className="text-xs text-[#8B8B9A] uppercase tracking-widest font-bold">Mesh network active</span>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
-                <span className="text-[10px] font-bold uppercase text-[#22C55E]">Live</span>
+                <span className="text-[14px] font-bold uppercase text-[#22C55E]">Live</span>
               </div>
             </div>
           </div>
           
           <div className="flex flex-col items-end whitespace-nowrap min-w-[70px]">
             <span className="text-4xl font-extrabold text-[#22C55E] font-mono leading-none">{devices.length}</span>
-            <span className="text-[10px] font-black text-[#5A5A6A] uppercase tracking-widest mt-1">Devices</span>
+            <span className="text-[14px] font-black text-[#5A5A6A] uppercase tracking-widest mt-1">Devices</span>
           </div>
         </div>
 
         <div className="h-px bg-[#2A2A35] my-1" />
 
-        <div className="flex justify-between items-center text-[#8B8B9A] text-[10px] font-bold uppercase tracking-wider">
+        <div className="flex justify-between items-center text-[#8B8B9A] text-[14px] font-bold uppercase tracking-wider">
           <div className="flex items-center gap-2">
             <Wifi size={14} className="text-[#22C55E]" />
             <span>Signal: Strong</span>
@@ -236,7 +236,7 @@ export default function MeshPulse() {
       <div className="flex bg-[#141419] p-1 rounded-2xl border border-[#2A2A35]">
         <button
           onClick={() => setViewMode('radar')}
-          className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-colors ${
+          className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-[14px] font-bold uppercase tracking-widest transition-colors ${
             viewMode === 'radar' ? 'bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/20' : 'text-[#8B8B9A] hover:text-white'
           }`}
         >
@@ -244,7 +244,7 @@ export default function MeshPulse() {
         </button>
         <button
           onClick={() => setViewMode('sat')}
-          className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-colors ${
+          className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-[14px] font-bold uppercase tracking-widest transition-colors ${
             viewMode === 'sat' ? 'bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/20' : 'text-[#8B8B9A] hover:text-white'
           }`}
         >
@@ -295,7 +295,8 @@ export default function MeshPulse() {
                     className="w-3 h-3 rounded-full relative z-10"
                     style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}` }}
                   />
-                  <span className="text-[8px] font-bold text-white uppercase bg-black/50 px-1 rounded">{device.name.split(' ')[1]}</span>
+                  <span className="text-[14px] font-bold text-white uppercase bg-black/50 px-1 rounded">{device.name.split(' ')[1]}</span>
+                  <span className="text-[10px] font-mono text-slate-300 bg-black/50 px-1 rounded">{device.distanceStr}</span>
                 </div>
               );
             })}
@@ -304,7 +305,7 @@ export default function MeshPulse() {
           !mapLoaded ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-50 bg-[#0A0A0F] text-[#8B8B9A]">
               <Loader2 size={32} className="animate-spin text-[#3B82F6]" />
-              <span className="text-[10px] uppercase font-bold tracking-widest">Loading Tactical Map...</span>
+              <span className="text-[14px] uppercase font-bold tracking-widest">Loading Tactical Map...</span>
             </div>
           ) : (
             <MapContainer
@@ -348,7 +349,7 @@ export default function MeshPulse() {
                       <p className="font-bold text-white uppercase tracking-wider">{device.name}</p>
                       <p className="text-[#8B8B9A]">Device Type: {device.type}</p>
                       <p className="text-[#8B8B9A]">Signal: <span className={device.status === 'success' ? 'text-[#22C55E]' : device.status === 'warning' ? 'text-[#F59E0B]' : 'text-[#EF4444]'}>{device.signal}</span></p>
-                      <p className="text-[10px] text-[#5A5A6A] italic mt-1">Last seen: {device.lastSeen}</p>
+                      <p className="text-[14px] text-[#5A5A6A] italic mt-1">Last seen: {device.lastSeen}</p>
                     </div>
                   </Popup>
                 </Marker>
@@ -366,12 +367,12 @@ export default function MeshPulse() {
             {scanning ? (
               <>
                 <Loader2 size={12} className="text-[#3B82F6] animate-spin" />
-                <span className="text-[10px] uppercase font-bold tracking-widest text-[#3B82F6]">Scanning...</span>
+                <span className="text-[14px] uppercase font-bold tracking-widest text-[#3B82F6]">Scanning...</span>
               </>
             ) : (
               <>
                 <div className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] animate-ping" />
-                <span className="text-[10px] uppercase font-bold tracking-widest text-[#8B8B9A]">Monitoring</span>
+                <span className="text-[14px] uppercase font-bold tracking-widest text-[#8B8B9A]">Monitoring</span>
               </>
             )}
           </div>
@@ -425,7 +426,7 @@ export default function MeshPulse() {
                       {/* Info */}
                       <div>
                         <p className="text-sm font-bold text-white leading-none mb-1.5">{device.name}</p>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#8B8B9A]">
+                        <p className="text-[14px] font-bold uppercase tracking-wider text-[#8B8B9A]">
                           {device.type} • Signal {device.signal}
                           {device.battery !== null && ` • ${device.battery}% BAT`}
                         </p>
@@ -441,7 +442,7 @@ export default function MeshPulse() {
                     </div>
 
                     {/* Last seen timestamp */}
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-[#5A5A6A] absolute bottom-2 right-4">
+                    <span className="text-[14px] font-bold uppercase tracking-widest text-[#5A5A6A] absolute bottom-2 right-4">
                       {device.lastSeen}
                     </span>
                   </motion.div>
@@ -455,7 +456,7 @@ export default function MeshPulse() {
         <button
           onClick={handleScan}
           disabled={scanning || loading}
-          className="mt-2 w-full flex items-center justify-center gap-2 rounded-2xl text-[#3B82F6] border border-[#3B82F6]/20 bg-[#3B82F6]/5 font-bold uppercase tracking-widest text-[10px] transition-all hover:bg-[#3B82F6]/10 active:scale-[0.99] disabled:opacity-50 h-14"
+          className="mt-2 w-full flex items-center justify-center gap-2 rounded-2xl text-[#3B82F6] border border-[#3B82F6]/20 bg-[#3B82F6]/5 font-bold uppercase tracking-widest text-[14px] transition-all hover:bg-[#3B82F6]/10 active:scale-[0.99] disabled:opacity-50 h-14"
         >
           {scanning ? (
             <>
@@ -496,7 +497,7 @@ export default function MeshPulse() {
               transition={{ duration: 0.25 }}
               className="overflow-hidden border-t border-[#2A2A35] bg-black/20"
             >
-              <div className="p-5 flex flex-col gap-3 text-[10px] font-bold uppercase tracking-widest text-[#8B8B9A]">
+              <div className="p-5 flex flex-col gap-3 text-[14px] font-bold uppercase tracking-widest text-[#8B8B9A]">
                 <div className="flex justify-between items-center py-2 border-b border-[#2A2A35]/50">
                   <span>Protocol</span>
                   <span className="text-white">WebRTC + BLE Hybrid gossip</span>

@@ -64,7 +64,7 @@ const FlashTransmitter = ({ data }) => {
             
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 flex items-center gap-2">
               <Monitor size={14} className="text-secondary" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-100">
+              <span className="text-[14px] font-black uppercase tracking-widest text-slate-100">
                 Transmitting: {Math.round((currentBit / binary.length) * 100)}%
               </span>
             </div>
@@ -72,7 +72,7 @@ const FlashTransmitter = ({ data }) => {
         )}
       </AnimatePresence>
       
-      <p className="text-[9px] font-black uppercase text-slate-600 text-center tracking-[0.2em]">
+      <p className="text-[14px] font-black uppercase text-slate-600 text-center tracking-[0.2em]">
         Experimental Line-of-Sight Module
       </p>
     </div>
