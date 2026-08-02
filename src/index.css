@@ -357,10 +357,10 @@ h1, h2, h3, h4 {
 }
 
 .mesh-tile {
-  filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(1.2) saturate(0.5);
+  /* Removed inversion filter as CartoDB Dark Matter is already dark */
 }
 
-.leaflet-control-zoom, .leaflet-control-attribution {
+.leaflet-control-attribution {
   display: none !important;
 }
 
