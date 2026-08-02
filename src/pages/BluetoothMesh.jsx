@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bluetooth, BluetoothConnected, BluetoothSearching, RefreshCw, Send, CheckCircle2, AlertCircle, Laptop, Smartphone, Tablet, Zap, Layers } from 'lucide-react';
-import { getAllShards, saveShard, addLog, getNodeIdentity } from '../storage/db';
+import { db, getAllShards, saveShard, addLog, getNodeIdentity } from '../storage/db';
 import { isBluetoothSupported, discoverDevices, syncNodes } from '../utils/bluetooth';
 
 const BluetoothMesh = () => {
@@ -48,7 +48,7 @@ const BluetoothMesh = () => {
       
       // Add to contacts
       try {
-        const { db } = await import('../storage/db');
+
         await db.contacts.put(newContact);
       } catch(e) {}
 

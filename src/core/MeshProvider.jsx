@@ -7,6 +7,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { getMeshInstance } from './meshNetwork';
 import { db } from '../storage/db';
+import { deriveBroadcastKey, decryptBroadcast, encryptBroadcast } from './meshCore.js';
 
 const MeshContext = createContext(null);
 
@@ -114,7 +115,7 @@ export function MeshProvider({ children }) {
           if (!squadName) return;
           const squad = await db.squads.get(squadName);
           if (squad) {
-            const { deriveBroadcastKey, decryptBroadcast } = await import('./meshCore.js');
+
             const key = await deriveBroadcastKey(squad.secretKey);
             const decryptedText = await decryptBroadcast(msg.plaintext, key);
             window.dispatchEvent(new CustomEvent('squad-message', {
@@ -222,7 +223,7 @@ export function MeshProvider({ children }) {
     const squad = await db.squads.get(squadName);
     if (!squad) throw new Error('Squad not found');
     
-    const { deriveBroadcastKey, encryptBroadcast } = await import('./meshCore.js');
+
     const key = await deriveBroadcastKey(squad.secretKey);
     const encryptedPayload = await encryptBroadcast(plaintext, key);
     
