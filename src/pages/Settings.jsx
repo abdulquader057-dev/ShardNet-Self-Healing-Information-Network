@@ -16,10 +16,26 @@ import {
   ChevronRight,
   Edit2,
   X,
-  BookOpen
+  BookOpen,
+  QrCode,
+  ScanLine,
+  Wifi,
+  Users,
+  Clock,
+  Share,
+  Database,
+  DownloadCloud,
+  Loader2,
+  Shield,
+  Key
 } from 'lucide-react';
+import { useMesh } from '../core/MeshProvider';
+import { QRCodeSVG } from 'qrcode.react';
+import { useNavigate } from 'react-router-dom';
+import { db } from '../storage/db';
 
 export default function Settings() {
+  const navigate = useNavigate();
   const [deviceName, setDeviceName] = useState(localStorage.getItem('setting_device_name') || 'Your Phone');
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(deviceName);
@@ -32,7 +48,11 @@ export default function Settings() {
   const [soundAlerts, setSoundAlerts] = useState(localStorage.getItem('setting_sound_alerts') !== 'false');
   const [vibration, setVibration] = useState(localStorage.getItem('setting_vibration') !== 'false');
   
-  const [demoMode, setDemoMode] = useState(localStorage.getItem('sharednet_demo_mode') === 'true');
+  const [dbSize, setDbSize] = useState('0 KB');
+  const [downloadingMap, setDownloadingMap] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+
+
   
   const [highContrast, setHighContrast] = useState(localStorage.getItem('setting_high_contrast') === 'true');
   const [largeText, setLargeText] = useState(localStorage.getItem('setting_large_text') === 'true');
@@ -43,16 +63,69 @@ export default function Settings() {
   const [presentationMode, setPresentationMode] = useState(localStorage.getItem('presentation_mode') === 'true');
   const [showAboutModal, setShowAboutModal] = useState(false);
 
-  const deviceId = 'SN-WV1K-7842';
+  // Mesh pairing state
+  const { nodeId: meshNodeId, peerCount, reachableCount, isReady, createOffer, acceptOffer, completeConnection, pendingMessages } = useMesh();
+  const [showPairModal, setShowPairModal] = useState(false);
+  const [pairMode, setPairMode] = useState(null); // 'show' | 'scan'
+  const [offerPayload, setOfferPayload] = useState('');
+  const [answerInput, setAnswerInput] = useState('');
+  const [pairStatus, setPairStatus] = useState(''); // '' | 'waiting' | 'connected' | 'error'
+  const [pendingConn, setPendingConn] = useState(null);
+  const [showQueue, setShowQueue] = useState(false);
 
-  // Apply visual settings on load/toggle
+  const deviceId = meshNodeId || 'SN-WV1K-7842';
+
+  const calculateDbSize = async () => {
+    try {
+      const messages = await db.history.count();
+      const nodes = await db.meshNodes.count();
+      setDbSize(`${(messages * 0.5 + nodes * 0.2).toFixed(1)} KB`);
+    } catch(e) {}
+  };
+
+  const handleDownloadMaps = async () => {
+    setDownloadingMap(true);
+    setDownloadProgress(0);
+    const cx = 11802;
+    const cy = 7445;
+    const z = 14;
+    const tiles = [];
+    for(let dx=-2; dx<=2; dx++) {
+      for(let dy=-2; dy<=2; dy++) {
+        tiles.push(`https://a.basemaps.cartocdn.com/dark_all/${z}/${cx+dx}/${cy+dy}.png`);
+      }
+    }
+    
+    let loaded = 0;
+    for(const url of tiles) {
+      try {
+        await fetch(url, { mode: 'no-cors' });
+      } catch(e) {}
+      loaded++;
+      setDownloadProgress(Math.round((loaded / tiles.length) * 100));
+    }
+    
+    setTimeout(() => {
+      setDownloadingMap(false);
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Map region cached for offline use.' } }));
+    }, 500);
+  };
+
   useEffect(() => {
+    calculateDbSize();
     if (highContrast) {
       document.documentElement.classList.add('high-contrast');
     } else {
       document.documentElement.classList.remove('high-contrast');
     }
   }, [highContrast]);
+
+  const handleChangePin = () => {
+    if (confirm("Are you sure you want to change your Master PIN? You will be prompted to set a new one.")) {
+      localStorage.removeItem('sharednet_pin_hash');
+      window.location.reload();
+    }
+  };
 
   useEffect(() => {
     if (largeText) {
@@ -86,7 +159,6 @@ export default function Settings() {
     navigator.clipboard.writeText(deviceId).then(() => {
       showToast('success', 'Device ID copied to clipboard');
     }).catch(() => {
-      // Fallback
       const el = document.createElement('textarea');
       el.value = deviceId;
       document.body.appendChild(el);
@@ -104,117 +176,7 @@ export default function Settings() {
     showToast('success', 'Device name updated');
   };
 
-  const handleDemoToggle = (val) => {
-    setDemoMode(val);
-    localStorage.setItem('sharednet_demo_mode', val.toString());
-    
-    // Seed/clear demo signals
-    if (val) {
-      if (window.sharedNetData) {
-        window.sharedNetData.signals = [
-          {
-            id: 'mock-1',
-            type: 'received',
-            title: 'Hiker-42 Emergency SOS',
-            status: 'active',
-            time: '4 min ago',
-            timestamp: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-            location: '120m northeast',
-            description: "Distress signal from hiker. Message: 'Twisted ankle, cannot walk. Need medical assistance.'",
-            sender: 'Hiker-42',
-            range: '120m',
-            battery: '34%'
-          },
-          {
-            id: 'demo-sig-1',
-            type: 'received',
-            title: 'Flood Warning Alert',
-            status: 'active',
-            time: '1 min ago',
-            timestamp: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
-            location: '1.2km north',
-            description: "Flash flood warning issued for local sectors. Evacuate to higher ground immediately.",
-            sender: 'BaseCamp',
-            range: '1.2km',
-            battery: '98%'
-          },
-          {
-            id: 'mock-2',
-            type: 'received',
-            title: 'Vehicle Collision Alert',
-            status: 'resolved',
-            time: 'Yesterday, 6:42 PM',
-            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-            location: '450m south',
-            description: "Multi-vehicle accident reported. Emergency services dispatched. All victims evacuated safely.",
-            sender: 'Vehicle-A1',
-            range: '450m',
-            battery: '82%'
-          },
-          {
-            id: 'demo-sig-2',
-            type: 'received',
-            title: 'Medical Rescue Resolved',
-            status: 'resolved',
-            time: 'Yesterday',
-            timestamp: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
-            location: '2.1km west',
-            description: "Cardiac incident reported. Rescue-01 intercepted and administered first-aid. Patient stabilized and evacuated.",
-            sender: 'Rescue-01',
-            range: '2.1km',
-            battery: '74%'
-          },
-          {
-            id: 'mock-3',
-            type: 'sent',
-            title: 'Your SOS Signal',
-            status: 'sent',
-            time: 'Today, 08:15 AM',
-            timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-            location: 'Your location',
-            description: "Test signal sent successfully. 3 nearby devices notified.",
-            sender: 'You (Self)',
-            range: 'Local Transceiver',
-            battery: '84%'
-          },
-          {
-            id: 'demo-sent-1',
-            type: 'sent',
-            title: 'Grid Status Check-in',
-            status: 'sent',
-            time: 'Today, 09:12 AM',
-            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-            location: 'Your location',
-            description: "Status Check: Grid-4 secure, transceiver active.",
-            sender: 'You (Self)',
-            range: 'Local Transceiver',
-            battery: '84%'
-          },
-          {
-            id: 'mock-4',
-            type: 'sent',
-            title: 'Test Ping',
-            status: 'sent',
-            time: 'Today, 07:30 AM',
-            timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-            location: 'Your location',
-            description: "Network connectivity test. All systems operational.",
-            sender: 'You (Self)',
-            range: 'Local Transceiver',
-            battery: '84%'
-          }
-        ];
-      }
-      showToast('info', 'Demo Mode Activated: mock telemetry loaded');
-    } else {
-      if (window.sharedNetData) {
-        window.sharedNetData.signals = []; // Trigger re-populate
-      }
-      showToast('info', 'Demo Mode Deactivated: Standard telemetry restored');
-    }
-    
-    window.dispatchEvent(new CustomEvent('demo-mode-changed'));
-  };
+
 
   const handleTestSOS = () => {
     window.dispatchEvent(new CustomEvent('trigger-sos-test'));
@@ -251,8 +213,18 @@ export default function Settings() {
     }
   };
 
+  const ToggleSwitch = ({ checked, onChange, activeColor = '#0A84FF' }) => (
+    <button 
+      onClick={() => onChange(!checked)}
+      className={`w-10 h-6 rounded-full p-1 transition-colors flex ${checked ? 'justify-end' : 'justify-start'}`}
+      style={{ backgroundColor: checked ? activeColor : '#3A3A3C' }}
+    >
+      <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
+    </button>
+  );
+
   return (
-    <div className="space-y-6 pb-28">
+    <div className="space-y-6 pb-48">
       
       {/* ── HEADER ── */}
       <div className="space-y-1">
@@ -313,26 +285,375 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* ── DEMO MODE SECTION (CRITICAL) ── */}
+      {/* ── IDENTITY SECTION ── */}
       <div className="space-y-2">
-        <span className="text-caption text-[#FF9500] uppercase tracking-widest block pl-1">Hackathon Showcase</span>
-        <div 
-          className="card p-4 rounded-xl border border-dashed border-[#FF9500]/50 space-y-3"
-          style={{ background: 'rgba(255, 149, 0, 0.04)' }}
-        >
-          <div className="flex justify-between items-center">
-            <div>
-              <span className="text-white font-bold text-xs">Demo Mode</span>
-              <p className="text-[10px] text-[#FF9500] mt-0.5">Populate application with realistic telemetry for presentations.</p>
+        <span className="text-caption text-[#0A84FF] uppercase tracking-widest block pl-1">Identity</span>
+        <div className="card p-4 bg-[#1C1C1E] border border-slate-800 rounded-xl space-y-4">
+          <button 
+            onClick={() => navigate('/contacts')}
+            className="w-full flex items-center justify-between group active:scale-[0.98] transition-transform"
+          >
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-8 h-8 rounded-full bg-[#0A84FF]/20 flex items-center justify-center">
+                <Users size={16} className="text-[#0A84FF]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold">Identity & Contacts</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Manage keys and friends</p>
+              </div>
             </div>
-            <ToggleSwitch 
-              checked={demoMode} 
-              onChange={handleDemoToggle} 
-              activeColor="#FF9500"
-            />
-          </div>
+            <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
+          </button>
+
+          <button 
+            onClick={() => navigate('/squads')}
+            className="w-full flex items-center justify-between group active:scale-[0.98] transition-transform"
+          >
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-8 h-8 rounded-full bg-[#8b5cf6]/20 flex items-center justify-center">
+                <Shield size={16} className="text-[#8b5cf6]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold">Squad Channels</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Encrypted private groups</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
+          </button>
+
+          <button 
+            onClick={() => navigate('/share')}
+            className="w-full flex items-center justify-between group active:scale-[0.98] transition-transform"
+          >
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-8 h-8 rounded-full bg-[#34C759]/20 flex items-center justify-center">
+                <Share size={16} className="text-[#34C759]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold">Share App Offline</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">AirDrop or QR code install</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
+          </button>
+
+          <button 
+            onClick={handleChangePin}
+            className="w-full flex items-center justify-between group active:scale-[0.98] transition-transform"
+          >
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-8 h-8 rounded-full bg-[#f59e0b]/20 flex items-center justify-center">
+                <Key size={16} className="text-[#f59e0b]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold">Change Master PIN</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Reset your security code</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
+          </button>
         </div>
       </div>
+
+      {/* ── SYSTEM DIAGNOSTICS SECTION ── */}
+      <div className="space-y-2">
+        <span className="text-caption text-[#34C759] uppercase tracking-widest block pl-1">System</span>
+        <div className="card p-4 bg-[#1C1C1E] border border-slate-800 rounded-xl space-y-4">
+          <button 
+            onClick={() => navigate('/storage')}
+            className="w-full flex items-center justify-between group active:scale-[0.98] transition-transform"
+          >
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-8 h-8 rounded-full bg-[#34C759]/20 flex items-center justify-center">
+                <Database size={16} className="text-[#34C759]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold">Local Datastore</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">{dbSize} • IndexedDB (Encrypted)</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
+          </button>
+          
+          <button 
+            onClick={handleDownloadMaps}
+            disabled={downloadingMap}
+            className="w-full flex items-center justify-between group active:scale-[0.98] transition-transform disabled:opacity-50"
+          >
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-8 h-8 rounded-full bg-[#0A84FF]/20 flex items-center justify-center">
+                {downloadingMap ? (
+                  <Loader2 size={16} className="text-[#0A84FF] animate-spin" />
+                ) : (
+                  <DownloadCloud size={16} className="text-[#0A84FF]" />
+                )}
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold">Download Offline Region</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                  {downloadingMap ? `Caching tiles... ${downloadProgress}%` : 'Save 10km radius to device'}
+                </p>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* ── MESH NETWORK SECTION ── */}
+      <div className="space-y-2">
+        <span className="text-caption text-[#0A84FF] uppercase tracking-widest block pl-1">Real Mesh Network</span>
+        <div className="card p-4 bg-[#1C1C1E] border border-slate-800 rounded-xl space-y-3">
+          
+          <div className="flex justify-between items-center">
+            <div>
+              <span className="text-[10px] text-slate-500 font-bold block">Mesh Node ID</span>
+              <span className="text-white font-mono text-xs font-semibold">{meshNodeId || '...'}</span>
+            </div>
+            <div className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${isReady ? 'bg-[#34C759]/20 text-[#34C759]' : 'bg-slate-700 text-slate-400'}`}>
+              {isReady ? 'Online' : 'Initializing'}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 py-2 border-y border-slate-800/60">
+            <div className="text-center">
+              <p className="text-lg font-black text-[#0A84FF] font-mono">{peerCount}</p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase">Direct</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-black text-[#34C759] font-mono">{reachableCount}</p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase">Reachable</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-black text-[#FF9500] font-mono">{pendingMessages.length}</p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase">Queued</p>
+            </div>
+          </div>
+
+          {pendingMessages.length > 0 && (
+            <div className="pt-2 border-t border-slate-800/60">
+              <button 
+                onClick={() => setShowQueue(!showQueue)}
+                className="w-full flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-slate-400 py-2"
+              >
+                <span>Store-and-Forward Queue</span>
+                <ChevronRight size={14} className={`transition-transform ${showQueue ? 'rotate-90' : ''}`} />
+              </button>
+              
+              <AnimatePresence>
+                {showQueue && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-2 mt-2 max-h-[150px] overflow-y-auto pr-1">
+                      {pendingMessages.map((msg, i) => (
+                        <div key={i} className="flex justify-between items-center bg-[#2C2C2E]/50 rounded-lg p-2">
+                          <div className="flex items-center gap-2">
+                            <Clock size={12} className="text-[#FF9500]" />
+                            <span className="text-[9px] font-mono text-slate-300">To: {msg.to.slice(0, 6)}</span>
+                          </div>
+                          <span className="text-[8px] uppercase font-black text-slate-500">{msg.type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={async () => {
+                setPairMode('show');
+                setPairStatus('waiting');
+                setShowPairModal(true);
+                try {
+                  const offer = await createOffer();
+                  setOfferPayload(offer.payload);
+                  setPendingConn(offer);
+                  setPairStatus('');
+                } catch (err) {
+                  setPairStatus('error');
+                  console.error('[Pairing] Offer failed:', err);
+                }
+              }}
+              className="flex-1 py-3 bg-[#0A84FF] text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              <QrCode size={14} /> Show My QR
+            </button>
+            <button
+              onClick={() => {
+                setPairMode('scan');
+                setShowPairModal(true);
+                setPairStatus('');
+                setAnswerInput('');
+              }}
+              className="flex-1 py-3 bg-[#2C2C2E] border border-slate-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              <ScanLine size={14} /> Scan Peer QR
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ── PAIR MODAL ── */}
+      <AnimatePresence>
+        {showPairModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setShowPairModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm bg-[#1C1C1E] border border-slate-700 rounded-2xl p-6 space-y-4"
+            >
+              <div className="flex justify-between items-center">
+                <h3 className="text-white font-black text-sm uppercase tracking-wider">
+                  {pairMode === 'show' ? 'Your Offer QR' : 'Scan Peer Code'}
+                </h3>
+                <button onClick={() => setShowPairModal(false)} className="text-slate-400 hover:text-white">
+                  <X size={18} />
+                </button>
+              </div>
+
+              {pairMode === 'show' && (
+                <div className="space-y-4">
+                  {pairStatus === 'waiting' ? (
+                    <div className="text-center py-8">
+                      <div className="w-8 h-8 border-2 border-[#0A84FF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                      <p className="text-slate-400 text-xs">Generating WebRTC offer...</p>
+                    </div>
+                  ) : pairStatus === 'error' ? (
+                    <p className="text-red-400 text-xs text-center py-4">Failed to create offer. Try again.</p>
+                  ) : (
+                    <>
+                      <div className="text-[10px] text-slate-500 text-center mb-2">Step 1: Have the other device scan this</div>
+                      <div className="bg-white p-4 rounded-xl flex items-center justify-center">
+                        <QRCodeSVG value={offerPayload} size={200} level="L" />
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[10px] text-slate-500 text-center">Step 2: Paste the answer code from their device:</p>
+                        <textarea
+                          value={answerInput}
+                          onChange={(e) => setAnswerInput(e.target.value)}
+                          placeholder="Paste the answer payload here..."
+                          className="w-full bg-[#2C2C2E] border border-slate-700 text-white rounded-lg px-3 py-2 text-[10px] font-mono h-20 resize-none focus:outline-none focus:border-[#0A84FF]"
+                        />
+                        <button
+                          onClick={() => {
+                            if (!answerInput.trim()) return;
+                            try {
+                              completeConnection(answerInput.trim());
+                              setPairStatus('connected');
+                              setTimeout(() => setShowPairModal(false), 1500);
+                              window.dispatchEvent(new CustomEvent('show-toast', {
+                                detail: { type: 'success', message: '✅ Mesh peer connected!' }
+                              }));
+                            } catch (err) {
+                              setPairStatus('error');
+                              console.error('[Pairing]', err);
+                            }
+                          }}
+                          className="w-full py-3 bg-[#34C759] text-white rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-[0.98] transition-transform"
+                        >
+                          Complete Connection
+                        </button>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (navigator.share) {
+                            try { await navigator.share({ title: 'SharedNet Pairing', text: offerPayload }); } catch { /* cancelled */ }
+                          } else {
+                            await navigator.clipboard.writeText(offerPayload);
+                            window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Offer copied to clipboard' } }));
+                          }
+                        }}
+                        className="w-full py-2 bg-[#2C2C2E] border border-slate-700 text-slate-300 rounded-xl text-[9px] font-bold uppercase tracking-wider"
+                      >
+                        Share Code Instead
+                      </button>
+                    </>
+                  )}
+                  {pairStatus === 'connected' && (
+                    <div className="text-center py-4">
+                      <div className="text-[#34C759] text-2xl mb-2">✅</div>
+                      <p className="text-[#34C759] font-bold text-sm">Connected!</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {pairMode === 'scan' && (
+                <div className="space-y-4">
+                  <p className="text-[10px] text-slate-500 text-center">Paste the offer code from the other device:</p>
+                  <textarea
+                    value={answerInput}
+                    onChange={(e) => setAnswerInput(e.target.value)}
+                    placeholder="Paste the offer payload here..."
+                    className="w-full bg-[#2C2C2E] border border-slate-700 text-white rounded-lg px-3 py-2 text-[10px] font-mono h-24 resize-none focus:outline-none focus:border-[#0A84FF]"
+                  />
+                  {pairStatus === 'connected' ? (
+                    <div className="text-center py-4">
+                      <div className="text-[#34C759] text-2xl mb-2">✅</div>
+                      <p className="text-[#34C759] font-bold text-sm">Connected!</p>
+                    </div>
+                  ) : pairStatus === 'answering' ? (
+                    <div className="space-y-3">
+                      <div className="text-[10px] text-slate-500 text-center">Show this answer to the other device:</div>
+                      <div className="bg-white p-4 rounded-xl flex items-center justify-center">
+                        <QRCodeSVG value={offerPayload} size={200} level="L" />
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (navigator.share) {
+                            try { await navigator.share({ title: 'SharedNet Answer', text: offerPayload }); } catch { /* cancelled */ }
+                          } else {
+                            await navigator.clipboard.writeText(offerPayload);
+                            window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Answer copied to clipboard' } }));
+                          }
+                        }}
+                        className="w-full py-2 bg-[#2C2C2E] border border-slate-700 text-slate-300 rounded-xl text-[9px] font-bold uppercase tracking-wider"
+                      >
+                        Share Answer Code
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        if (!answerInput.trim()) return;
+                        try {
+                          const answerPayload = await acceptOffer(answerInput.trim());
+                          setOfferPayload(answerPayload);
+                          setPairStatus('answering');
+                        } catch (err) {
+                          setPairStatus('error');
+                          console.error('[Pairing] Accept failed:', err);
+                        }
+                      }}
+                      className="w-full py-3 bg-[#0A84FF] text-white rounded-xl text-[10px] font-black uppercase tracking-wider active:scale-[0.98] transition-transform"
+                    >
+                      Accept & Generate Answer
+                    </button>
+                  )}
+                </div>
+              )}
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+
 
       {/* ── NETWORK CONFIGURATION SECTION ── */}
       <div className="space-y-2">
@@ -640,7 +961,8 @@ function ToggleSwitch({ checked, onChange, activeColor = '#34C759' }) {
       style={{
         width: '52px',
         height: '32px',
-        backgroundColor: checked ? activeColor : 'var(--bg-elevated, #2C2C2E)'
+        backgroundColor: checked ? activeColor : '#3A3A3C',
+        border: checked ? 'none' : '1px solid rgba(255,255,255,0.08)'
       }}
     >
       <span

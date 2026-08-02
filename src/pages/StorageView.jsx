@@ -10,8 +10,8 @@ import { safeCall, safeCallAsync, safeInterval } from '../core/stability';
 const ShardGroup = ({ messageId, messageShards, nodeId, onRebroadcast, onShareBundle, onBeamBundle, onDeleteShard, now }) => {
   const [lifecycle, setLifecycle] = useState('Detecting...');
   const firstShard = messageShards[0];
-  const isComplete = messageShards.length >= firstShard.totalShards;
-  const progress = (messageShards.length / firstShard.totalShards) * 100;
+  const isComplete = messageShards.length >= firstShard.totalShards || lifecycle === 'Fully Reconstructed';
+  const progress = isComplete ? 100 : (messageShards.length / firstShard.totalShards) * 100;
 
   useEffect(() => {
     safeCallAsync(() => getMessageLifecycle(messageId).then(setLifecycle), "Get Message Lifecycle");
@@ -22,7 +22,7 @@ const ShardGroup = ({ messageId, messageShards, nodeId, onRebroadcast, onShareBu
     if (diff <= 0) return 'Expired';
     const mins = Math.floor(diff / 60000);
     const secs = Math.floor((diff % 60000) / 1000);
-    return `${mins}m ${secs}s`;
+    return `${mins} min ${secs} sec`;
   };
 
   const getLifecycleColor = (status) => {
@@ -61,6 +61,7 @@ const ShardGroup = ({ messageId, messageShards, nodeId, onRebroadcast, onShareBu
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
+              style={{ width: `${progress}%` }}
               className={`h-full ${isComplete ? 'bg-secondary' : 'bg-primary'}`}
             />
           </div>
@@ -83,7 +84,7 @@ const ShardGroup = ({ messageId, messageShards, nodeId, onRebroadcast, onShareBu
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex flex-wrap gap-6 justify-center lg:justify-start">
         {messageShards.map((shard) => {
           const trust = getTrustLevel(shard.trustScore, shard.relayCount, shard.deviceCount);
           const isExpired = shard.expiry < now;
@@ -93,7 +94,7 @@ const ShardGroup = ({ messageId, messageShards, nodeId, onRebroadcast, onShareBu
             <motion.div 
               layout
               key={shard.id}
-              className={`bento-card p-6 border-white/5 space-y-6 group relative ${isExpired ? 'opacity-40 grayscale' : ''}`}
+              className={`bento-card p-6 border-white/5 space-y-6 group relative w-full sm:max-w-[340px] flex-1 ${isExpired ? 'opacity-40 grayscale' : ''}`}
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -218,7 +219,7 @@ const StorageView = () => {
   };
 
   return (
-    <div className="page-container">
+    <div className="page-container pb-48">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div className="flex items-center gap-4">
           <div className="bg-secondary/20 p-3 rounded-2xl shadow-lg shadow-secondary/5 text-secondary border border-secondary/20">
@@ -342,6 +343,15 @@ const StorageView = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-white/10 z-40">
+        <button 
+          onClick={() => window.history.back()}
+          className="btn-premium btn-outline w-full !py-4"
+        >
+          CLOSE VAULT
+        </button>
+      </div>
     </div>
   );
 };

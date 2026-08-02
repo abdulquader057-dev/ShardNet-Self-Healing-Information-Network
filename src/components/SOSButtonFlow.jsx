@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMesh } from '../core/MeshProvider';
 
 const CIRCUMFERENCE = 364.4; // 2 * Math.PI * 58
 
@@ -7,6 +8,7 @@ export default function SOSButtonFlow() {
   const [state, setState] = useState('idle'); // idle | countdown | sending | sent | cancelled
   const [timeLeft, setTimeLeft] = useState(3.0);
   const navigate = useNavigate();
+  const { broadcast, peerCount, isReady } = useMesh();
 
   const countdownIntervalRef = useRef(null);
   const sendingTimeoutRef = useRef(null);
@@ -190,6 +192,23 @@ export default function SOSButtonFlow() {
 
       // Dispatch global event so the feed updates dynamically if open
       window.dispatchEvent(new CustomEvent('demo-mode-changed'));
+
+      // ── REAL MESH BROADCAST ──
+      if (isReady) {
+        broadcast(
+          'EMERGENCY SOS: User needs immediate assistance. Location: nearby.',
+          'sos',
+          7,
+          { location: 'User location' }
+        ).then((result) => {
+          console.log(`[SOS] Broadcasted to ${result.reachableNow} direct peers`);
+          window.dispatchEvent(new CustomEvent('show-toast', {
+            detail: { type: 'success', message: `SOS sent to ${result.reachableNow} mesh peers` }
+          }));
+        }).catch((err) => {
+          console.warn('[SOS] Mesh broadcast failed:', err);
+        });
+      }
 
       setState('sent');
       

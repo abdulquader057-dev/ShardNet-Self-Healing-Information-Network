@@ -9,7 +9,7 @@ import {
 } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Navigation, Globe, Shield, Map as MapIcon, Crosshair } from 'lucide-react';
+import { Navigation, Globe, Shield, Map as MapIcon, Crosshair, ChevronUp, ChevronDown } from 'lucide-react';
 import { getLocationSafe } from '../utils/geo';
 import { safeInterval } from '../core/stability';
 import { GLOBAL_HUBS, INFRA_ICONS } from '../data/emergencyData';
@@ -116,6 +116,7 @@ const MeshMap = ({ messages = [], zoom = 13 }) => {
   const [activeTab, setActiveTab] = useState('local'); // local, global
   const [searchQuery, setSearchQuery] = useState('');
   const [mapInstance, setMapInstance] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -201,12 +202,7 @@ const MeshMap = ({ messages = [], zoom = 13 }) => {
 
         {/* ── INFRASTRUCTURE NODES (GLOBAL & LOCAL DISCOVERY) ── */}
         {[
-          ...GLOBAL_HUBS,
-          ...(location ? [
-            { id: 'p1', type: 'hospital', name: 'Nearby Trauma Center', lat: location.lat + 0.004, lng: location.lng + 0.002, info: 'Procedural Discovery' },
-            { id: 'p2', type: 'reservoir', name: 'Water Reserve Node', lat: location.lat - 0.003, lng: location.lng + 0.005, info: 'Procedural Discovery' },
-            { id: 'p3', type: 'shelter', name: 'Emergency Bunker', lat: location.lat + 0.006, lng: location.lng - 0.001, info: 'Procedural Discovery' },
-          ] : [])
+          ...GLOBAL_HUBS
         ].map(hub => (
           <Marker key={hub.id} position={[hub.lat, hub.lng]} icon={createInfraIcon(hub.type)}>
             <Popup>
@@ -227,51 +223,63 @@ const MeshMap = ({ messages = [], zoom = 13 }) => {
         ))}
       </MapContainer>
 
-      {/* ── TACTICAL OVERLAY ── */}
+      {/* ── TACTICAL OVERLAY (Instruction 2) ── */}
       <div style={{
         position: 'absolute', bottom: 12, right: 12, left: 12, zIndex: 1000,
-        background: 'rgba(9,11,20,0.92)', backdropFilter: 'blur(16px)',
+        background: 'rgba(9,11,20,0.95)', backdropFilter: 'blur(16px)',
         border: '1px solid rgba(59,130,246,0.3)', borderRadius: 16,
-        padding: '12px', display: 'flex', flexDirection: 'column', gap: 10
+        padding: '12px', display: 'flex', flexDirection: 'column', gap: isExpanded ? 10 : 0,
+        pointerEvents: 'auto'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button 
-              onClick={() => setActiveTab('local')}
-              style={{ background: activeTab === 'local' ? '#3b82f6' : 'transparent', color: activeTab === 'local' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', whiteSpace: 'nowrap' }}
-            >Local Scan</button>
-            <button 
-              onClick={() => setActiveTab('global')}
-              style={{ background: activeTab === 'global' ? '#3b82f6' : 'transparent', color: activeTab === 'global' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', whiteSpace: 'nowrap' }}
-            >Tactical Index</button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ fontSize: 9, fontWeight: 900, color: '#e2e8f0', textTransform: 'uppercase' }}>Tactical Index</span>
+            {isExpanded && (
+              <>
+                <button 
+                  onClick={() => setActiveTab('local')}
+                  style={{ background: activeTab === 'local' ? '#3b82f6' : 'transparent', color: activeTab === 'local' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                >Local Scan</button>
+                <button 
+                  onClick={() => setActiveTab('global')}
+                  style={{ background: activeTab === 'global' ? '#3b82f6' : 'transparent', color: activeTab === 'global' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                >Global Scan</button>
+              </>
+            )}
           </div>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-             <span style={{ fontSize: 8, fontWeight: 900, color: '#10b981' }}>MESH SECURE</span>
-          </div>
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            style={{ background: 'transparent', border: 'none', color: '#0A84FF', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+            aria-label={isExpanded ? "Collapse Index" : "Expand Index"}
+          >
+            {isExpanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+          </button>
         </div>
 
-        <div style={{ 
-          display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4,
-          msOverflowStyle: 'none', scrollbarWidth: 'none'
-        }}>
-          {(activeTab === 'local' ? GLOBAL_HUBS.filter(h => h.id.startsWith('in')) : GLOBAL_HUBS).map(hub => (
-            <div 
-              key={hub.id} 
-              onClick={() => panToHub(hub)}
-              style={{ 
-                flexShrink: 0, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', 
-                border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, minWidth: 140, cursor: 'pointer'
-              }}
-            >
-              <p style={{ fontSize: 7, fontWeight: 900, color: INFRA_ICONS[hub.type].color, textTransform: 'uppercase', margin: 0 }}>{hub.type}</p>
-              <p style={{ fontSize: 10, fontWeight: 700, color: '#e2e8f0', margin: '2px 0' }}>{hub.name}</p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <p style={{ fontSize: 8, color: '#475569', fontFamily: 'monospace', margin: 0 }}>{hub.lat.toFixed(2)}, {hub.lng.toFixed(2)}</p>
-                <span style={{ color: '#475569', fontSize: '8px', fontWeight: 'bold' }}>→</span>
+        {isExpanded && (
+          <div style={{ 
+            display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4,
+            msOverflowStyle: 'none', scrollbarWidth: 'none'
+          }}>
+            {(activeTab === 'local' ? GLOBAL_HUBS.filter(h => h.id.startsWith('in')) : GLOBAL_HUBS).map(hub => (
+              <div 
+                key={hub.id} 
+                onClick={() => panToHub(hub)}
+                style={{ 
+                  flexShrink: 0, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', 
+                  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, minWidth: 140, cursor: 'pointer'
+                }}
+              >
+                <p style={{ fontSize: 7, fontWeight: 900, color: INFRA_ICONS[hub.type].color, textTransform: 'uppercase', margin: 0 }}>{hub.type}</p>
+                <p style={{ fontSize: 10, fontWeight: 700, color: '#e2e8f0', margin: '2px 0' }}>{hub.name}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p style={{ fontSize: 8, color: '#475569', fontFamily: 'monospace', margin: 0 }}>{hub.lat.toFixed(2)}, {hub.lng.toFixed(2)}</p>
+                  <span style={{ color: '#475569', fontSize: '8px', fontWeight: 'bold' }}>→</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

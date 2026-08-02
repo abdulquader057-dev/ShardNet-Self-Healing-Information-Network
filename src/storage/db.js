@@ -80,6 +80,8 @@ let db = {
   logs: createMockStore('logs'),
   settings: createMockStore('settings'),
   history: createMockStore('history'),
+  contacts: createMockStore('contacts'),
+  forum: createMockStore('forum'),
   open: async () => { console.log("Mock DB Open"); },
   version: () => ({ stores: () => {} }) // Mock Dexie versioning
 };
@@ -89,12 +91,16 @@ try {
   if (typeof Dexie === 'function' || (Dexie && Dexie.default)) {
     const D = Dexie.default || Dexie;
     const realDb = new D('ShardNetDB');
-    realDb.version(10).stores({
+    realDb.version(11).stores({
       shards: 'id, messageId, shardIndex, expiry, createdAt, trustScore, nodeId, priority, location, relayCount, deviceCount',
       messages: 'messageId, reconstructedAt, shardCount, priority, previousMessageId, category, lifecycle, usefulness, lastInteraction, location, impact, *contributingNodes, consensusHash, *witnessNodes',
       logs: '++id, timestamp, type, message',
       settings: 'id, value',
-      history: '++id, timestamp, type, data'
+      history: '++id, timestamp, type, data',
+      contacts: 'nodeId, alias, addedAt, lastSeen',
+      forum: 'id, timestamp, authorNodeId, authorAlias, content',
+      squads: 'name, secretKey, addedAt',
+      mapTiles: 'url, data, timestamp'
     });
     db = realDb; // Swap to real DB
   }

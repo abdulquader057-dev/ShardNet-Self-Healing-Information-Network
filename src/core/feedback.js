@@ -1,5 +1,7 @@
 // SHARDNET FEEDBACK LAYER (SOUND & HAPTICS)
 
+let sharedAudioContext = null;
+
 export const AudioEngine = {
   play(type) {
     // Respect settings sound status
@@ -9,7 +11,16 @@ export const AudioEngine = {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
-      const ctx = new AudioContext();
+      
+      if (!sharedAudioContext) {
+        sharedAudioContext = new AudioContext();
+      }
+      const ctx = sharedAudioContext;
+      
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      
       const now = ctx.currentTime;
 
       if (type === 'tap') {

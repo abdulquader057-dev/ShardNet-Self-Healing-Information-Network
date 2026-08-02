@@ -7,6 +7,11 @@ import StorageView from './pages/StorageView';
 import ScanPage from './pages/ScanPage';
 import ReconstructedView from './pages/ReconstructedView';
 import Inbox from './pages/Inbox';
+import Forum from './pages/Forum';
+import Contacts from './pages/Contacts';
+import IntelDrop from './pages/IntelDrop';
+import OfflineShare from './pages/OfflineShare';
+import Squads from './pages/Squads';
 import BluetoothMesh from './pages/BluetoothMesh';
 import MeshPulse from './pages/MeshPulse';
 import MeshWhisper from './pages/MeshWhisper';
@@ -18,12 +23,25 @@ import { messageManager } from './core/messageManager';
 import { safeInit, safeInterval, safeCall } from './core/stability';
 import ErrorBoundary from './components/ErrorBoundary';
 import SOSButtonFlow from './components/SOSButtonFlow';
+import { MeshProvider } from './core/MeshProvider';
+import PINLock from './components/PINLock';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { AudioEngine, Haptic } from './core/feedback';
 
 function App() {
-  const [demoActive, setDemoActive] = useState(localStorage.getItem('sharednet_demo_mode') === 'true');
+  // MeshProvider wraps Router so all pages can access useMesh()
+  return (
+    <MeshProvider>
+      <PINLock>
+        <AppInner />
+      </PINLock>
+    </MeshProvider>
+  );
+}
+
+function AppInner() {
+  // Demo mode removed
   const [onboarded, setOnboarded] = useState(localStorage.getItem('sharednet_onboarded') === 'true');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [toasts, setToasts] = useState([]);
@@ -55,11 +73,7 @@ function App() {
       document.documentElement.classList.add('presentation-mode');
     }
 
-    // 4. Listeners for Demo Mode change
-    const handleDemoChange = () => {
-      setDemoActive(localStorage.getItem('sharednet_demo_mode') === 'true');
-    };
-    window.addEventListener('demo-mode-changed', handleDemoChange);
+    // Demo Mode change listener removed
 
     // 5. Toast listener
     const handleToast = (e) => {
@@ -110,7 +124,6 @@ function App() {
 
     return () => {
       safeCall(cleanup, "Interval Cleanup");
-      window.removeEventListener('demo-mode-changed', handleDemoChange);
       window.removeEventListener('show-toast', handleToast);
       window.removeEventListener('online', handleOnlineStatus);
       window.removeEventListener('offline', handleOfflineStatus);
@@ -129,8 +142,6 @@ function App() {
   return (
     <Router>
       <AppContent 
-        demoActive={demoActive}
-        setDemoActive={setDemoActive}
         onboarded={onboarded}
         setOnboarded={setOnboarded}
         currentSlide={currentSlide}
@@ -146,8 +157,6 @@ function App() {
 }
 
 function AppContent({
-  demoActive,
-  setDemoActive,
   onboarded,
   setOnboarded,
   currentSlide,
@@ -293,107 +302,23 @@ function AppContent({
               status: 'sent',
               time: 'Today, 07:30 AM',
               timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-              location: 'Your location',
-              description: "Network connectivity test. All systems operational.",
-              sender: 'You (Self)',
-              range: 'Local Transceiver',
-              battery: '84%'
-            }
-          ];
-        } else {
-          if (window.sharedNetData) window.sharedNetData.signals = [];
-        }
-        
-        window.dispatchEvent(new CustomEvent('demo-mode-changed'));
-        AudioEngine.play(nextMode ? 'success' : 'warning');
-        Haptic.vibrate(nextMode ? [50, 100, 50] : 100);
-        window.dispatchEvent(new CustomEvent('show-toast', {
-          detail: { type: 'info', message: `Demo: Demo Mode ${nextMode ? 'ON' : 'OFF'}` }
-        }));
-      }
-
-      // 2. Shift + R: Reset all data to default state
-      else if (e.key === 'R' && e.shiftKey) {
-        e.preventDefault();
-        AudioEngine.play('error');
-        Haptic.error();
-        localStorage.clear();
-        window.location.reload();
-      }
-
-      // 3. Shift + S: Simulate receiving an emergency signal
-      else if (e.key === 'S' && e.shiftKey) {
-        e.preventDefault();
-        if (!window.sharedNetData) window.sharedNetData = { signals: [] };
-        const newSig = {
-          id: `sim-${Date.now()}`,
-          type: 'received',
-          title: 'Trekker-09 Emergency SOS',
-          status: 'active',
-          time: 'Just now',
-          timestamp: new Date().toISOString(),
-          location: '320m northwest',
-          description: "Critical SOS alert received via Wi-Fi direct beacon. Message: 'Injured trekker, coordinates shared. Need urgent evacuation.'",
-          sender: 'Trekker-09',
-          range: '320m',
-          battery: '52%'
-        };
-        window.sharedNetData.signals.unshift(newSig);
-        window.dispatchEvent(new CustomEvent('demo-mode-changed'));
-        
-        AudioEngine.play('sos');
-        Haptic.sos();
-        window.dispatchEvent(new CustomEvent('show-toast', {
-          detail: { type: 'error', message: 'Demo: Simulated emergency received' }
-        }));
-      }
-
-      // 4. Shift + T: Advance time by 1 hour (age timestamps)
-      else if (e.key === 'T' && e.shiftKey) {
-        e.preventDefault();
-        if (window.sharedNetData && window.sharedNetData.signals) {
-          window.sharedNetData.signals = window.sharedNetData.signals.map(s => {
-            const nextTime = new Date(new Date(s.timestamp).getTime() - 60 * 60 * 1000).toISOString();
-            return {
-              ...s,
-              timestamp: nextTime,
-              time: '1h older'
-            };
-          });
-          window.dispatchEvent(new CustomEvent('demo-mode-changed'));
-          AudioEngine.play('success');
-          Haptic.success();
-          window.dispatchEvent(new CustomEvent('show-toast', {
-            detail: { type: 'info', message: 'Demo: Advanced timestamps by 1 hour' }
-          }));
-        }
-      }
-
-      // 5. Shift + H: Toggle hidden helper shortcuts overlay panel
-      else if (e.key === 'H' && e.shiftKey) {
-        e.preventDefault();
-        setShowHelpers(prev => !prev);
-      }
-
       // Standard single keys: N (Network), E (Feed), S (SOS)
-      else {
-        const key = e.key.toLowerCase();
-        if (key === 's') {
-          e.preventDefault();
-          AudioEngine.play('warning');
-          Haptic.warning();
-          if (confirm("🚨 WARNING: Trigger emergency SOS distress beacon?")) {
-            window.dispatchEvent(new CustomEvent('trigger-sos'));
-          }
-        } else if (key === 'n') {
-          e.preventDefault();
-          AudioEngine.play('tap');
-          navigate('/pulse');
-        } else if (key === 'e') {
-          e.preventDefault();
-          AudioEngine.play('tap');
-          navigate('/inbox');
+      const key = e.key.toLowerCase();
+      if (key === 's') {
+        e.preventDefault();
+        AudioEngine.play('warning');
+        Haptic.warning();
+        if (confirm("🚨 WARNING: Trigger emergency SOS distress beacon?")) {
+          window.dispatchEvent(new CustomEvent('trigger-sos'));
         }
+      } else if (key === 'n') {
+        e.preventDefault();
+        AudioEngine.play('tap');
+        navigate('/pulse');
+      } else if (key === 'e') {
+        e.preventDefault();
+        AudioEngine.play('tap');
+        navigate('/inbox');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -414,15 +339,7 @@ function AppContent({
         </div>
       )}
 
-      {/* ── PERSISTENT DEMO MODE BANNER ── */}
-      {demoActive && (
-        <div 
-          className="bg-[#FF9500] text-black text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center shrink-0 z-[10000]" 
-          style={{ height: '28px', borderBottom: '1px solid rgba(0,0,0,0.1)' }}
-        >
-          Demo Mode Active
-        </div>
-      )}
+      {/* Demo Mode banner removed */}
 
       <div className="noise-overlay" />
       <Navbar />
@@ -482,9 +399,15 @@ function AppContent({
 
       {/* ── MAIN ROUTER SCREEN OVERLAY ── */}
       <main className={`ui-overlay flex-1 ${transitionClass}`}>
-        <ErrorBoundary>
+        <ErrorBoundary key={location.pathname}>
           <Routes>
             <Route path="/"            element={<Home />} />
+            <Route path="/home"        element={<Home />} />
+            <Route path="/forum"       element={<Forum />} />
+            <Route path="/contacts"    element={<Contacts />} />
+            <Route path="/intel"       element={<IntelDrop />} />
+            <Route path="/share"       element={<OfflineShare />} />
+            <Route path="/squads"      element={<Squads />} />
             <Route path="/create"      element={<CreateMessage />} />
             <Route path="/storage"     element={<StorageView />} />
             <Route path="/scan"        element={<ScanPage />} />
@@ -502,23 +425,7 @@ function AppContent({
         </ErrorBoundary>
       </main>
 
-      {/* ── DEMO HELPERS CONSOLE (Instruction 3) ── */}
-      {showHelpers && (
-        <div className="fixed bottom-24 left-4 z-[999] p-4 bg-[#1C1C1E] border border-slate-800 rounded-xl max-w-[280px] text-[10px] text-slate-400 space-y-2 shadow-2xl pointer-events-auto">
-          <div className="flex justify-between items-center text-white font-bold uppercase tracking-wider">
-            <span>Demo Keyboard Helpers</span>
-            <button onClick={() => setShowHelpers(false)} className="text-slate-500 hover:text-white"><X size={12} /></button>
-          </div>
-          <div className="h-[1px] bg-slate-850" />
-          <ul className="space-y-1 list-disc pl-3">
-            <li><b className="text-[#FF9500]">Shift + D</b>: Toggle Demo Mode</li>
-            <li><b className="text-[#FF3B30]">Shift + S</b>: Simulate Emergency Beacon</li>
-            <li><b className="text-[#0A84FF]">Shift + T</b>: Age timestamps by 1 hour</li>
-            <li><b className="text-slate-200">Shift + R</b>: Nuclear Reset Data</li>
-            <li><b className="text-slate-200">Shift + H</b>: Close this panel</li>
-          </ul>
-        </div>
-      )}
+      {/* Demo Helpers Console removed */}
 
       {/* ── FIRST-TIME ONBOARDING FLOW OVERLAY ── */}
       {!onboarded && (

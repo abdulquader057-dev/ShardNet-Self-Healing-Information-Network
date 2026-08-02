@@ -10,7 +10,7 @@ import { events, MESH_EVENTS } from '../core/events';
 import { getGoogleMapsUrl } from '../utils/geo';
 import { addWitnessProof, getConsensusStatus } from '../core/consensusEngine';
 import { MapPin, Globe, Users } from 'lucide-react';
-import { safeInit, DEMO_MODE } from '../core/stability';
+import { safeInit } from '../core/stability';
 
 // ─── Message Reconstructor Reveal Card ────────────────────────────────────────
 const MessageReconstructor = ({ result, onClear, onRebroadcast }) => {
@@ -42,7 +42,7 @@ const MessageReconstructor = ({ result, onClear, onRebroadcast }) => {
               {isEmergency ? '🚨 EMERGENCY BROADCAST' : '✅ MESSAGE UNLOCKED'}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0 mr-1">
             <span className={`text-[8px] font-black px-2 py-1 rounded-full border border-white/20 ${isEmergency ? 'bg-red-500 text-white' : 'bg-primary text-white'}`}>
               {result.category || 'Info'}
             </span>
@@ -222,6 +222,7 @@ const ScanPage = () => {
   const fileInputRef = useRef(null);
   const [manualCode, setManualCode] = useState('');
   const [showManual, setShowManual] = useState(false);
+  const [recentShards, setRecentShards] = useState([]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -252,6 +253,17 @@ const ScanPage = () => {
       });
     };
     checkVault();
+
+    // Load recent shards for the history list
+    const loadRecentShards = async () => {
+      try {
+        const allShards = await getAllShards();
+        const sorted = allShards.sort((a, b) => (b.receivedAt || 0) - (a.receivedAt || 0));
+        setRecentShards(sorted.slice(0, 4));
+      } catch (e) { /* silent */ }
+    };
+    loadRecentShards();
+
     return () => unsubComplete();
   }, []);
 
@@ -335,8 +347,7 @@ const ScanPage = () => {
           return;
         }
 
-        const existing = await db.shards.get(shard.id);
-        if (existing && !DEMO_MODE) {
+        if (existing) {
           setError('SIGNAL REDUNDANT: Fragment already in Vault.');
         }
 
@@ -410,22 +421,17 @@ const ScanPage = () => {
     setIsScanning(true);
   };
 
-  const simulateDemoShard = () => {
-    if (!DEMO_MODE) return;
-    // Simulate a medical emergency shard
-    const demoShard = "SHARD:v1:mId_demo:1:2:Medical:NewDelhi:3:1777395000000:node_X:28.61:77.21:ENCRYPTED_DEMO_DATA";
-    handleResult(demoShard);
-  };
+
 
   return (
-    <div className="page-container">
+    <div className="page-container pb-48">
       <div className="flex items-center gap-4 mb-10">
-        <div className="bg-accent/20 p-3 rounded-2xl text-accent shadow-[0_0_15px_rgba(139,92,246,0.2)]">
-          <Zap size={28} />
+        <div className="bg-primary/20 p-3 rounded-2xl text-primary shadow-[0_0_15px_rgba(37,99,235,0.2)]">
+          <Camera size={28} />
         </div>
         <div className="space-y-1">
-          <h2 className="heading-lg text-white italic uppercase tracking-tighter">Signal Intercept</h2>
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol: Mesh-Gossip v4.0</p>
+          <h2 className="heading-lg text-white italic uppercase tracking-tighter">Manual Link</h2>
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol: Mesh-Gossip</p>
         </div>
       </div>
 
@@ -588,12 +594,39 @@ const ScanPage = () => {
               <div className="space-y-2">
                 <h4 className="text-xs font-black text-slate-300 uppercase tracking-widest">Protocol Intelligence</h4>
                 <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                  SharedNet utilizes <span className="text-slate-300">Shamir's Secret Sharing</span> to distribute encrypted payloads across the mesh. 
-                  Intercepting enough fragments allows local reconstruction without internet access.
+                  SharedNet utilizes encrypted data channels to distribute payloads across the mesh. 
+                  Scanning a peer's QR code manually links your devices for offline communication.
                 </p>
               </div>
            </div>
         </div>
+
+        {/* ── RECENT INTERCEPTS ── */}
+        {recentShards.length > 0 && (
+          <div className="bento-col-12">
+            <div className="bento-card border-white/5 bg-white/[0.02] p-5">
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Recent Intercepts</h4>
+              <div className="space-y-3">
+                {recentShards.map((shard, i) => {
+                  const age = shard.receivedAt ? Math.round((Date.now() - shard.receivedAt) / 60000) : null;
+                  const ageLabel = age !== null ? (age < 1 ? 'Just now' : age < 60 ? `${age}m ago` : `${Math.round(age/60)}h ago`) : 'Unknown';
+                  return (
+                    <div key={shard.id || i} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-[#0A84FF] animate-pulse" />
+                        <div>
+                          <span className="text-xs font-bold text-white">{shard.category || 'Info'} Fragment</span>
+                          <span className="text-[10px] text-slate-500 ml-2">{shard.location || 'Unknown'}</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-500">{ageLabel}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <div id="reader-hidden" style={{ display: 'none' }}></div>
     </div>

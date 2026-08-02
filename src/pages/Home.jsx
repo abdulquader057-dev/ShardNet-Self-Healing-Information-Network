@@ -15,6 +15,7 @@ import { monitorBattery, initShakeDetection } from '../utils/survival';
 import { safeInit, safeInterval, safeCall } from '../core/stability';
 import { events } from '../core/events';
 import { AudioEngine, Haptic } from '../core/feedback';
+import { useMesh } from '../core/MeshProvider';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ const Home = () => {
   const [stats, setStats] = useState({ shardCount: 0, messageCount: 0 });
   const [nodeId, setNodeId] = useState('——');
   const [emergency, setEmergency] = useState(false);
-  const [demoRunning, setDemoRunning] = useState(false);
+  const { bytesTransferred } = useMesh();
   const [showEmergencyCard, setShowEmergencyCard] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [vaultOpen, setVaultOpen] = useState(false);
@@ -103,27 +104,16 @@ const Home = () => {
     }
   };
 
-  const runDemoMode = async () => {
-    if (!confirm('Initiate Demo Mode?')) return;
-    setDemoRunning(true);
-    try {
-      const fakeMsgId = `DEMO-${Date.now()}`;
-      await saveShard({ id: `s1-${fakeMsgId}`, messageId: fakeMsgId, shardIndex: 0, totalShards: 2, expiry: Date.now() + 3600000, category: 'Emergency', location: 'Demo Sector A' });
-      await new Promise(r => setTimeout(r, 1000));
-      await saveShard({ id: `s2-${fakeMsgId}`, messageId: fakeMsgId, shardIndex: 1, totalShards: 2, expiry: Date.now() + 3600000, category: 'Emergency', location: 'Demo Sector A' });
-      await saveMessage({ messageId: fakeMsgId, message: 'Simulated bridge collapse at Sector A. Requesting immediate evac.', category: 'Emergency', location: 'Demo Sector A', reconstructedAt: Date.now(), priority: 3 });
-      
-      // Seed Demo Mode into Settings config directly
-      localStorage.setItem('sharednet_demo_mode', 'true');
-      window.dispatchEvent(new CustomEvent('demo-mode-changed'));
-      refresh();
-    } finally {
-      setDemoRunning(false);
-    }
+  const formatBytes = (bytes) => {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
-    <div className="page-container relative z-10 min-h-screen bg-[#0A0A0F] pb-28">
+    <div className="page-container relative z-10 min-h-screen bg-[#0A0A0F] pb-48">
       
       {/* ── HEADER ── */}
       <header className="flex flex-col mb-8 gap-4">
@@ -135,7 +125,7 @@ const Home = () => {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1C1C1E] border border-slate-800 text-[9px] font-black uppercase tracking-widest text-[#0A84FF]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0A84FF]" />
-              <span>AIR-GAP</span>
+              <span>MANUAL LINK</span>
             </div>
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1C1C1E] border border-slate-800 text-[9px] font-black uppercase tracking-widest ${emergency ? 'text-[#FF3B30]' : 'text-[#34C759]'}`}>
               <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${emergency ? 'bg-[#FF3B30]' : 'bg-[#34C759]'}`} />
@@ -209,8 +199,8 @@ const Home = () => {
             </div>
 
             <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-slate-400">
-              <span>Signal Integrity</span>
-              <span className="text-[#34C759]">98.4% Nominal</span>
+              <span>Data Relayed</span>
+              <span className="text-[#34C759]">{formatBytes(bytesTransferred.tx + bytesTransferred.rx)}</span>
             </div>
           </div>
         </div>
@@ -222,10 +212,9 @@ const Home = () => {
             style={{ height: '280px' }}
             data-label="Bento Radar Map"
           >
-            {/* Header overlay for high contrast */}
             <div className="absolute top-4 left-4 z-20 bg-[#1C1C1E]/95 border border-slate-850 px-3 py-1.5 rounded-lg flex items-center gap-2 pointer-events-auto">
               <div className="w-1.5 h-1.5 rounded-full bg-[#0A84FF] animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-wider text-white">Tactical Mesh radar</span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-white">Tactical Map</span>
             </div>
 
             <button 
@@ -247,7 +236,7 @@ const Home = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/create?mode=intel')}
+            onClick={() => navigate('/intel')}
             className="bento-card w-full h-full min-h-[140px] border-slate-800 bg-[#1C1C1E] text-left"
           >
             <div className="mb-4 text-[#0A84FF] bg-[#0A84FF]/10 w-fit p-3 rounded-2xl">
@@ -373,7 +362,6 @@ const Home = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={runDemoMode} className="btn-premium btn-outline !py-2 !px-4 !text-[9px]">DEMO MODE</button>
                   <button onClick={() => setShowEmergencyCard(true)} className="btn-premium btn-primary !py-2 !px-4 !text-[9px]">MY PROFILE</button>
                 </div>
               </div>

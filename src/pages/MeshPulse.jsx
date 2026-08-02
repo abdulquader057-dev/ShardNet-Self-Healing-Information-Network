@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import L from 'leaflet';
+import { useMesh } from '../core/MeshProvider';
 
 import PullToRefresh from '../components/PullToRefresh';
 
@@ -29,30 +30,48 @@ const userIcon = L.divIcon({
   iconAnchor: [18, 18]
 });
 
-const createNodeIcon = (status, type) => {
+const createNodeIcon = (status, type, name = '') => {
   let statusClass = '';
-  if (status === 'warning') statusClass = 'node-marker--warning';
-  else if (status === 'emergency') statusClass = 'node-marker--emergency';
+  let iconColor = '#0A84FF'; // Default primary
+  if (status === 'warning') {
+    statusClass = 'node-marker--warning';
+    iconColor = '#FF9500';
+  } else if (status === 'emergency') {
+    statusClass = 'node-marker--emergency';
+    iconColor = '#FF3B30';
+  } else if (status === 'success') {
+    statusClass = 'node-marker--success';
+    iconColor = '#34C759';
+  }
 
-  let iconClass = 'ph-bold ph-device-mobile';
-  if (type === 'Drone' || type === 'HQ Station') iconClass = 'ph-bold ph-paper-plane-tilt';
-  else if (type === 'Vehicle') iconClass = 'ph-bold ph-car';
-  else if (type === 'Mobile') iconClass = 'ph-bold ph-device-mobile';
+  // Pick the SVG depending on type/name
+  let svgContent = '';
+  if (type === 'Mobile' && String(name).includes('Rescue')) {
+    // Smartphone
+    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>`;
+  } else if (type === 'Mobile' || String(name).includes('Hiker') || String(name).includes('Trekker')) {
+    // User/Person
+    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+  } else if (type === 'Drone') {
+    // Navigation / Drone triangle
+    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>`;
+  } else if (type === 'Vehicle') {
+    // Car
+    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 12h14"/></svg>`;
+  } else {
+    // HQ Station / Globe
+    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`;
+  }
 
   return L.divIcon({
-    html: `<div class="node-marker ${statusClass}"><i class="${iconClass}" style="font-size: 16px;"></i></div>`,
+    html: `<div class="node-marker ${statusClass}" style="display:flex;align-items:center;justify-content:center;background:#111216;border:2px solid ${iconColor};border-radius:50%;width:32px;height:32px;box-shadow:0 0 12px ${iconColor}44;">${svgContent}</div>`,
     className: 'custom-leaflet-icon',
     iconSize: [32, 32],
     iconAnchor: [16, 16]
   });
 };
 
-const emergencySirenIcon = L.divIcon({
-  html: '<div class="emergency-siren-marker"><i class="ph-fill ph-siren" style="font-size: 18px;"></i><div class="emergency-pulse-ring"></div></div>',
-  className: 'custom-leaflet-icon',
-  iconSize: [38, 38],
-  iconAnchor: [19, 19]
-});
+
 
 export default function MeshPulse() {
   const [loading, setLoading] = useState(true);
@@ -60,42 +79,59 @@ export default function MeshPulse() {
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  const getInitialDevices = () => {
-    const isDemo = localStorage.getItem('sharednet_demo_mode') === 'true';
-    const base = [
-      { id: '1', name: 'Rescue-01', type: 'Mobile', signal: 'Strong', lastSeen: '2m ago', icon: Smartphone, status: 'success', coords: [17.4100, 78.4750] },
-      { id: '2', name: 'Hiker-42', type: 'Mobile', signal: 'Strong', lastSeen: '5m ago', icon: User, status: 'success', coords: [17.4040, 78.4800] },
-      { id: '3', name: 'Drone-X', type: 'Drone', signal: 'Medium', lastSeen: '1m ago', icon: Navigation, status: 'warning', coords: [17.4080, 78.4720] },
-      { id: '4', name: 'Vehicle-A1', type: 'Vehicle', signal: 'Weak', lastSeen: '8m ago', icon: Car, status: 'emergency', coords: [17.4020, 78.4780] }
-    ];
-    if (isDemo) {
-      return [
-        ...base,
-        { id: 'demo-dev-1', name: 'Trekker-09', type: 'Mobile', signal: 'Strong', lastSeen: '1m ago', icon: Smartphone, status: 'success', coords: [17.4010, 78.4700] },
-        { id: 'demo-dev-2', name: 'BaseCamp', type: 'HQ Station', signal: 'Strong', lastSeen: 'Just now', icon: Globe, status: 'success', coords: [17.4150, 78.4850] }
-      ];
-    }
-    return base;
-  };
+  const { peers, isReady } = useMesh();
+  const [devices, setDevices] = useState([]);
 
-  const [devices, setDevices] = useState(getInitialDevices());
+  // Load real WebRTC peers into the device list
+  useEffect(() => {
+    if (!isReady || !peers) return;
 
-  // Initial skeleton loader and demo-mode event listeners
+    // Create device objects for real peers
+    const realDevices = peers.map(peer => {
+      // Maintain existing battery if we already have it from a status update
+      const existing = devices.find(d => d.id === peer.id);
+      
+      const jitterLat = (Math.random() - 0.5) * 0.005;
+      const jitterLng = (Math.random() - 0.5) * 0.005;
+      return {
+        id: peer.id,
+        name: `Node ${peer.id.slice(-4)}`,
+        type: 'Mobile',
+        signal: 'Strong',
+        lastSeen: peer.lastSeen ? `${Math.round((Date.now() - peer.lastSeen) / 1000)}s ago` : 'Just now',
+        icon: Smartphone,
+        status: (existing?.battery && existing.battery < 20) ? 'emergency' : 'success',
+        coords: existing?.coords || [17.4100 + jitterLat, 78.4750 + jitterLng],
+        isReal: true,
+        battery: existing?.battery || null
+      };
+    });
+
+    setDevices(realDevices);
+  }, [peers, isReady]);
+
+  // Listen for battery status updates
+  useEffect(() => {
+    const handleStatusUpdate = (e) => {
+      const { from, battery } = e.detail;
+      if (battery !== undefined && battery !== null) {
+        setDevices(prev => prev.map(d => 
+          d.id === from ? { ...d, battery, status: battery < 20 ? 'emergency' : 'success' } : d
+        ));
+      }
+    };
+    window.addEventListener('mesh-status-update', handleStatusUpdate);
+    return () => window.removeEventListener('mesh-status-update', handleStatusUpdate);
+  }, []);
+
+  // Initial skeleton loader
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
       setTimeout(() => setMapLoaded(true), 300);
     }, 1500);
 
-    const handleDemoChange = () => {
-      setDevices(getInitialDevices());
-    };
-    window.addEventListener('demo-mode-changed', handleDemoChange);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('demo-mode-changed', handleDemoChange);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   const handleScan = () => {
@@ -103,26 +139,7 @@ export default function MeshPulse() {
     
     setTimeout(() => {
       setScanning(false);
-
-      if (devices.some(d => d.name === 'Command-Center')) {
-        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Scan finished: no new BLE nodes' } }));
-        return;
-      }
-
-      // Add 5th device (Command-Center) to list & map
-      const newDevice = { 
-        id: '5', 
-        name: 'Command-Center', 
-        type: 'HQ Station', 
-        signal: 'Strong', 
-        lastSeen: 'Just now', 
-        icon: Globe, 
-        status: 'success',
-        coords: [17.4120, 78.4790]
-      };
-
-      setDevices(prev => [newDevice, ...prev]);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: '🚨 Discovered Mesh Node: Command-Center' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Scan finished: no new BLE nodes found' } }));
     }, 3000);
   };
 
@@ -138,7 +155,7 @@ export default function MeshPulse() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="space-y-6 pb-28">
+      <div className="space-y-6 pb-48">
       
       {/* ── HEADER TELEMETRY CARD ── */}
       <div 
@@ -158,9 +175,9 @@ export default function MeshPulse() {
             </div>
           </div>
           
-          <div className="text-right">
-            <span className="text-hero text-[#34C759] font-mono leading-none block">{devices.length}</span>
-            <span className="text-caption text-slate-500">Devices</span>
+          <div className="flex flex-col items-end whitespace-nowrap min-w-[70px]">
+            <span className="text-4xl font-extrabold text-[#34C759] font-mono leading-none">{devices.length}</span>
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Devices</span>
           </div>
         </div>
 
@@ -237,42 +254,19 @@ export default function MeshPulse() {
               <Popup>
                 <div className="text-center text-xs space-y-1">
                   <p className="font-bold text-white uppercase tracking-wider">Your Transceiver</p>
-                  <p className="text-slate-400">GPS Lock: Delhi Sector (Mock)</p>
-                </div>
-              </Popup>
-            </Marker>
-
-            {/* Active Emergency Signal Marker at Hiker-42 coordinates */}
-            <Marker position={[17.4040, 78.4800]} icon={emergencySirenIcon}>
-              <Popup>
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center gap-1.5 text-rose-500 font-bold uppercase tracking-wider">
-                    <AlertTriangle size={14} />
-                    <span>Active Emergency</span>
-                  </div>
-                  <div className="h-[1px] bg-slate-800" />
-                  <p className="font-bold text-white">Node: Hiker-42</p>
-                  <p className="text-slate-400 leading-normal">Reported distress beacon 4 mins ago.</p>
-                  <button 
-                    onClick={() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'SOS Response Broadcasted across mesh' } }))}
-                    className="w-full mt-2 py-2 bg-[#FF3B30] text-white rounded font-bold text-[10px] uppercase tracking-wider text-center"
-                  >
-                    Tap to Respond
-                  </button>
+                  <p className="text-slate-400">GPS Lock Acquired</p>
                 </div>
               </Popup>
             </Marker>
 
             {/* Nearby Node Pins */}
             {devices.map(device => {
-              // Hiker-42 has a siren marker instead of standard node marker
-              if (device.name === 'Hiker-42') return null;
 
               return (
                 <Marker 
                   key={device.id} 
                   position={device.coords} 
-                  icon={createNodeIcon(device.status, device.type)}
+                  icon={createNodeIcon(device.status, device.type, device.name)}
                 >
                   <Popup>
                     <div className="space-y-1 text-xs">
@@ -356,7 +350,10 @@ export default function MeshPulse() {
                       {/* Info */}
                       <div>
                         <p className="text-body font-semibold text-white leading-none mb-1">{device.name}</p>
-                        <p className="text-body-sm text-slate-400">{device.type} • Signal {device.signal}</p>
+                        <p className="text-body-sm text-slate-400">
+                          {device.type} • Signal {device.signal}
+                          {device.battery !== null && ` • ${device.battery}% BAT`}
+                        </p>
                       </div>
                     </div>
 

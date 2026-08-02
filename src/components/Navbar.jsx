@@ -1,9 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Shield, QrCode, Inbox, Database, Share2, Settings } from 'lucide-react';
+import { Shield, QrCode, Inbox, Database, Share2, Settings, Hash } from 'lucide-react';
 
 const navItems = [
   { to: '/',        icon: Shield,    label: 'Home'  },
+  { to: '/forum',   icon: Hash,      label: 'Forum' },
   { to: '/scan',    icon: QrCode,    label: 'Scan'  },
   { to: '/pulse',   icon: Share2,    label: 'Pulse' },
   { to: '/inbox',   icon: Inbox,     label: 'Inbox' },

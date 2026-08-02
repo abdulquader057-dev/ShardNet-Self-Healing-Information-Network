@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 import fs from 'fs'
 import path from 'path'
@@ -17,6 +18,14 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    nodePolyfills({
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
+      protocolImports: true,
+    }),
     {
       name: 'log-interceptor',
       configureServer(server) {
@@ -62,12 +71,12 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/tile\.openstreetmap\.org\/.*/i,
+            urlPattern: /^https:\/\/.*\.basemaps\.cartocdn\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'map-tiles',
               expiration: {
-                maxEntries: 100,
+                maxEntries: 5000,
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 Days
               }
             }
