@@ -231,52 +231,99 @@ const Home = () => {
           </div>
         </div>
 
-        {/* INTEL DROP LINK */}
+        {/* INTERCEPT LINK */}
         <div className="bento-col-4">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/intel')}
+            onClick={() => navigate('/scan')}
             className="bento-card w-full h-full min-h-[140px] border-slate-800 bg-[#1C1C1E] text-left"
           >
             <div className="mb-4 text-[#0A84FF] bg-[#0A84FF]/10 w-fit p-3 rounded-2xl">
-              <Layers size={24} />
+              <QrCode size={24} />
             </div>
-            <h3 className="text-lg font-bold text-white">INTEL DROP</h3>
-            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Share critical data</p>
+            <h3 className="text-lg font-bold text-white">Intercept</h3>
+            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Scan a mesh node</p>
           </motion.button>
         </div>
 
-        {/* SAFE CHECK LINK */}
-        <div className="bento-col-4">
+        {/* INTEL HUB LINK */}
+        <div className="bento-col-8">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/create?mode=safe')}
-            className="bento-card w-full h-full min-h-[140px] border-slate-800 bg-[#1C1C1E] text-left"
+            onClick={() => navigate('/inbox')}
+            className="bento-card w-full h-full text-left min-h-[140px] border-[#34C759]/20 bg-gradient-to-br from-[#1C1C1E] to-[#34C759]/5 group relative overflow-hidden"
           >
-            <div className="mb-4 text-[#34C759] bg-[#34C759]/10 w-fit p-3 rounded-2xl">
-              <CheckCircle2 size={24} />
+            <div className="relative z-10 flex flex-col justify-between h-full space-y-4">
+              <div className="flex items-center justify-between w-full">
+                <div className="p-3 bg-[#34C759]/10 rounded-xl text-[#34C759]">
+                  <Inbox size={24} />
+                </div>
+                <div className="px-3 py-1 bg-[#34C759]/10 rounded-full text-[#34C759] text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#34C759] animate-pulse" />
+                  Live Sync
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">Intel Hub</h3>
+                <p className="text-[10px] font-medium text-[#34C759]/70 uppercase tracking-widest">
+                  Direct encrypted comms
+                </p>
+              </div>
             </div>
-            <h3 className="text-lg font-bold text-white">SAFE CHECK</h3>
-            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Update status</p>
           </motion.button>
         </div>
 
-        {/* SURVIVAL KIT LINK */}
-        <div className="bento-col-4">
+        {/* STEALTH VAULT & CHANNELS */}
+        <div className="bento-col-12 grid grid-cols-2 gap-4">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/survival')}
-            className="bento-card w-full h-full min-h-[140px] border-slate-800 bg-[#1C1C1E] text-left"
+            onClick={() => {
+              navigate('/vault');
+            }}
+            className="bento-card h-full border-slate-800 bg-[#1C1C1E] text-left flex flex-col justify-between"
           >
-            <div className="mb-4 text-rose-500 bg-rose-500/10 w-fit p-3 rounded-2xl">
-              <Heart size={24} />
+            <div className="flex items-center justify-between w-full mb-4">
+              <div className="p-3 bg-slate-800 rounded-xl text-slate-300">
+                {vaultOpen ? <Unlock size={20} /> : <Lock size={20} />}
+              </div>
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                {vaultOpen ? 'UNLOCKED' : 'LOCKED'}
+              </span>
             </div>
-            <h3 className="text-lg font-bold text-white">SURVIVAL KIT</h3>
-            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">First Aid Kits</p>
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">Stealth Vault</h3>
+              <p className="text-[9px] font-medium text-slate-500 uppercase tracking-widest">Memory-only sync</p>
+            </div>
           </motion.button>
+
+          <div className="bento-card border-slate-800 bg-[#1C1C1E] flex flex-col p-4 gap-3">
+            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+              <Zap size={10} /> Channels
+            </span>
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Channel Offline: Requires Line-of-Sight Hardware' } }))}
+              className="flex items-center justify-between p-3 rounded-xl bg-[#2C2C2E] border border-slate-700 hover:border-slate-500 transition-colors w-full text-left"
+            >
+              <div>
+                <h4 className="text-xs font-bold text-white">Optical Beam</h4>
+                <p className="text-[8px] text-slate-500 uppercase">Line-of-sight transfer</p>
+              </div>
+              <Navigation size={12} className="text-slate-500" />
+            </button>
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Channel Offline: Requires Ultrasonic Transducer' } }))}
+              className="flex items-center justify-between p-3 rounded-xl bg-[#2C2C2E] border border-slate-700 hover:border-slate-500 transition-colors w-full text-left"
+            >
+              <div>
+                <h4 className="text-xs font-bold text-white">Acoustic Whisper</h4>
+                <p className="text-[8px] text-slate-500 uppercase">Ultrasonic data relay</p>
+              </div>
+              <Navigation size={12} className="text-slate-500" />
+            </button>
+          </div>
         </div>
 
         {/* EXPLORE TACTICAL TOOLS COLLAPSIBLE TRIGGER */}
