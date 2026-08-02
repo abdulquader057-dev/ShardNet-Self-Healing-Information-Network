@@ -214,10 +214,7 @@ const Home = () => {
             style={{ height: '280px' }}
             data-label="Bento Radar Map"
           >
-            <div className="absolute top-4 left-4 z-20 bg-[#1C1C1E]/95 border border-slate-850 px-3 py-1.5 rounded-lg flex items-center gap-2 pointer-events-auto">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#0A84FF] animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-wider text-white">Tactical Map</span>
-            </div>
+            {/* Removed Tactical Map label overlay for cleaner map look */}
 
             <button 
               onClick={() => navigate('/pulse')}

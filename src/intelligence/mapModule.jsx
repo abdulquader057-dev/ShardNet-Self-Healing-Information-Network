@@ -171,46 +171,7 @@ const MeshMap = ({ messages = [], zoom = 13, minimal = false }) => {
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', background: '#0a0a0c', gap: '8px' }}>
       <style>{`@keyframes ripple { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(2.2); opacity: 0; } }`}</style>
       
-      {/* ── TOP SEARCH HUD (Moved outside map) ── */}
-      {!minimal && (
-      <div style={{ zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 6, padding: '0 12px' }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <div style={{ flex: 1, padding: '10px 16px', background: 'rgba(9,11,20,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-             <span style={{ fontSize: 14, color: '#64748b', marginRight: 8 }}>🔍</span>
-             <input 
-               type="text" 
-               placeholder="SEARCH OFFLINE INFRA..."
-               style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 10, fontWeight: 900, outline: 'none', width: '100%' }}
-               value={searchQuery}
-               onChange={(e) => setSearchQuery(e.target.value)}
-             />
-          </div>
-          <div style={{ padding: '10px 16px', background: '#dc2626', borderRadius: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-             <Shield size={12} color="#fff" />
-             <span style={{ fontSize: 9, fontWeight: 900, color: '#fff' }}>AIR-GAP</span>
-          </div>
-        </div>
-
-        {/* SEARCH DROPDOWN */}
-        {searchQuery && (
-          <div style={{ background: 'rgba(9,11,20,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 8, maxHeight: 200, overflowY: 'auto' }}>
-            {searchResults.length > 0 ? searchResults.map(h => (
-              <div 
-                key={h.id} 
-                onClick={() => { panToHub(h); setSearchQuery(''); }}
-                style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-              >
-                <div>
-                  <p style={{ fontSize: 9, fontWeight: 900, color: '#fff', margin: 0 }}>{h.name}</p>
-                  <p style={{ fontSize: 7, color: '#64748b', margin: 0 }}>{h.type.toUpperCase()}</p>
-                </div>
-                <span style={{ color: '#3b82f6', fontSize: '12px', fontWeight: 'bold' }}>→</span>
-              </div>
-            )) : <p style={{ fontSize: 9, color: '#64748b', padding: 8 }}>No offline data for this query.</p>}
-          </div>
-        )}
-      </div>
-      )}
+      {/* Removed SEARCH OFFLINE HUD per user request for clean map */}
 
       {/* ── MAP CONTAINER ── */}
       <div style={{ flex: 1, position: 'relative', minHeight: '200px' }}>
@@ -322,63 +283,7 @@ const MeshMap = ({ messages = [], zoom = 13, minimal = false }) => {
 
       </div>
 
-      {/* ── TACTICAL OVERLAY (Moved outside map) ── */}
-      {!minimal && (
-      <div style={{
-        zIndex: 1000, background: 'rgba(9,11,20,0.95)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 16,
-        padding: '12px', display: 'flex', flexDirection: 'column', gap: isExpanded ? 10 : 0, margin: '0 12px 12px 12px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{ fontSize: 9, fontWeight: 900, color: '#e2e8f0', textTransform: 'uppercase' }}>Tactical Index</span>
-            {isExpanded && (
-              <>
-                <button 
-                  onClick={() => setActiveTab('local')}
-                  style={{ background: activeTab === 'local' ? '#3b82f6' : 'transparent', color: activeTab === 'local' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: 'pointer' }}
-                >Local Scan</button>
-                <button 
-                  onClick={() => setActiveTab('global')}
-                  style={{ background: activeTab === 'global' ? '#3b82f6' : 'transparent', color: activeTab === 'global' ? '#fff' : '#64748b', border: 'none', padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', whiteSpace: 'nowrap', cursor: 'pointer' }}
-                >Global Scan</button>
-              </>
-            )}
-          </div>
-          <button 
-            onClick={() => setIsExpanded(!isExpanded)}
-            style={{ background: 'transparent', border: 'none', color: '#0A84FF', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
-            aria-label={isExpanded ? "Collapse Index" : "Expand Index"}
-          >
-            {isExpanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-          </button>
-        </div>
-
-        {isExpanded && (
-          <div style={{ 
-            display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4,
-            msOverflowStyle: 'none', scrollbarWidth: 'none'
-          }}>
-            {(activeTab === 'local' ? GLOBAL_HUBS.filter(h => h.id.startsWith('in')) : GLOBAL_HUBS).map(hub => (
-              <div 
-                key={hub.id} 
-                onClick={() => panToHub(hub)}
-                style={{ 
-                  flexShrink: 0, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', 
-                  border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, minWidth: 140, cursor: 'pointer'
-                }}
-              >
-                <p style={{ fontSize: 7, fontWeight: 900, color: INFRA_ICONS[hub.type].color, textTransform: 'uppercase', margin: 0 }}>{hub.type}</p>
-                <p style={{ fontSize: 10, fontWeight: 700, color: '#e2e8f0', margin: '2px 0' }}>{hub.name}</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <p style={{ fontSize: 8, color: '#475569', fontFamily: 'monospace', margin: 0 }}>{hub.lat.toFixed(2)}, {hub.lng.toFixed(2)}</p>
-                  <span style={{ color: '#475569', fontSize: '8px', fontWeight: 'bold' }}>→</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      )}
+      {/* Removed TACTICAL OVERLAY per user request for clean map */}
     </div>
   );
 };

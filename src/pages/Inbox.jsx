@@ -7,7 +7,7 @@ import { safeCallAsync } from '../core/stability';
 import PullToRefresh from '../components/PullToRefresh';
 
 export default function Inbox() {
-  const { sendDirect, nodeId, isReady } = useMesh();
+  const { sendDirect, nodeId, isReady, allKnownPeers } = useMesh();
   const [contacts, setContacts] = useState([]);
   const [messages, setMessages] = useState([]);
   const [activeContact, setActiveContact] = useState(null);
@@ -15,11 +15,33 @@ export default function Inbox() {
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
 
-  // Load Contacts
+  // Load Contacts and Merge with Live Peers
   const loadContacts = async () => {
     try {
       const allContacts = await db.contacts.toArray();
-      setContacts(allContacts.sort((a, b) => b.lastSeen - a.lastSeen));
+      const contactMap = new Map(allContacts.map(c => [c.nodeId, c]));
+      
+      // Inject all live peers into the list, falling back to "Unknown Node"
+      const merged = [...(allKnownPeers || [])].map(peer => {
+        const saved = contactMap.get(peer.id);
+        return {
+          nodeId: peer.id,
+          alias: saved ? saved.alias : `Node ${peer.id.slice(-4)}`,
+          lastSeen: peer.lastSeen,
+          isLive: true,
+          isDirect: peer.isDirect,
+          via: peer.via
+        };
+      });
+
+      // Also include saved contacts that are currently offline
+      allContacts.forEach(saved => {
+        if (!merged.find(m => m.nodeId === saved.nodeId)) {
+          merged.push({ ...saved, isLive: false });
+        }
+      });
+
+      setContacts(merged.sort((a, b) => b.lastSeen - a.lastSeen));
     } catch (e) {
       console.error('Failed to load contacts', e);
     } finally {
@@ -31,7 +53,7 @@ export default function Inbox() {
     loadContacts();
     const interval = setInterval(loadContacts, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [allKnownPeers]);
 
   // Load Messages for active contact
   const loadMessages = async (contactId) => {
@@ -204,8 +226,8 @@ export default function Inbox() {
       <div className="space-y-6 pb-48">
         <div className="flex items-end justify-between">
           <div className="space-y-1">
-            <h1 className="text-h1 text-white">Direct Comms</h1>
-            <p className="text-body-sm text-slate-400">Encrypted peer-to-peer messages</p>
+            <h1 className="text-h1 text-white">Mesh Network Comms</h1>
+            <p className="text-body-sm text-slate-400">WebRTC Encrypted Peer-to-Peer Thread</p>
           </div>
         </div>
 
@@ -241,10 +263,20 @@ export default function Inbox() {
                     <User size={20} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">{contact.alias}</h3>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      {contact.alias}
+                      {contact.isLive && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      )}
+                    </h3>
                     <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                      <Clock size={10} />
-                      Last seen: {formatTime(contact.lastSeen)}
+                      {contact.isLive ? (
+                        contact.isDirect ? "Direct WebRTC Peer" : `Multi-Hop via ${contact.via?.slice(0, 4) || '...'}`
+                      ) : (
+                        <>
+                          <Clock size={10} /> Last seen: {formatTime(contact.lastSeen)}
+                        </>
+                      )}
                     </p>
                   </div>
                 </div>

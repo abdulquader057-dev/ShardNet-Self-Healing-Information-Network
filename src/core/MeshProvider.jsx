@@ -156,6 +156,7 @@ export function MeshProvider({ children }) {
       setPeerCount(mesh.getPeerCount());
       setReachableCount(mesh.getReachableCount());
       setPendingMessages(mesh.getPendingMessages());
+      setAllKnownPeers(mesh.getAllKnownPeers());
     }, 2000);
 
     // Listen for peer connect/disconnect events
@@ -249,6 +250,7 @@ export function MeshProvider({ children }) {
     mesh: meshRef.current,
     nodeId,
     peers,
+    allKnownPeers,
     peerCount,
     reachableCount,
     pendingMessages,

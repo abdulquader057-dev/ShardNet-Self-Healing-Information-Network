@@ -364,6 +364,24 @@ export class MeshNetwork {
     return directPeers.size;
   }
 
+  getAllKnownPeers() {
+    const all = new Map();
+    // Direct peers
+    for (const [id, p] of this.peers.entries()) {
+      all.set(id, { id, isDirect: true, lastSeen: p.lastSeen });
+    }
+    // Multi-hop peers
+    for (const [via, list] of this.peerListCache.entries()) {
+      list.forEach((p) => {
+        const id = typeof p === 'object' ? p.id : p;
+        if (!all.has(id) && id !== this.nodeId) {
+          all.set(id, { id, isDirect: false, via, lastSeen: Date.now() });
+        }
+      });
+    }
+    return Array.from(all.values());
+  }
+
   getPendingMessages() {
     return this.queue.items.map((i) => ({ targetId: i.targetId, attempts: i.attempts, maxAttempts: i.maxAttempts }));
   }
