@@ -185,7 +185,7 @@ export default function EvidenceCapture() {
               className="aspect-square bg-[#141419] border border-[#2A2A35] rounded-3xl flex flex-col items-center justify-center gap-4 text-[#8B8B9A] hover:text-[#3B82F6] hover:border-[#3B82F6] transition-colors"
             >
               <Camera size={40} />
-              <span className="text-xs font-bold uppercase tracking-widest">Photo</span>
+              <span className="text-xs font-bold uppercase tracking-widest">Snap Scene</span>
             </button>
             
             <button
@@ -193,7 +193,7 @@ export default function EvidenceCapture() {
               className="aspect-square bg-[#141419] border border-[#2A2A35] rounded-3xl flex flex-col items-center justify-center gap-4 text-[#8B8B9A] hover:text-[#EF4444] hover:border-[#EF4444] transition-colors"
             >
               <Mic size={40} />
-              <span className="text-xs font-bold uppercase tracking-widest">Audio</span>
+              <span className="text-xs font-bold uppercase tracking-widest">Voice Proof</span>
             </button>
           </div>
         )}

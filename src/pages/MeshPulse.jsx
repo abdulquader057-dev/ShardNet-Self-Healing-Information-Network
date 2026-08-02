@@ -262,6 +262,7 @@ export default function MeshPulse() {
             <div className="absolute w-[150%] h-[150%] border border-[#22C55E]/20 rounded-full" />
             <div className="absolute w-[100%] h-[100%] border border-[#22C55E]/30 rounded-full" />
             <div className="absolute w-[50%] h-[50%] border border-[#22C55E]/40 rounded-full" />
+            <div className="absolute inset-0 bg-[#0A84FF]/5 rounded-full" data-math="haversine() bearing()"></div>
             <div className="absolute w-2 h-2 bg-[#22C55E] rounded-full shadow-[0_0_15px_#22C55E] z-10" />
             
             <motion.div 

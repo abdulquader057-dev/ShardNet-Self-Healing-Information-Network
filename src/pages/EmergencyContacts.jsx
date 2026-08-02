@@ -127,7 +127,7 @@ export default function EmergencyContacts() {
                     className="flex-1 min-w-[120px] h-12 rounded-xl bg-[#FF3B30] text-white flex items-center justify-center font-bold text-xs uppercase hover:bg-[#FF3B30]/80 transition-colors gap-2"
                   >
                     <ShieldAlert size={16} />
-                    Alert Now
+                    ALERT NOW
                   </button>
                 </div>
               </motion.div>

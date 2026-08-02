@@ -388,7 +388,7 @@ export default function Settings() {
                 <FileText size={16} className="text-[#0A84FF]" />
               </div>
               <div className="text-left">
-                <p className="text-sm font-semibold">Export Data to CSV</p>
+                <p className="text-sm font-semibold">CSV Export</p>
                 <p className="text-[14px] text-slate-500 font-medium mt-0.5">Backup messages and contacts</p>
               </div>
             </div>

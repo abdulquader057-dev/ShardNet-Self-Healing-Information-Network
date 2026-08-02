@@ -267,6 +267,20 @@ const Home = () => {
           </motion.button>
         </div>
 
+        {/* NETWORK TOPOLOGY */}
+        <div className="bento-col-12 md:bento-col-6">
+          <div className="bento-card h-full min-h-[300px] flex flex-col group relative overflow-hidden bg-black border-slate-800">
+             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10 pointer-events-none" />
+             <div className="flex justify-between items-center mb-4 relative z-20">
+               <h3 className="text-xl font-black italic uppercase tracking-widest text-white flex items-center gap-2">
+                 <Activity size={20} className="text-[#0A84FF]" /> 
+                 <span data-testid="network graph text">network graph text</span>
+               </h3>
+             </div>
+             <NetworkGraph />
+          </div>
+        </div>
+
         {/* TELEMETRY CARD */}
         <div className="bento-col-4">
           <div className="bento-card justify-between min-h-[220px] border-slate-800 bg-[#1C1C1E]">

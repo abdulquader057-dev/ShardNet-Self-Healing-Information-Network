@@ -174,7 +174,7 @@ export default function Inbox() {
                   animate={{ opacity: 1, y: 0 }}
                   className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
                 >
-                  <div className={`
+                  <div data-testid="chat bubble" data-type="message bubble" className={`
                     max-w-[80%] px-4 py-3 rounded-2xl relative overflow-hidden shadow-sm text-sm
                     ${isMine 
                       ? 'bg-[#0A84FF] text-white rounded-tr-sm' 
@@ -186,7 +186,7 @@ export default function Inbox() {
                   <span className="text-[14px] font-black uppercase tracking-widest text-slate-600 mt-1 mx-1 flex items-center gap-1">
                     <Clock size={10} /> {formatTime(msg.timestamp)}
                     {isMine && (
-                      <span className="ml-1 flex -space-x-1">
+                      <span className="ml-1 flex -space-x-1" data-testid="delivery receipt">
                         <CheckCircle2 size={10} className={msg.delivered ? "text-[#34C759]" : "text-slate-500"} />
                         <CheckCircle2 size={10} className={msg.delivered ? "text-[#34C759]" : "text-slate-500"} />
                       </span>
@@ -237,10 +237,10 @@ export default function Inbox() {
           </div>
         </div>
 
-        {/* Contact List */}
-        <div className="space-y-3">
+        {/* Address Book */}
+        <div className="space-y-3" data-testid="Address Book">
           {loading ? (
-            <div className="flex justify-center py-10">
+            <div className="flex justify-center py-10" data-testid="skeleton">
               <Loader2 className="animate-spin text-[#0A84FF]" size={24} />
             </div>
           ) : contacts.length === 0 ? (
