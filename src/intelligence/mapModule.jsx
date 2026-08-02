@@ -271,7 +271,6 @@ const MeshMap = ({ messages = [], zoom = 13, minimal = false }) => {
         <span style={{ fontSize: 9, fontWeight: 900, color: '#e2e8f0', letterSpacing: 1 }}>LIVE GPS</span>
       </div>
 
-      </MapContainer>
       </div>
 
       {/* ── TACTICAL OVERLAY (Moved outside map) ── */}
