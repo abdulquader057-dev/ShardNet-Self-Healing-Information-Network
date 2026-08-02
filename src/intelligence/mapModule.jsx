@@ -110,7 +110,7 @@ function LiveLocation({ onLocation }) {
 }
 
 /* ─── Tactical Map Component ───────────────────────────────────────────── */
-const MeshMap = ({ messages = [], zoom = 13 }) => {
+const MeshMap = ({ messages = [], zoom = 13, minimal = false }) => {
   const [mounted,  setMounted]  = useState(false);
   const [location, setLocation] = useState(null);
   const [activeTab, setActiveTab] = useState('local'); // local, global
@@ -139,13 +139,14 @@ const MeshMap = ({ messages = [], zoom = 13 }) => {
   if (!mounted) return <div className="h-full w-full bg-black flex items-center justify-center text-primary font-mono text-[10px]">INITIALIZING MESH-GRID...</div>;
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0a0a0c' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', background: '#0a0a0c', gap: '8px' }}>
       <style>{`@keyframes ripple { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(2.2); opacity: 0; } }`}</style>
       
-      {/* ── TOP SEARCH HUD ── */}
-      <div style={{ position: 'absolute', top: 12, left: 12, right: 12, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {/* ── TOP SEARCH HUD (Moved outside map) ── */}
+      {!minimal && (
+      <div style={{ zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 6, padding: '0 12px' }}>
         <div style={{ display: 'flex', gap: 6 }}>
-          <div style={{ flex: 1, padding: '10px 16px', background: 'rgba(9,11,20,0.9)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ flex: 1, padding: '10px 16px', background: 'rgba(9,11,20,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
              <span style={{ fontSize: 14, color: '#64748b', marginRight: 8 }}>🔍</span>
              <input 
                type="text" 
@@ -180,13 +181,15 @@ const MeshMap = ({ messages = [], zoom = 13 }) => {
           </div>
         )}
       </div>
+      )}
 
       {/* ── MAP CONTAINER ── */}
-      <MapContainer
-        center={[28.6139, 77.2090]} // START AT NEW DELHI FOR INDIA FOCUS
-        zoom={zoom}
-        zoomControl={false}
-        attributionControl={false}
+      <div style={{ flex: 1, position: 'relative', minHeight: '200px' }}>
+        <MapContainer
+          center={[28.6139, 77.2090]} // START AT NEW DELHI FOR INDIA FOCUS
+          zoom={zoom}
+          zoomControl={true}
+          attributionControl={false}
         style={{ height: '100%', width: '100%', background: '#0d1117' }}
       >
         <MapInstanceCapture setMap={setMapInstance} />
@@ -257,13 +260,25 @@ const MeshMap = ({ messages = [], zoom = 13 }) => {
         </div>
       )}
 
-      {/* ── TACTICAL OVERLAY (Instruction 2) ── */}
+      {/* ── LIVE GPS TOP-RIGHT PILL ── */}
       <div style={{
-        position: 'absolute', bottom: 60, right: 12, left: 12, zIndex: 1000,
-        background: 'rgba(9,11,20,0.95)', backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(59,130,246,0.3)', borderRadius: 16,
-        padding: '12px', display: 'flex', flexDirection: 'column', gap: isExpanded ? 10 : 0,
-        pointerEvents: 'auto'
+        position: 'absolute', top: 12, right: 12, zIndex: 1000,
+        background: 'rgba(9,11,20,0.95)', border: '1px solid rgba(59,130,246,0.3)',
+        borderRadius: 12, padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6,
+        pointerEvents: 'none'
+      }}>
+        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3b82f6', boxShadow: '0 0 8px #3b82f6' }} />
+        <span style={{ fontSize: 9, fontWeight: 900, color: '#e2e8f0', letterSpacing: 1 }}>LIVE GPS</span>
+      </div>
+
+      </MapContainer>
+      </div>
+
+      {/* ── TACTICAL OVERLAY (Moved outside map) ── */}
+      {!minimal && (
+      <div style={{
+        zIndex: 1000, background: 'rgba(9,11,20,0.95)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 16,
+        padding: '12px', display: 'flex', flexDirection: 'column', gap: isExpanded ? 10 : 0, margin: '0 12px 12px 12px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -315,6 +330,7 @@ const MeshMap = ({ messages = [], zoom = 13 }) => {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

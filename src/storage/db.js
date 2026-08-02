@@ -82,6 +82,8 @@ let db = {
   history: createMockStore('history'),
   contacts: createMockStore('contacts'),
   forum: createMockStore('forum'),
+  emergencyContacts: createMockStore('emergencyContacts'),
+  evidence: createMockStore('evidence'),
   open: async () => { console.log("Mock DB Open"); },
   version: () => ({ stores: () => {} }) // Mock Dexie versioning
 };
@@ -91,16 +93,18 @@ try {
   if (typeof Dexie === 'function' || (Dexie && Dexie.default)) {
     const D = Dexie.default || Dexie;
     const realDb = new D('ShardNetDB');
-    realDb.version(11).stores({
+    realDb.version(12).stores({
       shards: 'id, messageId, shardIndex, expiry, createdAt, trustScore, nodeId, priority, location, relayCount, deviceCount',
       messages: 'messageId, reconstructedAt, shardCount, priority, previousMessageId, category, lifecycle, usefulness, lastInteraction, location, impact, *contributingNodes, consensusHash, *witnessNodes',
       logs: '++id, timestamp, type, message',
       settings: 'id, value',
       history: '++id, timestamp, type, data',
       contacts: 'nodeId, alias, addedAt, lastSeen',
-      forum: 'id, timestamp, authorNodeId, authorAlias, content',
+      forum: 'id, timestamp, authorNodeId, authorAlias, content, category, ttl, receivedAt',
       squads: 'name, secretKey, addedAt',
-      mapTiles: 'url, data, timestamp'
+      mapTiles: 'url, data, timestamp',
+      emergencyContacts: '++id, name, phone',
+      evidence: 'id, type, category, timestamp, ttl'
     });
     db = realDb; // Swap to real DB
   }
@@ -380,4 +384,37 @@ export const getSetting = async (key, defaultValue) => {
 
 export const setSetting = async (key, value) => {
   return await db.settings.put({ id: key, value });
+};
+
+export const injectDemoData = async () => {
+  const now = Date.now();
+  
+  // 1. Inject 3 Forum Broadcasts
+  await db.forum.bulkPut([
+    { id: 'demo-f1', authorNodeId: 'HQ-CMD-01', authorAlias: 'Central Command', category: 'INFO', content: 'Safe zone established at Sector 4. Medical supplies available.', timestamp: now - 3600000, ttl: 21600000 },
+    { id: 'demo-f2', authorNodeId: 'MED-02', authorAlias: 'Field Medic Alpha', category: 'MEDICAL', content: 'Need O- blood at triage point Bravo. High urgency.', timestamp: now - 1800000, ttl: 10800000 },
+    { id: 'demo-f3', authorNodeId: 'SCOUT-9', authorAlias: 'Recon Unit', category: 'WARNING', content: 'Main bridge is out. Use alternate route through the valley.', timestamp: now - 900000, ttl: 10800000 }
+  ]);
+
+  // 2. Inject 4 Inbox Messages (SOS)
+  await db.messages.bulkPut([
+    { messageId: 'sos-1', message: 'SOS: Trapped under debris. Coordinates attached.', timestamp: now - 7200000, type: 'emergency', location: '17.4110, 78.4760', status: 'RECEIVED' },
+    { messageId: 'sos-2', message: 'SOS: Evacuation needed at LZ Alpha.', timestamp: now - 3600000, type: 'emergency', location: '17.4150, 78.4800', status: 'RECEIVED' },
+    { messageId: 'sos-3', message: 'SOS: Fire spreading, need immediate assist.', timestamp: now - 1800000, type: 'emergency', location: '17.4020, 78.4710', status: 'RECEIVED' },
+    { messageId: 'sos-4', message: 'SOS: Medical emergency, unconscious individual.', timestamp: now - 600000, type: 'emergency', location: '17.4080, 78.4850', status: 'RECEIVED' }
+  ]);
+
+  // 3. Inject 5 Active Nodes (MeshPulse/Map can optionally use this, or we just rely on db size)
+  await db.meshNodes.bulkPut([
+    { id: 'N-101', lastSeen: now - 5000, profile: { name: 'Rescue Alpha', type: 'Mobile', battery: 85 } },
+    { id: 'N-102', lastSeen: now - 12000, profile: { name: 'Medic Bravo', type: 'Mobile', battery: 60 } },
+    { id: 'N-103', lastSeen: now - 25000, profile: { name: 'Drone X', type: 'Drone', battery: 42 } },
+    { id: 'N-104', lastSeen: now - 45000, profile: { name: 'Transport V', type: 'Vehicle', battery: 90 } },
+    { id: 'N-105', lastSeen: now - 2000, profile: { name: 'Hiker 1', type: 'Mobile', battery: 15 } }
+  ]);
+
+  // Dispatch event so UI updates
+  window.dispatchEvent(new CustomEvent('forum-updated'));
+  window.dispatchEvent(new CustomEvent('inbox-updated'));
+  window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Demo Data Injected Successfully!' } }));
 };

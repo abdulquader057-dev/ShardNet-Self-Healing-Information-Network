@@ -26,20 +26,20 @@ export function evaluateIncomingMessage(message, selfId) {
   }
 
   const isForMe = message.type === 'direct' && message.to === selfId;
-  const isBroadcastLike = message.type === 'broadcast' || message.type === 'sos' || message.type === 'status';
+  const isBroadcastLike = message.type === 'broadcast' || message.type === 'sos' || message.type === 'status' || message.type === 'evidence';
 
   const deliverLocally = isForMe || isBroadcastLike;
 
   // Direct messages addressed to someone else still relay (multi-hop),
   // but we do NOT "deliver" them locally — we can't decrypt them.
-  const ttlRemaining = (message.ttl ?? 0) - 1;
-  const shouldForward = ttlRemaining > 0 && !isForMe;
+  const hopsRemaining = (message.hopsRemaining ?? 7) - 1;
+  const shouldForward = hopsRemaining > 0 && !isForMe;
 
   let outgoing = null;
   if (shouldForward) {
     outgoing = {
       ...message,
-      ttl: ttlRemaining,
+      hopsRemaining,
       visited: [...(message.visited || []), selfId],
     };
   }
@@ -50,13 +50,15 @@ export function evaluateIncomingMessage(message, selfId) {
 /**
  * Build a brand-new outgoing message.
  */
-export function createMessage({ type, from, to = null, ttl = 7, payload, extra = {} }) {
+export function createMessage({ type, from, to = null, hopsRemaining = 7, ttl = 10800000, category = 'INFO', payload, extra = {} }) {
   return {
     id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
     type,
     from,
     to,
+    hopsRemaining,
     ttl,
+    category,
     visited: [from],
     payload,
     timestamp: Date.now(),

@@ -32,7 +32,7 @@ import {
 import { useMesh } from '../core/MeshProvider';
 import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../storage/db';
+import { db, injectDemoData } from '../storage/db';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -348,6 +348,32 @@ export default function Settings() {
               <div className="text-left">
                 <p className="text-sm font-semibold">Change Master PIN</p>
                 <p className="text-[10px] text-slate-500 font-medium mt-0.5">Reset your security code</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── HACKATHON TOOLS ── */}
+      <div className="space-y-2">
+        <span className="text-caption text-[#FF9500] uppercase tracking-widest block pl-1">Hackathon Tools</span>
+        <div className="card p-4 bg-[#1C1C1E] border border-slate-800 rounded-xl space-y-4">
+          <button 
+            onClick={() => {
+              if(confirm("Flood database with demo data (SOS, nodes, forum posts)?")) {
+                injectDemoData();
+              }
+            }}
+            className="w-full flex items-center justify-between group active:scale-[0.98] transition-transform"
+          >
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-8 h-8 rounded-full bg-[#FF9500]/20 flex items-center justify-center">
+                <Sparkles size={16} className="text-[#FF9500]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold">Inject Demo Data</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Populate map, inbox & forum</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />

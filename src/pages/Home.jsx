@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   QrCode, Inbox, Zap, Lock, Unlock,
-  Navigation, Activity, Layers, ShieldAlert, CheckCircle2, Heart, X
+  Navigation, Activity, Layers, ShieldAlert, CheckCircle2, Heart, X, Camera
 } from 'lucide-react';
 import {
   db, getAllMessages, getNodeIdentity,
@@ -20,7 +20,7 @@ import { useMesh } from '../core/MeshProvider';
 const Home = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
-  const [stats, setStats] = useState({ shardCount: 0, messageCount: 0 });
+  const [stats, setStats] = useState({ shardCount: 0, messageCount: 0, evidenceCount: 0, activeSignalsCount: 0 });
   const [nodeId, setNodeId] = useState('——');
   const [emergency, setEmergency] = useState(false);
   const { bytesTransferred } = useMesh();
@@ -65,8 +65,10 @@ const Home = () => {
     try {
       const msgs = await getAllMessages();
       const shards = await db.shards.count();
+      const evidenceCount = await db.evidence.count();
+      const activeSignalsCount = await db.forum.count();
       setMessages(msgs);
-      setStats({ shardCount: shards, messageCount: msgs.length });
+      setStats({ shardCount: shards, messageCount: msgs.length, evidenceCount, activeSignalsCount });
       setEmergency(msgs.some(m => m.category === 'Emergency' && Date.now() - m.reconstructedAt < 3600000));
     } catch (e) {
       console.warn("Refresh Failure:", e);
@@ -189,12 +191,12 @@ const Home = () => {
 
             <div className="grid grid-cols-2 gap-4 py-4 my-2 border-y border-slate-800/80">
               <div className="space-y-1">
-                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Active Shards</p>
-                <p className="text-2xl font-black text-[#0A84FF] font-mono">{stats.shardCount}</p>
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Active Signals</p>
+                <p className="text-2xl font-black text-[#0A84FF] font-mono">{stats.activeSignalsCount}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Reconstructed</p>
-                <p className="text-2xl font-black text-[#34C759] font-mono">{stats.messageCount}</p>
+                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Stored Evidence</p>
+                <p className="text-2xl font-black text-[#34C759] font-mono">{stats.evidenceCount}</p>
               </div>
             </div>
 
@@ -226,24 +228,24 @@ const Home = () => {
 
             {/* Render the full interactive leaflet map module within this card frame */}
             <div className="w-full h-full z-10">
-              <MeshMap messages={messages} />
+              <MeshMap messages={messages} minimal={true} />
             </div>
           </div>
         </div>
 
-        {/* INTEL DROP LINK */}
+        {/* EVIDENCE CAPTURE LINK */}
         <div className="bento-col-4">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/intel')}
+            onClick={() => navigate('/evidence')}
             className="bento-card w-full h-full min-h-[140px] border-slate-800 bg-[#1C1C1E] text-left"
           >
-            <div className="mb-4 text-[#0A84FF] bg-[#0A84FF]/10 w-fit p-3 rounded-2xl">
-              <Layers size={24} />
+            <div className="mb-4 text-[#EF4444] bg-[#EF4444]/10 w-fit p-3 rounded-2xl">
+              <Camera size={24} />
             </div>
-            <h3 className="text-lg font-bold text-white">INTEL DROP</h3>
-            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Share critical data</p>
+            <h3 className="text-lg font-bold text-white">EVIDENCE</h3>
+            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">Capture securely</p>
           </motion.button>
         </div>
 

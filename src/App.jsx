@@ -15,9 +15,10 @@ import Squads from './pages/Squads';
 import BluetoothMesh from './pages/BluetoothMesh';
 import MeshPulse from './pages/MeshPulse';
 import MeshWhisper from './pages/MeshWhisper';
-import SilentRelay from './pages/SilentRelay';
 import Settings from './pages/Settings';
 import SurvivalKit from './pages/SurvivalKit';
+import EmergencyContacts from './pages/EmergencyContacts';
+import EvidenceCapture from './pages/EvidenceCapture';
 import { performSelfHealing } from './storage/db';
 import { messageManager } from './core/messageManager';
 import { safeInit, safeInterval, safeCall } from './core/stability';
@@ -309,6 +310,8 @@ function AppContent({
             <Route path="/"            element={<Home />} />
             <Route path="/home"        element={<Home />} />
             <Route path="/forum"       element={<Forum />} />
+            <Route path="/sos-book"    element={<EmergencyContacts />} />
+            <Route path="/evidence"    element={<EvidenceCapture />} />
             <Route path="/contacts"    element={<Contacts />} />
             <Route path="/intel"       element={<IntelDrop />} />
             <Route path="/share"       element={<OfflineShare />} />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMesh } from '../core/MeshProvider';
+import { db } from '../storage/db';
 
 const CIRCUMFERENCE = 364.4; // 2 * Math.PI * 58
 
@@ -198,7 +199,8 @@ export default function SOSButtonFlow() {
         broadcast(
           'EMERGENCY SOS: User needs immediate assistance. Location: nearby.',
           'sos',
-          7,
+          10800000,
+          'SOS',
           { location: 'User location' }
         ).then((result) => {
           console.log(`[SOS] Broadcasted to ${result.reachableNow} direct peers`);
@@ -209,6 +211,25 @@ export default function SOSButtonFlow() {
           console.warn('[SOS] Mesh broadcast failed:', err);
         });
       }
+
+      // ── SMS FALLBACK ──
+      db.emergencyContacts.toArray().then((contacts) => {
+        if (contacts && contacts.length > 0) {
+          const phones = contacts.map(c => c.phone).join(',');
+          const smsBody = encodeURIComponent('SOS! I need immediate help. Sent via offline mesh network.');
+          
+          // Use Web Share API if available, otherwise fallback to sms: URI
+          if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
+            navigator.share({
+              title: 'Emergency SOS',
+              text: 'SOS! I need immediate help. Sent via offline mesh network.',
+            }).catch(console.warn);
+          } else {
+            // Open native SMS app
+            window.open(`sms:${phones}?body=${smsBody}`, '_self');
+          }
+        }
+      }).catch(console.warn);
 
       setState('sent');
       

@@ -1,49 +1,55 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Shield, QrCode, Inbox, Database, Share2, Settings, Hash } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { Shield, QrCode, Inbox, Database, Share2, Settings, Hash, BookOpen } from 'lucide-react';
 
 const navItems = [
   { to: '/',        icon: Shield,    label: 'Home'  },
   { to: '/forum',   icon: Hash,      label: 'Forum' },
-  { to: '/scan',    icon: QrCode,    label: 'Scan'  },
+  { to: '/sos-book',icon: BookOpen,  label: 'SOS Book'},
+  { to: '/scan',    icon: QrCode,    label: 'Link'  },
   { to: '/pulse',   icon: Share2,    label: 'Pulse' },
   { to: '/inbox',   icon: Inbox,     label: 'Inbox' },
   { to: '/storage', icon: Database,  label: 'Vault' },
   { to: '/settings', icon: Settings, label: 'Config' },
 ];
 
-const Navbar = () => (
-  <nav className="bottom-nav fixed bottom-0 left-0 right-0 z-[9999] pointer-events-none flex justify-center pb-6">
-    <div 
-      className="mx-4 w-full max-w-[500px] pointer-events-auto glass-premium rounded-[2rem] flex items-center justify-around p-2 border-white/10"
-      data-label="Nav Hub"
-    >
-      {navItems.map(({ to, icon: Icon, label }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={to === '/'}
-          className={({ isActive }) => `
-            flex flex-col items-center gap-1 px-2 sm:px-4 py-2 rounded-2xl transition-all duration-300 shrink-0
-            ${isActive ? 'bg-primary/20 text-primary scale-105 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'text-slate-500 hover:text-slate-300'}
-          `}
-          onClick={() => {
-            if (navigator.vibrate) navigator.vibrate(50);
-          }}
-        >
-          {({ isActive }) => (
-            <>
-              <Icon size={isActive ? 20 : 18} className="shrink-0" />
-              <span className={`text-[8px] font-black uppercase tracking-widest leading-none whitespace-nowrap ${isActive ? 'text-primary' : 'text-slate-500'}`}>
-                {label}
-              </span>
-            </>
-          )}
-        </NavLink>
-      ))}
-    </div>
-  </nav>
-);
+const Navbar = () => {
+  const location = useLocation();
+  // Hide bottom nav on specific screens if needed (e.g. Evidence Capture)
+  if (location.pathname === '/evidence') return null;
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-[9999] h-20 bg-[#0A0A0F]/90 backdrop-blur border-t border-[#2A2A35] safe-area-bottom">
+      <div className="flex items-center h-full overflow-x-auto scroll-smooth no-scrollbar px-2 max-w-[800px] mx-auto">
+        {navItems.map(({ to, icon: Icon, label }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/'}
+            className={({ isActive }) => `
+              flex flex-col items-center justify-center gap-1 min-w-[64px] h-full flex-1 transition-all duration-300
+              ${isActive ? 'text-[#3B82F6]' : 'text-[#8B8B9A] hover:text-white'}
+            `}
+            onClick={() => {
+              if (navigator.vibrate) navigator.vibrate(50);
+            }}
+          >
+            {({ isActive }) => (
+              <>
+                <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-[#3B82F6]/10' : ''}`}>
+                  <Icon size={isActive ? 22 : 20} strokeWidth={isActive ? 2.5 : 2} />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider">
+                  {label}
+                </span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </div>
+    </nav>
+  );
+};
 
 export default Navbar;
 

@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #2563EB;
-  --color-secondary: #16A34A;
+  --color-primary: #3B82F6;
+  --color-secondary: #22C55E;
   --color-accent: #3B82F6;
-  --color-danger: #DC2626;
+  --color-danger: #EF4444;
   --color-warning: #F59E0B;
-  --color-surface: #1A1D26;
-  --color-background: #0F1117;
+  --color-surface: #141419;
+  --color-background: #0A0A0F;
 
   --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -15,7 +15,7 @@
 
 /* ═══════════════════════════════════════════════════════════════
    RESET & BASE
-   Using UI/UX Pro Max Minimalism & Swiss Style foundation
+   Using TURANT Emergency Polish
 ═══════════════════════════════════════════════════════════════ */
 *, *::before, *::after {
   margin: 0;
@@ -44,18 +44,18 @@ p, span, h1, h2, h3, h4, h5, h6, a, div {
 }
 
 :root {
-  --bg: #0F1117;
-  --surface: #1A1D26;
-  --primary: #2563EB;
-  --secondary: #16A34A;
+  --bg: #0A0A0F;
+  --surface: #141419;
+  --primary: #3B82F6;
+  --secondary: #22C55E;
   --accent: #3B82F6;
-  --danger: #DC2626;
+  --danger: #EF4444;
   --warning: #F59E0B;
   
   /* UI/UX Pro Max: Premium Glass System */
-  --glass: rgba(9, 11, 20, 0.88);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-highlight: rgba(255, 255, 255, 0.12);
+  --glass: rgba(20, 20, 25, 0.88);
+  --glass-border: #2A2A35;
+  --glass-highlight: rgba(255, 255, 255, 0.05);
   --glass-blur: 20px;
 
   /* Responsive spacing */

@@ -219,6 +219,9 @@ export class MeshNetwork {
     if (this.seenMessageIds.has(msg.id)) return;
     this.seenMessageIds.add(msg.id);
 
+    // Attach local receipt timestamp
+    msg.receivedAt = Date.now();
+
     // Relay logic
     const result = Core.evaluateIncomingMessage(msg, this.nodeId);
     if (result.deliverLocally) await this._deliverLocally(msg);
@@ -268,23 +271,23 @@ export class MeshNetwork {
 
   // ---------- Public API ----------
 
-  async broadcast(plaintext, type = 'broadcast', ttl = 7, extra = {}) {
+  async broadcast(plaintext, type = 'broadcast', ttl = 10800000, category = 'INFO', extra = {}) {
     const key = await this.broadcastKeyPromise;
     const payload = await Core.encryptBroadcast(plaintext, key);
-    const message = Core.createMessage({ type, from: this.nodeId, ttl, payload, extra });
+    const message = Core.createMessage({ type, from: this.nodeId, ttl, category, payload, extra });
     this.seenMessageIds.add(message.id);
     this._floodToAllExcept(message, []);
     return { reachableNow: this.peers.size, message };
   }
 
-  async broadcastRaw(payload, type = 'squad', ttl = 7, extra = {}) {
-    const message = Core.createMessage({ type, from: this.nodeId, ttl, payload, extra });
+  async broadcastRaw(payload, type = 'squad', ttl = 10800000, category = 'INFO', extra = {}) {
+    const message = Core.createMessage({ type, from: this.nodeId, ttl, category, payload, extra });
     this.seenMessageIds.add(message.id);
     this._floodToAllExcept(message, []);
     return { reachableNow: this.peers.size, message };
   }
 
-  async sendDirect(targetNodeId, plaintext, ttl = 7) {
+  async sendDirect(targetNodeId, plaintext, ttl = 10800000, category = 'INFO') {
     const targetPeer = this.peers.get(targetNodeId);
     let targetPubKey = null;
 
@@ -295,7 +298,7 @@ export class MeshNetwork {
     if (!targetPubKey) throw new Error('No public key for that node — cannot encrypt.');
 
     const payload = await Core.encryptDirect(plaintext, targetPubKey);
-    const message = Core.createMessage({ type: 'direct', from: this.nodeId, to: targetNodeId, ttl, payload });
+    const message = Core.createMessage({ type: 'direct', from: this.nodeId, to: targetNodeId, ttl, category, payload });
     this.seenMessageIds.add(message.id);
     this._floodToAllExcept(message, []);
 
