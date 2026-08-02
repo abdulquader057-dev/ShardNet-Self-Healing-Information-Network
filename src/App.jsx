@@ -19,6 +19,7 @@ import Settings from './pages/Settings';
 import SurvivalKit from './pages/SurvivalKit';
 import EmergencyContacts from './pages/EmergencyContacts';
 import EvidenceCapture from './pages/EvidenceCapture';
+import SilentRelay from './pages/SilentRelay';
 import { performSelfHealing } from './storage/db';
 import { messageManager } from './core/messageManager';
 import { safeInit, safeInterval, safeCall } from './core/stability';
