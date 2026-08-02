@@ -26,7 +26,7 @@ export function evaluateIncomingMessage(message, selfId) {
   }
 
   const isForMe = message.type === 'direct' && message.to === selfId;
-  const isBroadcastLike = message.type === 'broadcast' || message.type === 'sos' || message.type === 'status' || message.type === 'evidence';
+  const isBroadcastLike = message.type === 'broadcast' || message.type === 'sos' || message.type === 'status' || message.type === 'evidence' || message.type === 'forum' || message.type === 'chat' || message.type === 'squad';
 
   const deliverLocally = isForMe || isBroadcastLike;
 

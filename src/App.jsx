@@ -305,7 +305,7 @@ function AppContent({
       </div>
 
       {/* ── MAIN ROUTER SCREEN OVERLAY ── */}
-      <main className={`ui-overlay flex-1 ${transitionClass}`}>
+      <main className={`ui-overlay flex-1 pb-36 ${transitionClass}`}>
         <ErrorBoundary key={location.pathname}>
           <Routes>
             <Route path="/"            element={<Home />} />

@@ -175,8 +175,9 @@ export class MeshNetwork {
       this.peers.set(remoteNodeId, { conn: peerConn, publicJwk: remotePubKeyJwk, lastSeen: Date.now() });
       console.log(`[Mesh] ✅ Connected to peer: ${remoteNodeId}`);
       
-      // Exchange peer lists for routing
-      const listStr = JSON.stringify({ __meshControl: 'peer-list', peers: [...this.peers.keys()] });
+      // Exchange peer lists with public keys for multi-hop encryption
+      const peersWithKeys = [...this.peers.entries()].map(([id, p]) => ({ id, publicJwk: p.publicJwk }));
+      const listStr = JSON.stringify({ __meshControl: 'peer-list', peers: peersWithKeys });
       peerConn.send(listStr);
       this._emitEvent('bytes-transferred', { bytes: listStr.length, direction: 'tx' });
       
@@ -293,6 +294,15 @@ export class MeshNetwork {
 
     if (targetPeer) {
       targetPubKey = await Core.importPublicKeyJwk(targetPeer.publicJwk);
+    } else {
+      // Search in peerListCache for the target node's public key (for multi-hop encryption)
+      for (const list of this.peerListCache.values()) {
+        const remoteNode = list.find(p => (typeof p === 'object' ? p.id === targetNodeId : p === targetNodeId));
+        if (remoteNode && remoteNode.publicJwk) {
+          targetPubKey = await Core.importPublicKeyJwk(remoteNode.publicJwk);
+          break;
+        }
+      }
     }
 
     if (!targetPubKey) throw new Error('No public key for that node — cannot encrypt.');
@@ -311,7 +321,9 @@ export class MeshNetwork {
   _tickQueue() {
     const isReachable = (targetId) =>
       this.peers.has(targetId) ||
-      [...this.peerListCache.values()].some((list) => list.includes(targetId));
+      [...this.peerListCache.values()].some((list) => 
+        list.some(p => (typeof p === 'object' ? p.id === targetId : p === targetId))
+      );
     const { toSend } = Core.tickQueue(this.queue, Date.now(), isReachable);
     toSend.forEach((item) => this._floodToAllExcept(item.message, []));
   }
@@ -347,7 +359,7 @@ export class MeshNetwork {
   getReachableCount() {
     const directPeers = new Set(this.peers.keys());
     for (const list of this.peerListCache.values()) {
-      list.forEach((id) => directPeers.add(id));
+      list.forEach((p) => directPeers.add(typeof p === 'object' ? p.id : p));
     }
     return directPeers.size;
   }

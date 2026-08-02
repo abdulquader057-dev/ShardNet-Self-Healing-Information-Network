@@ -16,8 +16,8 @@ export async function getLocationSafe() {
       }),
       () => resolve({ lat: 0, lng: 0, fallback: true }),
       { 
-        timeout: 4000, 
-        enableHighAccuracy: false,
+        timeout: 15000, 
+        enableHighAccuracy: true,
         maximumAge: 10000 
       }
     );
