@@ -35,6 +35,7 @@ export function MeshProvider({ children }) {
   const [nodeId, setNodeId] = useState('');
   const [lastMessage, setLastMessage] = useState(null);
   const [bytesTransferred, setBytesTransferred] = useState({ tx: 0, rx: 0 });
+  const [allKnownPeers, setAllKnownPeers] = useState([]);
 
   useEffect(() => {
     let mounted = true;
