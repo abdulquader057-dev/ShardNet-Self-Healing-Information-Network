@@ -190,7 +190,7 @@ const MeshMap = ({ messages = [], zoom = 13 }) => {
         style={{ height: '100%', width: '100%', background: '#0d1117' }}
       >
         <MapInstanceCapture setMap={setMapInstance} />
-        <TileLayer url={navigator.onLine ? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" : ""} className="mesh-tile" />
+        <TileLayer url={navigator.onLine ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" : ""} className="mesh-tile" />
         
         {/* 🗺️ ABSOLUTE OFFLINE GRID */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, opacity: 0.2 }}>
@@ -223,9 +223,43 @@ const MeshMap = ({ messages = [], zoom = 13 }) => {
         ))}
       </MapContainer>
 
+      {/* ── LIVE GPS COORDINATE BADGE ── */}
+      {location && (
+        <div style={{
+          position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 1000,
+          background: 'rgba(9,11,20,0.95)', backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(59,130,246,0.3)', borderRadius: 24,
+          padding: '6px 6px 6px 12px', display: 'flex', alignItems: 'center', gap: 12,
+          pointerEvents: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 10 }}>📍</span>
+            <span style={{ fontSize: 9, fontWeight: 900, color: '#e2e8f0', fontFamily: 'monospace' }}>
+              {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+            </span>
+            <span style={{ fontSize: 8, fontWeight: 700, color: '#64748b' }}>
+              ±{Math.round(location.accuracy)}m
+            </span>
+          </div>
+          <button 
+            onClick={() => {
+              navigator.clipboard.writeText(`${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`);
+              window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Coordinates copied to clipboard' } }));
+            }}
+            style={{ 
+              background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: 'none', 
+              padding: '4px 12px', borderRadius: 16, fontSize: 8, fontWeight: 900, 
+              cursor: 'pointer', transition: 'all 0.2s' 
+            }}
+          >
+            COPY
+          </button>
+        </div>
+      )}
+
       {/* ── TACTICAL OVERLAY (Instruction 2) ── */}
       <div style={{
-        position: 'absolute', bottom: 12, right: 12, left: 12, zIndex: 1000,
+        position: 'absolute', bottom: 60, right: 12, left: 12, zIndex: 1000,
         background: 'rgba(9,11,20,0.95)', backdropFilter: 'blur(16px)',
         border: '1px solid rgba(59,130,246,0.3)', borderRadius: 16,
         padding: '12px', display: 'flex', flexDirection: 'column', gap: isExpanded ? 10 : 0,

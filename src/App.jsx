@@ -188,15 +188,15 @@ function AppContent({
     };
   }, [location.pathname]);
 
-  // Demo keyboard script helper shortcuts (Instruction 3)
+  // Keyboard script helper shortcuts
   useEffect(() => {
     let keyHintShown = localStorage.getItem('key_hint_shown') === 'true';
 
     const handleKeyDown = (e) => {
       // Shortcut key indicators hint
-      if (!keyHintShown && (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || ['s','n','e','d','r','t','h'].includes(e.key.toLowerCase()))) {
+      if (!keyHintShown && (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || ['s','n','e'].includes(e.key.toLowerCase()))) {
         window.dispatchEvent(new CustomEvent('show-toast', {
-          detail: { type: 'info', message: "Pro tip: Press 'S' for SOS, 'N' for Network, 'E' for Feed, 'D' for Demo Mode" }
+          detail: { type: 'info', message: "Pro tip: Press 'S' for SOS, 'N' for Network, 'E' for Inbox" }
         }));
         localStorage.setItem('key_hint_shown', 'true');
         keyHintShown = true;
@@ -207,101 +207,6 @@ function AppContent({
         return;
       }
 
-      // 1. Shift + D: Toggle Demo Mode instantly
-      if (e.key === 'D' && e.shiftKey) {
-        e.preventDefault();
-        const currentMode = localStorage.getItem('sharednet_demo_mode') === 'true';
-        const nextMode = !currentMode;
-        localStorage.setItem('sharednet_demo_mode', nextMode.toString());
-        
-        if (nextMode) {
-          if (!window.sharedNetData) window.sharedNetData = { signals: [] };
-          window.sharedNetData.signals = [
-            {
-              id: 'mock-1',
-              type: 'received',
-              title: 'Hiker-42 Emergency SOS',
-              status: 'active',
-              time: '4 min ago',
-              timestamp: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-              location: '120m northeast',
-              description: "Distress signal from hiker. Message: 'Twisted ankle, cannot walk. Need medical assistance.'",
-              sender: 'Hiker-42',
-              range: '120m',
-              battery: '34%'
-            },
-            {
-              id: 'demo-sig-1',
-              type: 'received',
-              title: 'Flood Warning Alert',
-              status: 'active',
-              time: '1 min ago',
-              timestamp: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
-              location: '1.2km north',
-              description: "Flash flood warning issued for local sectors. Evacuate to higher ground immediately.",
-              sender: 'BaseCamp',
-              range: '1.2km',
-              battery: '98%'
-            },
-            {
-              id: 'mock-2',
-              type: 'received',
-              title: 'Vehicle Collision Alert',
-              status: 'resolved',
-              time: 'Yesterday, 6:42 PM',
-              timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-              location: '450m south',
-              description: "Multi-vehicle accident reported. Emergency services dispatched. All victims evacuated safely.",
-              sender: 'Vehicle-A1',
-              range: '450m',
-              battery: '82%'
-            },
-            {
-              id: 'demo-sig-2',
-              type: 'received',
-              title: 'Medical Rescue Resolved',
-              status: 'resolved',
-              time: 'Yesterday',
-              timestamp: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
-              location: '2.1km west',
-              description: "Cardiac incident reported. Rescue-01 intercepted and administered first-aid. Patient stabilized and evacuated.",
-              sender: 'Rescue-01',
-              range: '2.1km',
-              battery: '74%'
-            },
-            {
-              id: 'mock-3',
-              type: 'sent',
-              title: 'Your SOS Signal',
-              status: 'sent',
-              time: 'Today, 08:15 AM',
-              timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-              location: 'Your location',
-              description: "Test signal sent successfully. 3 nearby devices notified.",
-              sender: 'You (Self)',
-              range: 'Local Transceiver',
-              battery: '84%'
-            },
-            {
-              id: 'demo-sent-1',
-              type: 'sent',
-              title: 'Grid Status Check-in',
-              status: 'sent',
-              time: 'Today, 09:12 AM',
-              timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-              location: 'Your location',
-              description: "Status Check: Grid-4 secure, transceiver active.",
-              sender: 'You (Self)',
-              range: 'Local Transceiver',
-              battery: '84%'
-            },
-            {
-              id: 'mock-4',
-              type: 'sent',
-              title: 'Test Ping',
-              status: 'sent',
-              time: 'Today, 07:30 AM',
-              timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
       // Standard single keys: N (Network), E (Feed), S (SOS)
       const key = e.key.toLowerCase();
       if (key === 's') {
