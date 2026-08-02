@@ -74,20 +74,41 @@ function LiveLocation({ onLocation }) {
   const [pos, setPos] = useState(null);
   const hasCentred = useRef(false);
 
+  const triggerLocation = useCallback(async () => {
+    window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'info', message: 'Acquiring GPS lock...' } }));
+    const loc = await getLocationSafe();
+    if (loc.lat !== 0 || loc.lng !== 0) {
+      const fullLoc = { lat: loc.lat, lng: loc.lng, accuracy: loc.accuracy || 100 };
+      setPos(fullLoc);
+      onLocation(fullLoc);
+      if (map && map.getContainer()) {
+        try {
+          map.flyTo([loc.lat, loc.lng], 16, { animate: true, duration: 1.5 });
+          hasCentred.current = true;
+        } catch (e) {
+          console.warn("🛡️ MAP_SHIELD: flyTo deferred");
+        }
+      }
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'GPS Locked.' } }));
+    } else {
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'GPS Failed. Check permissions.' } }));
+    }
+  }, [map, onLocation]);
+
   useEffect(() => {
     let isMounted = true;
     async function syncLocation() {
       const loc = await getLocationSafe();
       if (!isMounted) return;
       if (loc.lat !== 0 || loc.lng !== 0) {
-        const fullLoc = { lat: loc.lat, lng: loc.lng, accuracy: loc.fallback ? 100 : 15 };
+        const fullLoc = { lat: loc.lat, lng: loc.lng, accuracy: loc.accuracy || 100 };
         setPos(fullLoc);
         onLocation(fullLoc);
         
         // SAFE FLY-TO: Ensure map is loaded and panes exist
         if (!hasCentred.current && map && map.getContainer()) {
           try {
-            map.flyTo([loc.lat, loc.lng], 14, { animate: true, duration: 2 });
+            map.flyTo([loc.lat, loc.lng], 16, { animate: true, duration: 2 });
             hasCentred.current = true;
           } catch (e) {
             console.warn("🛡️ MAP_SHIELD: flyTo deferred - map not ready");
@@ -96,9 +117,17 @@ function LiveLocation({ onLocation }) {
       }
     }
     syncLocation();
-    const interval = safeInterval(syncLocation, 8000);
-    return () => { isMounted = false; clearInterval(interval); };
-  }, [map, onLocation]);
+    const interval = safeInterval(syncLocation, 10000);
+    
+    // Listen for manual trigger event
+    window.addEventListener('trigger-locate-me', triggerLocation);
+    
+    return () => { 
+      isMounted = false; 
+      clearInterval(interval); 
+      window.removeEventListener('trigger-locate-me', triggerLocation);
+    };
+  }, [map, onLocation, triggerLocation]);
 
   if (!pos) return null;
   return (
@@ -227,38 +256,58 @@ const MeshMap = ({ messages = [], zoom = 13, minimal = false }) => {
       </MapContainer>
 
       {/* ── LIVE GPS COORDINATE BADGE ── */}
-      {location && (
-        <div style={{
-          position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 1000,
-          background: 'rgba(9,11,20,0.95)', backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(59,130,246,0.3)', borderRadius: 24,
-          padding: '6px 6px 6px 12px', display: 'flex', alignItems: 'center', gap: 12,
-          pointerEvents: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 10 }}>📍</span>
-            <span style={{ fontSize: 9, fontWeight: 900, color: '#e2e8f0', fontFamily: 'monospace' }}>
-              {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
-            </span>
-            <span style={{ fontSize: 8, fontWeight: 700, color: '#64748b' }}>
-              ±{Math.round(location.accuracy)}m
-            </span>
-          </div>
+      <div style={{
+        position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 1000,
+        background: 'rgba(9,11,20,0.95)', backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(59,130,246,0.3)', borderRadius: 24,
+        padding: '6px 6px 6px 12px', display: 'flex', alignItems: 'center', gap: 12,
+        pointerEvents: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 10 }}>📍</span>
+          {location ? (
+            <>
+              <span style={{ fontSize: 9, fontWeight: 900, color: '#e2e8f0', fontFamily: 'monospace' }}>
+                {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+              </span>
+              <span style={{ fontSize: 8, fontWeight: 700, color: '#64748b' }}>
+                ±{Math.round(location.accuracy)}m
+              </span>
+            </>
+          ) : (
+            <span style={{ fontSize: 9, fontWeight: 900, color: '#ef4444' }}>OFFLINE</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button 
             onClick={() => {
-              navigator.clipboard.writeText(`${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`);
-              window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Coordinates copied to clipboard' } }));
+              window.dispatchEvent(new CustomEvent('trigger-locate-me'));
             }}
             style={{ 
-              background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: 'none', 
+              background: 'rgba(16,185,129,0.15)', color: '#10b981', border: 'none', 
               padding: '4px 12px', borderRadius: 16, fontSize: 8, fontWeight: 900, 
               cursor: 'pointer', transition: 'all 0.2s' 
             }}
           >
-            COPY
+            LOCATE
           </button>
+          {location && (
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(`${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`);
+                window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Coordinates copied to clipboard' } }));
+              }}
+              style={{ 
+                background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: 'none', 
+                padding: '4px 12px', borderRadius: 16, fontSize: 8, fontWeight: 900, 
+                cursor: 'pointer', transition: 'all 0.2s' 
+              }}
+            >
+              COPY
+            </button>
+          )}
         </div>
-      )}
+      </div>
 
       {/* ── LIVE GPS TOP-RIGHT PILL ── */}
       <div style={{

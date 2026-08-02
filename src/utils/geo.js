@@ -4,24 +4,29 @@
  */
 export async function getLocationSafe() {
   if (!navigator.geolocation) {
+    console.warn("Geolocation API not supported.");
     return { lat: 0, lng: 0, fallback: true };
   }
 
-  return new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-        fallback: false
-      }),
-      () => resolve({ lat: 0, lng: 0, fallback: true }),
-      { 
-        timeout: 15000, 
-        enableHighAccuracy: true,
-        maximumAge: 10000 
-      }
-    );
+  const getPos = (options) => new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, options);
   });
+
+  try {
+    // Attempt 1: High Accuracy, No Cache (Force GPS chip)
+    const pos = await getPos({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    return { lat: pos.coords.latitude, lng: pos.coords.longitude, fallback: false, accuracy: pos.coords.accuracy };
+  } catch (err1) {
+    console.warn("High accuracy GPS failed:", err1.message, "Code:", err1.code);
+    try {
+      // Attempt 2: Low Accuracy, Allow Cache (Network/Cell tower fallback)
+      const pos = await getPos({ enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+      return { lat: pos.coords.latitude, lng: pos.coords.longitude, fallback: false, accuracy: pos.coords.accuracy };
+    } catch (err2) {
+      console.error("All geolocation attempts failed:", err2.message);
+      return { lat: 0, lng: 0, fallback: true };
+    }
+  }
 }
 
 export function formatCoords(lat, lng) {
