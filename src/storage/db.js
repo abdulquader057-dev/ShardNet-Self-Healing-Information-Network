@@ -251,7 +251,24 @@ export const clearAllData = async () => {
   await db.messages.clear();
 };
 
-export const setVaultKey = (key) => { activeVaultKey = key; };
+export const setVaultKey = async (key) => { 
+  activeVaultKey = key; 
+  if (!localStorage.getItem('vaultTest')) {
+    const test = await encryptData("VAULT_TEST", key);
+    localStorage.setItem('vaultTest', JSON.stringify(test));
+  }
+};
+export const verifyVaultKey = async (key) => {
+  const testStr = localStorage.getItem('vaultTest');
+  if (!testStr) return true; // No key set yet
+  try {
+    const testObj = JSON.parse(testStr);
+    const decrypted = await decryptData(testObj, key);
+    return decrypted === "VAULT_TEST";
+  } catch (e) {
+    return false;
+  }
+};
 export const clearVaultKey = () => { activeVaultKey = null; };
 export const isVaultLocked = () => !activeVaultKey;
 
@@ -341,8 +358,22 @@ export const performSelfHealing = async () => {
     for (const s of oldest) await db.shards.delete(s.id);
   }
 
-  if (expiredCount > 0 || cleanedMessages > 0) {
-    await addLog(`Self-healing active: Purged ${expiredCount} expired signals and ${cleanedMessages} inactive records.`, 'success');
+  // 4. Auto-purge evidence after TTL + 24h
+  const evidences = await db.evidence.toArray();
+  let purgedEvidence = 0;
+  for (const ev of evidences) {
+    if (ev.ttl) {
+      const ttlMs = ev.ttl * 3600000;
+      const gracePeriod = 86400000; // 24 hours
+      if (now > (ev.timestamp + ttlMs + gracePeriod)) {
+        await db.evidence.delete(ev.id);
+        purgedEvidence++;
+      }
+    }
+  }
+
+  if (expiredCount > 0 || cleanedMessages > 0 || purgedEvidence > 0) {
+    await addLog(`Self-healing active: Purged ${expiredCount} expired signals, ${cleanedMessages} inactive records, and ${purgedEvidence} old evidence items.`, 'success');
   }
 };
 
@@ -386,35 +417,3 @@ export const setSetting = async (key, value) => {
   return await db.settings.put({ id: key, value });
 };
 
-export const injectDemoData = async () => {
-  const now = Date.now();
-  
-  // 1. Inject 3 Forum Broadcasts
-  await db.forum.bulkPut([
-    { id: 'demo-f1', authorNodeId: 'HQ-CMD-01', authorAlias: 'Central Command', category: 'INFO', content: 'Safe zone established at Sector 4. Medical supplies available.', timestamp: now - 3600000, ttl: 21600000 },
-    { id: 'demo-f2', authorNodeId: 'MED-02', authorAlias: 'Field Medic Alpha', category: 'MEDICAL', content: 'Need O- blood at triage point Bravo. High urgency.', timestamp: now - 1800000, ttl: 10800000 },
-    { id: 'demo-f3', authorNodeId: 'SCOUT-9', authorAlias: 'Recon Unit', category: 'WARNING', content: 'Main bridge is out. Use alternate route through the valley.', timestamp: now - 900000, ttl: 10800000 }
-  ]);
-
-  // 2. Inject 4 Inbox Messages (SOS)
-  await db.messages.bulkPut([
-    { messageId: 'sos-1', message: 'SOS: Trapped under debris. Coordinates attached.', timestamp: now - 7200000, type: 'emergency', location: '17.4110, 78.4760', status: 'RECEIVED' },
-    { messageId: 'sos-2', message: 'SOS: Evacuation needed at LZ Alpha.', timestamp: now - 3600000, type: 'emergency', location: '17.4150, 78.4800', status: 'RECEIVED' },
-    { messageId: 'sos-3', message: 'SOS: Fire spreading, need immediate assist.', timestamp: now - 1800000, type: 'emergency', location: '17.4020, 78.4710', status: 'RECEIVED' },
-    { messageId: 'sos-4', message: 'SOS: Medical emergency, unconscious individual.', timestamp: now - 600000, type: 'emergency', location: '17.4080, 78.4850', status: 'RECEIVED' }
-  ]);
-
-  // 3. Inject 5 Active Nodes (MeshPulse/Map can optionally use this, or we just rely on db size)
-  await db.meshNodes.bulkPut([
-    { id: 'N-101', lastSeen: now - 5000, profile: { name: 'Rescue Alpha', type: 'Mobile', battery: 85 } },
-    { id: 'N-102', lastSeen: now - 12000, profile: { name: 'Medic Bravo', type: 'Mobile', battery: 60 } },
-    { id: 'N-103', lastSeen: now - 25000, profile: { name: 'Drone X', type: 'Drone', battery: 42 } },
-    { id: 'N-104', lastSeen: now - 45000, profile: { name: 'Transport V', type: 'Vehicle', battery: 90 } },
-    { id: 'N-105', lastSeen: now - 2000, profile: { name: 'Hiker 1', type: 'Mobile', battery: 15 } }
-  ]);
-
-  // Dispatch event so UI updates
-  window.dispatchEvent(new CustomEvent('forum-updated'));
-  window.dispatchEvent(new CustomEvent('inbox-updated'));
-  window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Demo Data Injected Successfully!' } }));
-};

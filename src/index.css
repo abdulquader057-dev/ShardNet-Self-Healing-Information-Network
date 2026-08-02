@@ -1,17 +1,6 @@
-@import "tailwindcss";
+@import "./designTokens.css";
 
-@theme {
-  --color-primary: #3B82F6;
-  --color-secondary: #22C55E;
-  --color-accent: #3B82F6;
-  --color-danger: #EF4444;
-  --color-warning: #F59E0B;
-  --color-surface: #141419;
-  --color-background: #0A0A0F;
-
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
+/* Using designTokens.css for theme variables */
 
 /* ═══════════════════════════════════════════════════════════════
    RESET & BASE
@@ -74,7 +63,7 @@ html {
 body {
   background: var(--bg);
   color: #f8fafc;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-sans);
   overflow-x: hidden;
   width: 100%;
   max-width: 100%;
@@ -210,7 +199,7 @@ body::after {
    TYPOGRAPHY
 ═══════════════════════════════════════════════════════════════ */
 h1, h2, h3, h4 {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-sans);
   letter-spacing: -0.04em;
   font-weight: 800;
 }
@@ -771,7 +760,7 @@ html.presentation-mode [data-label]::after {
   left: 8px;
   background: #FF9500;
   color: black;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-sans);
   font-size: 7px;
   font-weight: 900;
   padding: 2px 5px;

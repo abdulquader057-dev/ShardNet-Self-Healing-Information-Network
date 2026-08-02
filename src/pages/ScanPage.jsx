@@ -217,6 +217,7 @@ const ScanPage = () => {
   const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isDecrypting, setIsDecrypting] = useState(false);
+  const [scanMode, setScanMode] = useState('shard'); // 'shard' or 'read'
   const [facingMode, setFacingMode] = useState('environment');
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -315,6 +316,16 @@ const ScanPage = () => {
 
   async function handleResult(decodedText) {
     setError(null);
+    if (scanMode === 'read') {
+      try {
+        const parsed = JSON.parse(decodedText);
+        setScanResult({ type: 'read', result: parsed });
+      } catch (e) {
+        setScanResult({ type: 'read', result: { rawText: decodedText } });
+      }
+      return;
+    }
+
     try {
       const result = parseShardQR(decodedText);
       if (!result) {
@@ -432,6 +443,20 @@ const ScanPage = () => {
         <div className="space-y-1">
           <h2 className="heading-lg text-white italic uppercase tracking-tighter">Manual Link</h2>
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol: Mesh-Gossip</p>
+        </div>
+        <div className="ml-auto flex bg-[#141419] p-1 rounded-xl border border-[#2A2A35]">
+          <button 
+            onClick={() => setScanMode('shard')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${scanMode === 'shard' ? 'bg-[#3B82F6] text-white' : 'text-[#8B8B9A] hover:text-white'}`}
+          >
+            SHARD
+          </button>
+          <button 
+            onClick={() => setScanMode('read')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${scanMode === 'read' ? 'bg-[#3B82F6] text-white' : 'text-[#8B8B9A] hover:text-white'}`}
+          >
+            READ
+          </button>
         </div>
       </div>
 
@@ -579,7 +604,27 @@ const ScanPage = () => {
                       {scanResult.errCount > 0 && <span className="text-danger">{scanResult.errCount} failures purged</span>}
                     </p>
                   </div>
-                  <button onClick={handleScanNext} className="btn-premium btn-primary w-full">CONTINUE SCAN</button>
+                  <button onClick={() => setScanResult(null)} className="btn-premium btn-secondary !py-4 w-full mt-4">
+                    ACKNOWLEDGE
+                  </button>
+                </motion.div>
+              )}
+              {scanResult?.type === 'read' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-full max-w-md p-8 glass-premium rounded-[2rem] border-secondary/20 flex flex-col gap-6"
+                >
+                  <div className="flex items-center gap-3">
+                    <Info className="text-secondary" size={24} />
+                    <h3 className="text-xl font-black text-white italic uppercase">READ MODE DECODED</h3>
+                  </div>
+                  <div className="bg-black/50 p-4 rounded-xl overflow-auto text-left text-xs font-mono text-green-400 max-h-[300px]">
+                    <pre>{JSON.stringify(scanResult.result, null, 2)}</pre>
+                  </div>
+                  <button onClick={() => setScanResult(null)} className="btn-premium btn-secondary !py-4 w-full mt-4">
+                    DISMISS
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>

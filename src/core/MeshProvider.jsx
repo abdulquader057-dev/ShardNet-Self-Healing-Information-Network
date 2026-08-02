@@ -149,7 +149,7 @@ export function MeshProvider({ children }) {
     });
 
     // Poll peer state every 2s for reactive UI updates
-    const pollInterval = setInterval(() => {
+    const pollInterval = setInterval(async () => {
       if (!mounted) return;
       const currentPeers = mesh.getPeers();
       setPeers(currentPeers);
@@ -157,6 +157,13 @@ export function MeshProvider({ children }) {
       setReachableCount(mesh.getReachableCount());
       setPendingMessages(mesh.getPendingMessages());
       setAllKnownPeers(mesh.getAllKnownPeers());
+      
+      if (typeof mesh.getRawDataStats === 'function') {
+        const stats = await mesh.getRawDataStats();
+        if (mounted) {
+          setBytesTransferred(stats);
+        }
+      }
     }, 2000);
 
     // Listen for peer connect/disconnect events

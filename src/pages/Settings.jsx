@@ -32,7 +32,7 @@ import {
 import { useMesh } from '../core/MeshProvider';
 import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate } from 'react-router-dom';
-import { db, injectDemoData } from '../storage/db';
+import { db } from '../storage/db';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -51,7 +51,7 @@ export default function Settings() {
   const [dbSize, setDbSize] = useState('0 KB');
   const [downloadingMap, setDownloadingMap] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
-
+  const [batterySaver, setBatterySaver] = useState(localStorage.getItem('setting_battery_saver') === 'true');
 
   
   const [highContrast, setHighContrast] = useState(localStorage.getItem('setting_high_contrast') === 'true');
@@ -59,8 +59,7 @@ export default function Settings() {
   const [reduceMotion, setReduceMotion] = useState(localStorage.getItem('setting_reduce_motion') === 'true');
 
   // Presentation settings (Instruction 6)
-  const [versionTaps, setVersionTaps] = useState(0);
-  const [presentationMode, setPresentationMode] = useState(localStorage.getItem('presentation_mode') === 'true');
+
   const [showAboutModal, setShowAboutModal] = useState(false);
 
   // Mesh pairing state
@@ -144,12 +143,44 @@ export default function Settings() {
   }, [reduceMotion]);
 
   useEffect(() => {
-    if (presentationMode) {
-      document.documentElement.classList.add('presentation-mode');
+    if (batterySaver) {
+      document.documentElement.classList.add('battery-saver');
     } else {
-      document.documentElement.classList.remove('presentation-mode');
+      document.documentElement.classList.remove('battery-saver');
     }
-  }, [presentationMode]);
+  }, [batterySaver]);
+
+  const handleExportCSV = async () => {
+    try {
+      const history = await db.history.toArray();
+      const nodes = await db.meshNodes.toArray();
+      const csv = "type,id,data\\n" + 
+        history.map(h => `history,${h.id},${JSON.stringify(h).replace(/,/g, ';')}`).join("\\n") + "\\n" +
+        nodes.map(n => `node,${n.id},${JSON.stringify(n).replace(/,/g, ';')}`).join("\\n");
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sharednet-export-${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('success', 'Data exported to CSV');
+    } catch(e) {
+      showToast('error', 'Export failed');
+    }
+  };
+
+  const handleResetData = () => {
+    if (confirm("WARNING: This will wipe all stored data, contacts, and evidence. Proceed?")) {
+      db.delete().then(() => {
+        localStorage.clear();
+        window.location.reload();
+      });
+    }
+  };
+
+
 
   const showToast = (type, message) => {
     window.dispatchEvent(new CustomEvent('show-toast', { detail: { type, message } }));
@@ -190,28 +221,7 @@ export default function Settings() {
     }
   };
 
-  const handleVersionClick = () => {
-    const nextTaps = versionTaps + 1;
-    setVersionTaps(nextTaps);
-    if (nextTaps >= 5) {
-      const nextPres = !presentationMode;
-      setPresentationMode(nextPres);
-      localStorage.setItem('presentation_mode', nextPres.toString());
-      
-      if (nextPres) {
-        document.documentElement.classList.add('presentation-mode');
-        showToast('info', 'Presentation Mode ON — slowed animations for demo');
-      } else {
-        document.documentElement.classList.remove('presentation-mode');
-        showToast('info', 'Presentation Mode OFF — default speeds restored');
-      }
-      
-      window.dispatchEvent(new CustomEvent('demo-mode-changed'));
-      setVersionTaps(0);
-    } else {
-      showToast('info', `Tap Version ${5 - nextTaps} more times for Presentation Settings`);
-    }
-  };
+
 
   const ToggleSwitch = ({ checked, onChange, activeColor = '#0A84FF' }) => (
     <button 
@@ -355,25 +365,46 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* ── HACKATHON TOOLS ── */}
+      {/* ── DATA & POWER ── */}
       <div className="space-y-2">
-        <span className="text-caption text-[#FF9500] uppercase tracking-widest block pl-1">Hackathon Tools</span>
+        <span className="text-caption text-slate-500 uppercase tracking-widest block pl-1">Data & Power</span>
         <div className="card p-4 bg-[#1C1C1E] border border-slate-800 rounded-xl space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <span className="text-white font-semibold text-xs">Battery Saver</span>
+              <p className="text-[10px] text-slate-500">Reduce GPS polling and animations.</p>
+            </div>
+            <ToggleSwitch 
+              checked={batterySaver} 
+              onChange={(val) => { setBatterySaver(val); localStorage.setItem('setting_battery_saver', val.toString()); }} 
+            />
+          </div>
           <button 
-            onClick={() => {
-              if(confirm("Flood database with demo data (SOS, nodes, forum posts)?")) {
-                injectDemoData();
-              }
-            }}
+            onClick={handleExportCSV}
             className="w-full flex items-center justify-between group active:scale-[0.98] transition-transform"
           >
             <div className="flex items-center gap-3 text-white">
-              <div className="w-8 h-8 rounded-full bg-[#FF9500]/20 flex items-center justify-center">
-                <Sparkles size={16} className="text-[#FF9500]" />
+              <div className="w-8 h-8 rounded-full bg-[#0A84FF]/20 flex items-center justify-center">
+                <FileText size={16} className="text-[#0A84FF]" />
               </div>
               <div className="text-left">
-                <p className="text-sm font-semibold">Inject Demo Data</p>
-                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Populate map, inbox & forum</p>
+                <p className="text-sm font-semibold">Export Data to CSV</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Backup messages and contacts</p>
+              </div>
+            </div>
+            <DownloadCloud size={18} className="text-slate-600 group-hover:text-white transition-colors" />
+          </button>
+          <button 
+            onClick={handleResetData}
+            className="w-full flex items-center justify-between group active:scale-[0.98] transition-transform"
+          >
+            <div className="flex items-center gap-3 text-white">
+              <div className="w-8 h-8 rounded-full bg-[#FF3B30]/20 flex items-center justify-center">
+                <ShieldAlert size={16} className="text-[#FF3B30]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-[#FF3B30]">Reset All Data</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">Wipe device entirely</p>
               </div>
             </div>
             <ChevronRight size={18} className="text-slate-600 group-hover:text-white transition-colors" />
@@ -806,170 +837,14 @@ export default function Settings() {
       <div className="space-y-2">
         <span className="text-caption text-slate-500 uppercase tracking-widest block pl-1">About</span>
         <div className="card p-4 bg-[#1C1C1E] border border-slate-800 rounded-xl divide-y divide-slate-800/60 text-xs">
-          <div 
-            onClick={handleVersionClick} 
-            className="pb-3 flex justify-between items-center cursor-pointer hover:bg-white/5 p-1 rounded transition-all"
-          >
+          <div className="pb-3 flex justify-between items-center">
             <span className="text-slate-500 font-medium">Software Version</span>
-            <span className="text-white font-semibold flex items-center gap-1.5">
-              <span>1.0.0 (Hackathon Build)</span>
-              {presentationMode && <span className="bg-[#FF9500] text-black px-1.5 py-0.5 rounded text-[8px] font-black uppercase">PRES</span>}
-            </span>
-          </div>
-          <div className="py-3 flex justify-between items-center">
-            <span className="text-slate-500 font-medium">Pitch Context</span>
-            <span className="text-white font-semibold">Founders Fest 2026</span>
-          </div>
-          <div className="pt-3 flex justify-between items-center">
-            <span className="text-slate-500 font-medium">Technical Blueprint</span>
-            <button 
-              onClick={() => { setShowAboutModal(true); showToast('info', 'Opening Pitch leaf-behind...'); }}
-              className="text-[#0A84FF] font-semibold flex items-center gap-1 hover:underline bg-transparent border-none p-0 cursor-pointer"
-            >
-              <span>Audit Blueprint</span>
-              <ChevronRight size={14} />
-            </button>
+            <span className="text-white font-semibold">SharedNet v2.8.0</span>
           </div>
         </div>
       </div>
 
-      {/* ── JUDGE-FACING "ABOUT" MODAL OVERLAY (Instruction 4) ── */}
-      <AnimatePresence>
-        {showAboutModal && (
-          <div 
-            className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="absolute inset-0" onClick={() => setShowAboutModal(false)} />
-            
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 30 }}
-              className="bg-[#1C1C1E] border border-slate-800 w-full max-w-sm rounded-xl p-6 relative z-10 flex flex-col gap-4 shadow-2xl max-h-[85vh] overflow-y-auto scroll-momentum-container"
-            >
-              {/* Header */}
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-xl font-black text-white italic uppercase tracking-tight">SharedNet</h2>
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mt-0.5">
-                    1.0.0 (Founders Fest Build)
-                  </span>
-                </div>
-                <button 
-                  onClick={() => setShowAboutModal(false)}
-                  className="p-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
-                >
-                  <X size={18} />
-                </button>
-              </div>
 
-              <div className="h-[1px] bg-slate-800/80" />
-
-              {/* Tagline & Problem */}
-              <div className="space-y-1">
-                <span className="text-[10px] text-[#0A84FF] font-bold uppercase tracking-wide block">The Proposition</span>
-                <p className="text-white text-xs font-bold leading-normal">
-                  "Emergency communication when everything else fails."
-                </p>
-              </div>
-
-              <div className="space-y-1 text-xs">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide block">The Problem</span>
-                <p className="text-slate-400 leading-relaxed">
-                  Natural disasters, remote areas, and grid attacks sever communications. First responders and survivors need coordination without cell towers or internet.
-                </p>
-              </div>
-
-              <div className="space-y-1 text-xs">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide block">The Solution</span>
-                <p className="text-slate-400 leading-relaxed">
-                  SharedNet forms a self-healing mesh network using WebRTC data channels and Bluetooth Low Energy. Every phone becomes a relay. Messages hop from device to device.
-                </p>
-              </div>
-
-              {/* Tech Stack */}
-              <div className="space-y-1 text-xs">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide block">Technical Stack</span>
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {['WebRTC Channels', 'BLE GATT', 'AES-256-GCM', 'PWA Offline'].map(tech => (
-                    <span key={tech} className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[9px] font-bold">
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1 text-xs">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide block">Team Credentials</span>
-                <p className="text-slate-400 italic">Built by Team Antigravity at Founders Fest 2026</p>
-              </div>
-
-              {/* QR Code */}
-              <div className="bg-[#2C2C2E]/40 border border-slate-800 p-4 rounded-lg text-center space-y-2">
-                <span className="text-[9px] text-[#FF9500] font-black uppercase tracking-widest block">Live Pitch Demo link</span>
-                
-                {/* SVG QR Code (Instruction 4) */}
-                <svg viewBox="0 0 100 100" className="w-24 h-24 mx-auto bg-white p-1.5 rounded">
-                  <rect x="0" y="0" width="30" height="30" fill="black" />
-                  <rect x="5" y="5" width="20" height="20" fill="white" />
-                  <rect x="10" y="10" width="10" height="10" fill="black" />
-                  
-                  <rect x="70" y="0" width="30" height="30" fill="black" />
-                  <rect x="75" y="5" width="20" height="20" fill="white" />
-                  <rect x="80" y="10" width="10" height="10" fill="black" />
-                  
-                  <rect x="0" y="70" width="30" height="30" fill="black" />
-                  <rect x="5" y="75" width="20" height="20" fill="white" />
-                  <rect x="10" y="80" width="10" height="10" fill="black" />
-                  
-                  <rect x="75" y="75" width="10" height="10" fill="black" />
-                  <rect x="78" y="78" width="4" height="4" fill="white" />
-                  
-                  <rect x="35" y="5" width="10" height="5" fill="black" />
-                  <rect x="55" y="10" width="5" height="15" fill="black" />
-                  <rect x="40" y="25" width="15" height="5" fill="black" />
-                  <rect x="5" y="45" width="15" height="10" fill="black" />
-                  <rect x="25" y="35" width="5" height="20" fill="black" />
-                  <rect x="35" y="45" width="20" height="5" fill="black" />
-                  <rect x="45" y="55" width="5" height="15" fill="black" />
-                  <rect x="15" y="60" width="10" height="5" fill="black" />
-                  <rect x="65" y="35" width="15" height="5" fill="black" />
-                  <rect x="60" y="50" width="5" height="15" fill="black" />
-                  <rect x="85" y="45" width="10" height="10" fill="black" />
-                  <rect x="70" y="60" width="10" height="5" fill="black" />
-                  <rect x="35" y="80" width="15" height="10" fill="black" />
-                  <rect x="55" y="75" width="10" height="5" fill="black" />
-                  <rect x="55" y="85" width="5" height="10" fill="black" />
-                </svg>
-
-                <p className="text-[9px] text-slate-500">Scan to run SharedNet on judge transceivers</p>
-              </div>
-
-              {/* View on GitHub Button */}
-              <div className="flex gap-2">
-                <a 
-                  href="https://github.com/abdulquader057-dev/ShardNet-Self-Healing-Information-Network" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="flex-1 h-12 bg-transparent border border-slate-800 text-slate-300 rounded-xl flex items-center justify-center gap-2 font-bold text-xs uppercase hover:bg-slate-800/40 active:scale-95 transition-transform"
-                >
-                  <i className="ph-bold ph-github-logo" style={{ fontSize: '16px' }} />
-                  <span>View Repository</span>
-                </a>
-                <button
-                  onClick={() => setShowAboutModal(false)}
-                  className="flex-1 h-12 bg-slate-800 text-white rounded-xl font-bold text-xs uppercase active:scale-95 transition-transform"
-                >
-                  Close
-                </button>
-              </div>
-
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
     </div>
   );

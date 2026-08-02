@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Search, MessageSquare, ArrowLeft, Send, Clock, MapPin, User, Info, Loader2 } from 'lucide-react';
+import { Users, Search, MessageSquare, ArrowLeft, Send, Clock, MapPin, User, Info, Loader2, CheckCircle2 } from 'lucide-react';
 import { db } from '../storage/db';
 import { useMesh } from '../core/MeshProvider';
 import { safeCallAsync } from '../core/stability';
@@ -185,6 +185,12 @@ export default function Inbox() {
                   </div>
                   <span className="text-[9px] font-black uppercase tracking-widest text-slate-600 mt-1 mx-1 flex items-center gap-1">
                     <Clock size={10} /> {formatTime(msg.timestamp)}
+                    {isMine && (
+                      <span className="ml-1 flex -space-x-1">
+                        <CheckCircle2 size={10} className={msg.delivered ? "text-[#34C759]" : "text-slate-500"} />
+                        <CheckCircle2 size={10} className={msg.delivered ? "text-[#34C759]" : "text-slate-500"} />
+                      </span>
+                    )}
                   </span>
                 </motion.div>
               );

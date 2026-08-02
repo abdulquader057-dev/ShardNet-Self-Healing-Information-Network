@@ -352,6 +352,27 @@ export class MeshNetwork {
     }));
   }
 
+  async getRawDataStats() {
+    let tx = 0, rx = 0;
+    for (const [id, peer] of this.peers.entries()) {
+      if (peer.conn && peer.conn._pc && typeof peer.conn._pc.getStats === 'function') {
+        try {
+          const stats = await peer.conn._pc.getStats();
+          stats.forEach(report => {
+            if (report.type === 'data-channel') {
+              if (report.bytesSent) tx += report.bytesSent;
+              if (report.bytesReceived) rx += report.bytesReceived;
+            }
+          });
+        } catch (e) {
+          // Ignore stats error for peer
+        }
+      }
+    }
+    return { tx, rx };
+  }
+
+
   getPeerCount() {
     return this.peers.size;
   }

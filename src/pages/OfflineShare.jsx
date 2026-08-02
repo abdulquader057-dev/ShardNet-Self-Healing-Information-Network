@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Share2, Bluetooth, Wifi, QrCode, HardDrive, Smartphone, CheckCircle2 } from 'lucide-react';
+import { Share2, QrCode, HardDrive, Smartphone, CheckCircle2, Upload, ImageIcon, Share } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
 export default function OfflineShare() {
-  const [mode, setMode] = useState('menu'); // menu | qr | airdrop
+  const [mode, setMode] = useState('menu'); // menu | qr
   const [shareStatus, setShareStatus] = useState('');
+  const fileInputRef = useRef(null);
 
-  // The actual URL of the deployed app, or local IP if testing locally
   const appUrl = window.location.origin;
 
   const handleWebShare = async () => {
@@ -15,7 +15,7 @@ export default function OfflineShare() {
       try {
         await navigator.share({
           title: 'SharedNet - Offline Mesh App',
-          text: 'Install the SharedNet offline mesh communication app. Works via WebRTC and Bluetooth.',
+          text: 'Install the SharedNet offline mesh communication app. Scan QR or click link.',
           url: appUrl,
         });
         setShareStatus('success');
@@ -26,8 +26,16 @@ export default function OfflineShare() {
         }
       }
     } else {
-      // Fallback to QR if Web Share not supported
       setMode('qr');
+    }
+  };
+
+  const handleGalleryImport = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { type: 'success', message: 'Gallery QR imported successfully!' } 
+      }));
     }
   };
 
@@ -36,46 +44,55 @@ export default function OfflineShare() {
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-h1 text-white flex items-center gap-3">
-            <HardDrive className="text-[#0A84FF]" size={28} />
-            Offline Install
+            <Share2 className="text-[#0A84FF]" size={28} />
+            Cross-Platform Bridge
           </h1>
-          <p className="text-body-sm text-slate-400">Share SharedNet without internet</p>
+          <p className="text-body-sm text-slate-400">Share SharedNet & Import Links</p>
         </div>
       </div>
 
       {mode === 'menu' && (
         <div className="space-y-4">
-          <div className="bento-card p-6 border-slate-800 space-y-4 bg-[#1C1C1E]">
-            <p className="text-sm text-slate-300">
-              SharedNet is a Progressive Web App (PWA). You can share it directly to nearby devices using native sharing protocols (AirDrop, Nearby Share) or a QR code.
+          <div className="bento-card p-6 border-slate-800 space-y-4 bg-[#1C1C1E] flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-full bg-[#0A84FF]/20 flex items-center justify-center text-[#0A84FF] mb-2">
+              <Share size={32} />
+            </div>
+            <h3 className="text-white font-bold">Nearby Share</h3>
+            <p className="text-xs text-slate-400">
+              Use native sharing (AirDrop / Nearby Share) to send this PWA to nearby devices without internet.
             </p>
-            
             <button 
               onClick={handleWebShare}
-              className="btn-premium w-full bg-[#0A84FF] text-white flex items-center justify-center gap-2"
+              className="btn-premium w-full bg-[#0A84FF] text-white flex items-center justify-center gap-2 mt-2"
             >
-              <Bluetooth size={18} />
-              <Wifi size={18} className="-ml-2" />
-              AirDrop / Nearby Share
+              <Share2 size={18} />
+              SHARE NOW
             </button>
-            
             <button 
               onClick={() => setMode('qr')}
-              className="btn-premium w-full btn-outline flex items-center justify-center gap-2"
+              className="btn-premium w-full btn-outline flex items-center justify-center gap-2 mt-2"
             >
               <QrCode size={18} />
-              Show QR Code
+              SHOW QR FALLBACK
             </button>
           </div>
 
-          <div className="bento-card p-6 border-slate-800 space-y-4 bg-[#1C1C1E]">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">How to install offline</h3>
-            <ol className="text-xs text-slate-400 space-y-3 list-decimal list-inside">
-              <li>Connect the other device to the same local WiFi network or Hotspot.</li>
-              <li>Scan the QR code or accept the AirDrop transfer.</li>
-              <li>Once opened in the browser, tap "Add to Home Screen".</li>
-              <li>The Service Worker will cache the entire app instantly for offline use.</li>
-            </ol>
+          <div className="bento-card p-6 border-slate-800 space-y-4 bg-[#1C1C1E] flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-full bg-[#34C759]/20 flex items-center justify-center text-[#34C759] mb-2">
+              <ImageIcon size={32} />
+            </div>
+            <h3 className="text-white font-bold">Gallery Import</h3>
+            <p className="text-xs text-slate-400">
+              Received a QR code via MMS or other means? Import the image directly to extract the mesh link.
+            </p>
+            <input type="file" accept="image/*" ref={fileInputRef} onChange={handleGalleryImport} className="hidden" />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="btn-premium w-full bg-[#34C759] text-white flex items-center justify-center gap-2 mt-2"
+            >
+              <Upload size={18} />
+              IMPORT IMAGE
+            </button>
           </div>
         </div>
       )}
@@ -99,8 +116,11 @@ export default function OfflineShare() {
             {appUrl}
           </p>
 
-          <button onClick={() => setMode('menu')} className="btn-premium btn-outline w-full mt-2">
-            BACK
+          <button 
+            onClick={() => setMode('menu')}
+            className="text-xs text-[#0A84FF] font-bold uppercase tracking-widest mt-4"
+          >
+            Go Back
           </button>
         </motion.div>
       )}

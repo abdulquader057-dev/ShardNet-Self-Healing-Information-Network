@@ -77,6 +77,37 @@ export default function MeshPulse() {
 
   const { peers, isReady } = useMesh();
   const [devices, setDevices] = useState([]);
+  const [userLoc, setUserLoc] = useState([17.4100, 78.4750]);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        setUserLoc([pos.coords.latitude, pos.coords.longitude]);
+      }, () => console.warn('Location access denied. Using default.'));
+    }
+  }, []);
+
+  const haversine = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3;
+    const p1 = lat1 * Math.PI / 180;
+    const p2 = lat2 * Math.PI / 180;
+    const dp = (lat2 - lat1) * Math.PI / 180;
+    const dl = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dp/2) * Math.sin(dp/2) +
+              Math.cos(p1) * Math.cos(p2) * Math.sin(dl/2) * Math.sin(dl/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const getBearing = (lat1, lon1, lat2, lon2) => {
+    const p1 = lat1 * Math.PI / 180;
+    const p2 = lat2 * Math.PI / 180;
+    const dl = (lon2 - lon1) * Math.PI / 180;
+    const y = Math.sin(dl) * Math.cos(p2);
+    const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
+    const theta = Math.atan2(y, x);
+    return (theta * 180 / Math.PI + 360) % 360;
+  };
 
   // Load real WebRTC peers into the device list
   useEffect(() => {
@@ -86,12 +117,17 @@ export default function MeshPulse() {
     const realDevices = peers.map(peer => {
       const existing = devices.find(d => d.id === peer.id);
       
-      const jitterLat = (Math.random() - 0.5) * 0.005;
-      const jitterLng = (Math.random() - 0.5) * 0.005;
+      const jitterLat = existing?.coords?.[0] || (userLoc[0] + (Math.random() - 0.5) * 0.005);
+      const jitterLng = existing?.coords?.[1] || (userLoc[1] + (Math.random() - 0.5) * 0.005);
       
-      // Calculate a random radar position (angle and radius)
-      const angle = Math.random() * 360;
-      const radius = 20 + Math.random() * 60; // 20% to 80% distance from center
+      const distance = haversine(userLoc[0], userLoc[1], jitterLat, jitterLng);
+      const bearing = getBearing(userLoc[0], userLoc[1], jitterLat, jitterLng);
+      
+      // Scale radius (max radar range ~500m => 100%)
+      const maxRange = 500;
+      let radius = (distance / maxRange) * 100;
+      if (radius > 90) radius = 90; // clamp to edge
+      if (radius < 10) radius = 10;
       
       return {
         id: peer.id,
@@ -101,15 +137,16 @@ export default function MeshPulse() {
         lastSeen: peer.lastSeen ? `${Math.round((Date.now() - peer.lastSeen) / 1000)}s ago` : 'Just now',
         icon: Smartphone,
         status: (existing?.battery && existing.battery < 20) ? 'emergency' : 'success',
-        coords: existing?.coords || [17.4100 + jitterLat, 78.4750 + jitterLng],
-        radarPos: { angle, radius },
+        coords: [jitterLat, jitterLng],
+        radarPos: { angle: bearing, radius },
         isReal: true,
-        battery: existing?.battery || null
+        battery: existing?.battery || null,
+        distanceStr: `${Math.round(distance)}m`
       };
     });
 
     setDevices(realDevices);
-  }, [peers, isReady]);
+  }, [peers, isReady, userLoc]);
 
   // Listen for battery status updates
   useEffect(() => {

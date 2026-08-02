@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   QrCode, Inbox, Zap, Lock, Unlock,
@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import {
   db, getAllMessages, getNodeIdentity,
-  setVaultKey, clearVaultKey, isVaultLocked, clearAllData, saveMessage, saveShard
+  setVaultKey, clearVaultKey, isVaultLocked, verifyVaultKey, clearAllData, saveMessage, saveShard
 } from '../storage/db';
 import { useNavigate } from 'react-router-dom';
 import MeshMap from '../intelligence/mapModule';
@@ -16,6 +16,7 @@ import { safeInit, safeInterval, safeCall } from '../core/stability';
 import { events } from '../core/events';
 import { AudioEngine, Haptic } from '../core/feedback';
 import { useMesh } from '../core/MeshProvider';
+import { getCurrentPosition } from '../utils/geo';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ const Home = () => {
   const [nodeId, setNodeId] = useState('——');
   const [emergency, setEmergency] = useState(false);
   const { bytesTransferred } = useMesh();
+  const [sosCountdown, setSosCountdown] = useState(null);
+  const sosIntervalRef = useRef(null);
   const [showEmergencyCard, setShowEmergencyCard] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [vaultOpen, setVaultOpen] = useState(false);
@@ -76,26 +79,93 @@ const Home = () => {
   };
 
   const handleSOS = () => {
+    if (sosCountdown !== null) return; // already counting
+    Haptic.sos();
+    setSosCountdown(5);
+    sosIntervalRef.current = setInterval(() => {
+      setSosCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(sosIntervalRef.current);
+          triggerRealSOS();
+          return null;
+        }
+        Haptic.sos();
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const cancelSOS = () => {
+    if (sosIntervalRef.current) {
+      clearInterval(sosIntervalRef.current);
+    }
+    setSosCountdown(null);
+  };
+
+  const triggerRealSOS = async () => {
     AudioEngine.play('sos');
     Haptic.sos();
     
     // Broadcast signal via safe event bus
     events.emit('SOS_BROADCAST', { lat: 0, lng: 0, timestamp: Date.now() });
+    
+    // log to db.sosHistory
+    try {
+      let lat = 0, lng = 0;
+      try {
+        const pos = await getCurrentPosition();
+        lat = pos.lat;
+        lng = pos.lng;
+      } catch (e) {}
+
+      await db.sosHistory.put({
+         timestamp: Date.now(),
+         location: `${lat}, ${lng}`,
+         peerCount: stats.activeSignalsCount
+      });
+      
+      const contacts = await db.emergencyContacts.toArray();
+      if (contacts.length > 0) {
+        const phones = contacts.map(c => c.phone).join(',');
+        const msg = `SOS! Emergency at ${lat}, ${lng}`;
+        window.location.href = `sms:${phones}?body=${encodeURIComponent(msg)}`;
+      }
+    } catch(e) {}
+
     navigate('/create?mode=sos');
   };
 
-  const toggleVault = () => {
+  const toggleVault = async () => {
     try {
       if (isVaultLocked()) {
         const k = prompt('Enter Vault Key (or Duress PIN: 0000 to wipe):');
+        if (!k) return;
+        
         if (k === '0000' || k === '9999') {
-          clearAllData().then(() => {
-            window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: '🚨 DURESS TRIGGERED: ALL VAULT DATA WIPED' } }));
-            refresh();
-          });
+          await clearAllData();
+          window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: '🚨 DURESS TRIGGERED: ALL VAULT DATA WIPED' } }));
+          refresh();
           return;
         }
-        if (k) setVaultKey(k);
+
+        const isValid = await verifyVaultKey(k);
+        if (isValid) {
+          await setVaultKey(k);
+          sessionStorage.removeItem('vaultAttempts');
+          window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Vault Unlocked' } }));
+        } else {
+          let attempts = parseInt(sessionStorage.getItem('vaultAttempts') || '0', 10) + 1;
+          sessionStorage.setItem('vaultAttempts', attempts);
+          if (attempts >= 5) {
+            await clearAllData();
+            sessionStorage.removeItem('vaultAttempts');
+            window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: '🚨 5 FAILED ATTEMPTS: ALL VAULT DATA WIPED' } }));
+            refresh();
+          } else {
+            window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'warning', message: `Invalid Key. ${5 - attempts} attempts remaining.` } }));
+          }
+          return;
+        }
       } else {
         clearVaultKey();
       }
@@ -116,6 +186,26 @@ const Home = () => {
 
   return (
     <div className="page-container relative z-10 min-h-screen bg-[#0A0A0F] pb-48">
+      
+      {/* SOS Overlay */}
+      <AnimatePresence>
+        {sosCountdown !== null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={cancelSOS}
+            className="fixed inset-0 z-[9999] bg-[#FF3B30] flex flex-col items-center justify-center p-4 cursor-pointer"
+          >
+            <div className="text-white text-9xl font-black mb-8 animate-pulse">
+              {sosCountdown}
+            </div>
+            <div className="text-white text-2xl font-bold uppercase tracking-widest text-center">
+              TAP ANYWHERE TO CANCEL
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* ── HEADER ── */}
       <header className="flex flex-col mb-8 gap-4">
@@ -200,9 +290,30 @@ const Home = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-slate-400">
+            <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-slate-400 mb-4">
               <span>Data Relayed</span>
               <span className="text-[#34C759]">{formatBytes(bytesTransferred.tx + bytesTransferred.rx)}</span>
+            </div>
+            
+            {/* SVG Network Graph */}
+            <div className="relative w-full h-16 border-t border-slate-800/80 pt-3">
+              <svg className="w-full h-full" viewBox="0 0 200 60">
+                <circle cx="100" cy="30" r="8" fill="#0A84FF" className="animate-pulse" />
+                <circle cx="30" cy="15" r="4" fill="#34C759" />
+                <circle cx="40" cy="50" r="4" fill="#34C759" />
+                <circle cx="170" cy="20" r="4" fill="#34C759" />
+                <circle cx="160" cy="45" r="4" fill="#EF4444" />
+                
+                <line x1="100" y1="30" x2="30" y2="15" stroke="#0A84FF" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="2,2" />
+                <line x1="100" y1="30" x2="40" y2="50" stroke="#0A84FF" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="2,2" />
+                <line x1="100" y1="30" x2="170" y2="20" stroke="#0A84FF" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="2,2" />
+                <line x1="100" y1="30" x2="160" y2="45" stroke="#EF4444" strokeWidth="1" strokeOpacity="0.4" />
+                <line x1="30" y1="15" x2="40" y2="50" stroke="#34C759" strokeWidth="1" strokeOpacity="0.2" />
+                <line x1="170" y1="20" x2="160" y2="45" stroke="#EF4444" strokeWidth="1" strokeOpacity="0.2" />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none text-[8px] font-mono">
+                TOPOLOGY MAP
+              </div>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Hash, MessageSquare, Clock, Globe, ShieldAlert, AlertTriangle, Info, Timer, Repeat } from 'lucide-react';
+import { Send, Hash, MessageSquare, Clock, Globe, ShieldAlert, AlertTriangle, Info, Timer, Repeat, QrCode, X } from 'lucide-react';
+import QRCode from 'qrcode';
 import { useMesh } from '../core/MeshProvider';
 import { db } from '../storage/db';
 import VoiceRecorder from '../components/VoiceRecorder';
@@ -27,6 +28,7 @@ export default function Forum() {
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [selectedCategory, setSelectedCategory] = useState('INFO');
   const [selectedTTL, setSelectedTTL] = useState(10800000); // 3h
+  const [qrCodeData, setQrCodeData] = useState(null);
   
   const scrollRef = useRef(null);
 
@@ -99,6 +101,20 @@ export default function Forum() {
     broadcast(payloadStr, 'forum', selectedTTL, selectedCategory).catch(err => {
       console.warn('Forum broadcast failed', err);
     });
+  };
+
+  const handleShowQR = async (post) => {
+    try {
+      const payload = JSON.stringify(post);
+      const url = await QRCode.toDataURL(payload, {
+        errorCorrectionLevel: 'L',
+        margin: 2,
+        color: { dark: '#000000', light: '#ffffff' }
+      });
+      setQrCodeData(url);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleRebroadcast = async (post) => {
@@ -225,9 +241,14 @@ export default function Forum() {
                     <Clock size={10} /> {getRelativeTime(post.timestamp)}
                   </span>
                   {!isMine && (
-                    <button onClick={() => handleRebroadcast(post)} className="text-[10px] font-bold uppercase tracking-widest text-[#3B82F6] flex items-center gap-1 hover:text-white transition-colors">
-                      <Repeat size={10} /> Relay
-                    </button>
+                    <div className="flex gap-2">
+                      <button onClick={() => handleRebroadcast(post)} className="text-[10px] font-bold uppercase tracking-widest text-[#3B82F6] flex items-center gap-1 hover:text-white transition-colors">
+                        <Repeat size={10} /> Relay
+                      </button>
+                      <button onClick={() => handleShowQR(post)} className="text-[10px] font-bold uppercase tracking-widest text-[#10B981] flex items-center gap-1 hover:text-white transition-colors">
+                        <QrCode size={10} /> QR
+                      </button>
+                    </div>
                   )}
                 </div>
               </motion.div>
@@ -297,6 +318,34 @@ export default function Forum() {
           </button>
         </div>
       </div>
+
+      {/* QR Modal */}
+      <AnimatePresence>
+        {qrCodeData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] bg-[#0A0A0F]/90 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <div className="bg-[#141419] border border-[#2A2A35] rounded-3xl p-6 flex flex-col items-center gap-6 relative">
+              <button 
+                onClick={() => setQrCodeData(null)}
+                className="absolute top-4 right-4 text-[#8B8B9A] hover:text-white"
+              >
+                <X size={24} />
+              </button>
+              <h3 className="text-xl font-bold text-white uppercase mt-2">Broadcast QR</h3>
+              <div className="bg-white p-4 rounded-2xl">
+                <img src={qrCodeData} alt="Broadcast QR" className="w-64 h-64" />
+              </div>
+              <p className="text-xs text-[#5A5A6A] font-bold uppercase tracking-widest text-center max-w-[250px]">
+                Scan with any device in READ MODE to decode payload.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

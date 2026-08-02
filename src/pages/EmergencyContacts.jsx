@@ -7,6 +7,7 @@ export default function EmergencyContacts() {
   const [contacts, setContacts] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newContact, setNewContact] = useState({ name: '', phone: '' });
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     loadContacts();
@@ -24,11 +25,20 @@ export default function EmergencyContacts() {
   const handleSave = async () => {
     if (!newContact.name || !newContact.phone) return;
     try {
-      await db.emergencyContacts.put({
-        name: newContact.name,
-        phone: newContact.phone
-      });
+      if (editingId) {
+        await db.emergencyContacts.put({
+          id: editingId,
+          name: newContact.name,
+          phone: newContact.phone
+        });
+      } else {
+        await db.emergencyContacts.put({
+          name: newContact.name,
+          phone: newContact.phone
+        });
+      }
       setNewContact({ name: '', phone: '' });
+      setEditingId(null);
       setShowAddForm(false);
       loadContacts();
       window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', message: 'Emergency Contact Saved' } }));
@@ -36,6 +46,17 @@ export default function EmergencyContacts() {
       console.error(e);
       window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Failed to save contact' } }));
     }
+  };
+
+  const handleEdit = (contact) => {
+    setNewContact({ name: contact.name, phone: contact.phone });
+    setEditingId(contact.id);
+    setShowAddForm(true);
+  };
+
+  const alertContact = (phone) => {
+    const msg = `SOS! I need emergency assistance.`;
+    window.location.href = `sms:${phone}?body=${encodeURIComponent(msg)}`;
   };
 
   const handleDelete = async (id) => {
@@ -86,18 +107,27 @@ export default function EmergencyContacts() {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <a 
-                    href={`tel:${contact.phone}`}
-                    className="w-12 h-12 rounded-xl bg-[#22C55E]/10 text-[#22C55E] flex items-center justify-center hover:bg-[#22C55E]/20 transition-colors"
-                  >
-                    <Phone size={20} />
-                  </a>
+                <div className="flex flex-col gap-2 mt-4 sm:mt-0 sm:flex-row">
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleEdit(contact)}
+                      className="w-12 h-12 rounded-xl bg-[#3B82F6]/10 text-[#3B82F6] flex items-center justify-center hover:bg-[#3B82F6]/20 transition-colors"
+                    >
+                      <span className="text-xs font-bold">Edit</span>
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(contact.id)}
+                      className="w-12 h-12 rounded-xl bg-[#EF4444]/10 text-[#EF4444] flex items-center justify-center hover:bg-[#EF4444]/20 transition-colors"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
                   <button 
-                    onClick={() => handleDelete(contact.id)}
-                    className="w-12 h-12 rounded-xl bg-[#EF4444]/10 text-[#EF4444] flex items-center justify-center hover:bg-[#EF4444]/20 transition-colors"
+                    onClick={() => alertContact(contact.phone)}
+                    className="flex-1 min-w-[120px] h-12 rounded-xl bg-[#FF3B30] text-white flex items-center justify-center font-bold text-xs uppercase hover:bg-[#FF3B30]/80 transition-colors gap-2"
                   >
-                    <Trash2 size={20} />
+                    <ShieldAlert size={16} />
+                    Alert Now
                   </button>
                 </div>
               </motion.div>
@@ -107,7 +137,11 @@ export default function EmergencyContacts() {
 
         {/* Add Button */}
         <button
-          onClick={() => setShowAddForm(true)}
+          onClick={() => {
+            setEditingId(null);
+            setNewContact({ name: '', phone: '' });
+            setShowAddForm(true);
+          }}
           className="w-full min-h-[64px] rounded-2xl border-2 border-dashed border-[#2A2A35] text-[#8B8B9A] font-bold flex items-center justify-center gap-2 hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
         >
           <Plus size={24} />
@@ -134,7 +168,11 @@ export default function EmergencyContacts() {
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold text-white">New Contact</h3>
                 <button 
-                  onClick={() => setShowAddForm(false)}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setEditingId(null);
+                    setNewContact({ name: '', phone: '' });
+                  }}
                   className="w-12 h-12 rounded-full bg-[#2A2A35]/50 flex items-center justify-center text-[#8B8B9A] hover:text-white"
                 >
                   <X size={24} />

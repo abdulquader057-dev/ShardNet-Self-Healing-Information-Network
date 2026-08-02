@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Database, Trash2, Clock, Info, CheckCircle2, XCircle, Share2, Shield, QrCode, Download, Copy, Maximize2, Layers, Repeat, Map, Globe, Bluetooth } from 'lucide-react';
-import { getAllShards, db, addLog, getNodeIdentity, getMessageLifecycle } from '../storage/db';
+import { getAllShards, db, addLog, getNodeIdentity, getMessageLifecycle, clearVaultKey } from '../storage/db';
 import { reconstructMessage } from '../core/sharding';
 import { generateShardQR, getTrustLevel, getCategoryStyle, generateBundleQR } from '../utils/qr';
 import { beamSignal, isSharingSupported } from '../utils/sharing';
@@ -160,6 +160,7 @@ const StorageView = () => {
   const [rebroadcastQR, setRebroadcastQR] = useState(null);
   const [selectedShard, setSelectedShard] = useState(null);
   const [showFullscreen, setShowFullscreen] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [bundleQR, setBundleQR] = useState(null);
   const [nodeId, setNodeId] = useState('unknown');
   const [now, setNow] = useState(Date.now());
@@ -344,9 +345,47 @@ const StorageView = () => {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {showCloseConfirm && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4"
+          >
+            <div className="bg-[#1C1C1E] p-6 rounded-3xl border border-[#FF3B30]/30 text-center max-w-sm space-y-6">
+              <div className="mx-auto w-12 h-12 bg-[#FF3B30]/20 text-[#FF3B30] rounded-full flex items-center justify-center mb-2">
+                <Shield size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-white uppercase italic">Lock Vault?</h3>
+                <p className="text-xs text-slate-400 font-medium mt-2">Closing this view will instantly wipe the active decryption key from memory. You will need to enter your PIN to access these files again.</p>
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setShowCloseConfirm(false)}
+                  className="btn-premium btn-outline flex-1 !py-3"
+                >
+                  CANCEL
+                </button>
+                <button 
+                  onClick={() => {
+                    clearVaultKey();
+                    window.history.back();
+                  }}
+                  className="btn-premium btn-primary !bg-[#FF3B30] !text-white flex-1 !py-3"
+                >
+                  LOCK & CLOSE
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-white/10 z-40">
         <button 
-          onClick={() => window.history.back()}
+          onClick={() => setShowCloseConfirm(true)}
           className="btn-premium btn-outline w-full !py-4"
         >
           CLOSE VAULT

@@ -54,7 +54,7 @@ export default function EvidenceCapture() {
     setIsRecording(true);
     setMode('audio');
     try {
-      const result = await captureCompressedVoice(10000); // max 10s
+      const result = await captureCompressedVoice(5000); // max 5s
       setMediaData({ type: 'audio', payload: result });
     } catch (e) {
       window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', message: 'Mic access failed' } }));

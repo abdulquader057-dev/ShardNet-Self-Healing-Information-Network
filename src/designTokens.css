@@ -1,0 +1,80 @@
+/* designTokens.css - Central design token definitions for SharedNet */
+
+:root {
+  /* Primary colour palette (deep teal & cyan) */
+  --color-primary: #0A84FF; /* deep cyan */
+  --color-primary-dark: #0066CC;
+  --color-primary-light: #5AC8FA;
+  --color-secondary: #30D158; /* teal */
+  --color-secondary-dark: #0C981E;
+  --color-secondary-light: #66FF99;
+  --color-accent: #FF9500; /* amber accent */
+  --color-danger: #FF3B30; /* red for errors / SOS */
+  --color-warning: #FFCC00;
+  --color-surface: #141419; /* dark surface */
+  --color-background: #0A0A0F; /* app background */
+
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Spacing & radii */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(20, 20, 25, 0.88);
+  --glass-border: #2A2A35;
+  --glass-blur: 20px;
+
+  /* Transitions */
+  --transition-fast: 150ms;
+  --transition-medium: 300ms;
+  --transition-slow: 500ms;
+}
+
+/* Utility classes */
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-family: var(--font-sans);
+  transition: background var(--transition-fast) ease-in-out, transform var(--transition-fast) ease-in-out;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-2px);
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: white;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-family: var(--font-sans);
+}
+
+.btn-danger:hover {
+  background: var(--color-danger);
+  opacity: 0.9;
+}
+
+.bg-surface { background: var(--color-surface); }
+.bg-background { background: var(--color-background); }
+.text-primary { color: var(--color-primary); }
+.text-secondary { color: var(--color-secondary); }
+.text-danger { color: var(--color-danger); }
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}

@@ -11,10 +11,9 @@ import { captureCompressedVoice, optimizeVoicePayload } from '../utils/audio';
 import { shareImage, downloadImage } from '../utils/sharing';
 
 const categories = [
-  { id: 'Info', icon: <Info size={18} />, label: 'Standard Info' },
-  { id: 'Emergency', icon: <AlertTriangle size={18} />, label: 'Emergency' },
-  { id: 'Safe Route', icon: <Map size={18} />, label: 'Safe Route' },
-  { id: 'Medical', icon: <Activity size={18} />, label: 'Medical' },
+  { id: 'ALERT', icon: <AlertTriangle size={18} />, label: 'ALERT' },
+  { id: 'INFO', icon: <Info size={18} />, label: 'INFO' },
+  { id: 'SAFE', icon: <Check size={18} />, label: 'SAFE' },
 ];
 
 const CreateMessage = () => {
@@ -23,7 +22,8 @@ const CreateMessage = () => {
 
   const [message, setMessage] = useState('');
   const [priority, setPriority] = useState(mode === 'sos' ? 3 : mode === 'safe' ? 1 : 2);
-  const [category, setCategory] = useState(mode === 'sos' ? 'Emergency' : mode === 'safe' ? 'Safe Route' : 'Info');
+  const [category, setCategory] = useState(mode === 'sos' ? 'ALERT' : mode === 'safe' ? 'SAFE' : 'INFO');
+  const [ttl, setTtl] = useState(1);
   const [location, setLocation] = useState('Sector 7G');
   const [prevMessages, setPrevMessages] = useState([]);
   const [selectedPrev, setSelectedPrev] = useState(null);
@@ -127,7 +127,7 @@ const CreateMessage = () => {
         }
       }
 
-      const shards = await createShards(finalPayload, category, nodeId, priority, location, selectedPrev, geoData);
+      const shards = await createShards(finalPayload, category, nodeId, priority, location, selectedPrev, geoData, ttl);
       
       for (const shard of shards) await saveShard(shard);
 
@@ -216,11 +216,11 @@ const CreateMessage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-4">
               <label className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Information Category</label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 {categories.map((cat) => (
                   <button
                     key={cat.id} type="button" onClick={() => setCategory(cat.id)}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${
+                    className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${
                       category === cat.id 
                         ? 'bg-primary/20 border-primary text-primary shadow-lg shadow-primary/10' 
                         : 'bg-white/5 border-white/10 text-slate-500'
@@ -228,6 +228,24 @@ const CreateMessage = () => {
                   >
                     {cat.icon}
                     <span className="text-[9px] font-black uppercase tracking-widest">{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <label className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Signal TTL</label>
+              <div className="grid grid-cols-3 gap-3">
+                {[1, 3, 6].map((t) => (
+                  <button
+                    key={t} type="button" onClick={() => setTtl(t)}
+                    className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${
+                      ttl === t 
+                        ? 'bg-[#0A84FF]/20 border-[#0A84FF] text-[#0A84FF] shadow-lg shadow-[#0A84FF]/10' 
+                        : 'bg-white/5 border-white/10 text-slate-500'
+                    }`}
+                  >
+                    <span className="text-lg font-black">{t}h</span>
                   </button>
                 ))}
               </div>
